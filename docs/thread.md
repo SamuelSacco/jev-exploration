@@ -4,6 +4,14 @@
 
 _24 posts. Written 2026-09-16, the day after Jev launched._
 
+> **Snapshot, frozen.** This thread was written on 2026-09-16, the day after Jev launched,
+> and is kept as-is as a record of what the argument looked like then. Two of its
+> conclusions have since been overtaken by evidence: post 22 says the calibration
+> experiment has not been run (four public benchmarks have now measured it, and they
+> disagree), and post 20's statement-verification numbers come from an n=3 probe that
+> should not be read as a result. For current claims and evidence see
+> [the ledger](claims-audit.md).
+
 ---
 
 ### 1/24

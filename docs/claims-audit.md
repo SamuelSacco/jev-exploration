@@ -1,145 +1,223 @@
-# Jev: claim audit + demos
+# Jev evidence ledger
 
-Exploratory findings, 2026-09-16/17. Sources: TypeSafe docs + launch post (read directly),
-my own live API calls (7 total, all within normal use), and a sweep of launch coverage:
-HN (1,797 pts, 474 comments), The Register, SiliconANGLE, The Rundown, Cherry Creek audit,
-Actionbox review, LumaDock, Every, Near Here, Good Start Labs, and founder/social posts.
-Jev launched Sept 15, 2026 — discussion is ~48h old. No Reddit threads, no peer-reviewed
-evals, no published calibration data exist yet.
+One row per claim made about Jev, with its current status and the best evidence for or
+against it. This file is meant to be edited as evidence appears; it is not a snapshot.
 
----
+**Last updated:** 2026-09-17 · **Model version in our own runs:** `jev-1.13.0`
 
-## 1. Claims I verified myself (live API + docs)
+Status vocabulary:
 
-**The HTTP contract is exactly as documented.** One endpoint —
-`POST https://api.typesafe.ai/v1/systemone` — taking `{state, model, questions}` and
-returning `{model, answers, usage}`. Three question types, no more: Noul → P(yes) float,
-Choice → winner + full distribution + confidence, Score → probability-weighted position
-(between levels allowed) + distribution + confidence. Verified across 7 live calls.
+| Status | Meaning |
+|---|---|
+| Verified | Independently reproduced, or checkable from the API contract itself |
+| Overstated | Directionally true, but the headline figure is best-case |
+| Refuted | False as stated, sometimes by TypeSafe's own footnotes |
+| Contested | Measured more than once, with results that disagree |
+| Unmeasured | No public evidence either way |
 
-**Parallel batching works as advertised.** 36 questions (12 tickets × 3 judgments) in
-ONE call, 1.61s round trip. 8 rerank questions in one call, 1.69s. Adding questions did
-not blow up latency.
-
-**Outputs are tiny; output is free.** My calls used 89–997 output tokens. TypeSafe prices
-input at $0.042/MTok and output at $0 ("too cheap to meter") — published in the launch
-post, consistent with usage blocks I received. Concrete: the 12-ticket triage call cost
-3,357 input tokens ≈ **$0.00014 — 36 judgments for a tenth of a cent.**
-
-**The honest-uncertainty behaviors check out.** When I asked an unknowable question
-("will the user renew?") it returned 0.49. When I forced a Choice with no good option
-and no "other," it picked at 0.52 probability with **0.04 confidence** — the distribution
-itself flags the garbage-in case, which is exactly why the docs say to include a
-no-match option. Contradictory evidence returned 0.40, leaning correctly but uncertain.
-
-**Documented limits confirmed present, unpublished limits confirmed absent.** 255-option
-Choice cap and ~32k-token request budget are documented. No public rate limits, SLA, or
-uptime commitment exist (only 429/529 + backoff guidance in the API reference).
+A note on provenance. Rows marked *(ours)* come from our own live calls, listed in
+[§5](#5-our-own-runs). Everything else is cited to the party that measured it. We have not
+re-run anyone else's benchmark, and the third-party numbers below are recorded as
+reported.
 
 ---
 
-## 2. Claims that are true but smaller than the marketing
+## The ledger
 
-**Speed/cost multipliers.** Official surfaces disagree with each other: 193.6x/444.6x
-(homepage), 40–200x (blog), 20–200x (founder thread), 100x (launch video) — and the
-homepage's own 0.114s-vs-8.566s Doom demo is a 75x ratio, not 193.6x. TypeSafe's own
-caveat: headline figures are "on the higher end of real world gains." Independent tests:
-~5x faster / 8.6x cheaper (Near Here, n=50), ~25x faster / ~580x cheaper (Every, vs a
-heavy-reasoning flagship). Direction: true. Headline numbers: best-case marketing.
-
-**"Similar intelligence to frontier LLMs."** TypeSafe's 4 workflow evals: Jev 67.8%
-agreement at $0.0004/case vs GPT-5.6 Terra 67.9% at $0.0304 — i.e., Jev *ties a mid-tier
-LLM* and trails top reasoning models (Sol 74.1%, Opus 73.1%). Worse: reference answers
-are the *average output of two other LLMs*, not ground truth — TypeSafe acknowledges
-the bias. Independent: Near Here got 96% vs 84–86% for small LLMs on moderation;
-Every's Jev caught 6/7 planted defects vs Fable's 7/7. Verdict: competitive with
-mid-tier models on bounded classification, not frontier, at a fraction of the cost.
-
-**My latency vs theirs.** They claim 70–500ms end-to-end. I measured 1.6–3.7s from my
-VM (includes network). Independent testers measured 0.35–0.59s. Their number is
-plausible near their infra; not reproduced from here.
-
----
-
-## 3. Claims I can debunk (or that debunk themselves)
-
-**"Can't hallucinate."** Debunked as stated — including by TypeSafe. Their 0% chart
-carries the footnote *"Our number is not empirical. Schema matching is guaranteed."*
-Their own docs: **"Typed output guarantees the interface, not truth."** What Jev can't
-do is emit a malformed answer; it can absolutely emit a confident wrong valid value.
-Constrained decoding gives any LLM the same shape guarantee (LumaDock, HN consensus).
-
-**"0% structured-output error rate."** Definitional, not measured — admitted in their
-own footnote. Not a benchmark result.
-
-**"New model class" as a scientific category.** No weights, no paper, no parameter
-count, no architecture details published. "System One Model" is TypeSafe's product
-category name, not an established scientific classification. The RLCD training method
-is a name plus a stated objective ("epistemically honest probabilities") — nothing
-more is public. Unverifiable either way.
+| # | Claim | Status | Evidence |
+|---|---|---|---|
+| 1 | One endpoint, `{state, model, questions}` in, `{model, answers, usage}` out | Verified | [§1](#1-the-api-contract) (ours) |
+| 2 | Independent questions batch into one call without a latency blowup | Verified | [§1](#1-the-api-contract) (ours) |
+| 3 | Output tokens are free; input is $0.042/MTok | Verified | [§1](#1-the-api-contract) (ours) |
+| 4 | 255-option Choice cap, ~32k token budget | Verified | TypeSafe docs |
+| 5 | No published rate limits, SLA, or uptime commitment | Verified (absent) | TypeSafe docs |
+| 6 | Returns honest uncertainty on unanswerable questions | Verified, small n | [§1](#1-the-api-contract) (ours, n=4) |
+| 7 | "193.6× faster / 444.6× cheaper" | Overstated | [§2](#2-speed-and-cost) |
+| 8 | "Similar intelligence to frontier LLMs" | Overstated | [§3](#3-intelligence-and-accuracy) |
+| 9 | 70–500 ms end-to-end | Overstated as a user-facing figure | [§2](#2-speed-and-cost) |
+| 10 | "Can't hallucinate" / 0% structured-output errors | Refuted | [§4](#4-refuted) |
+| 11 | "New model class" as a scientific category | Unmeasured | [§4](#4-refuted) |
+| 12 | An ordinary LLM can reproduce the interface | Verified | [§3](#3-intelligence-and-accuracy) — openjev |
+| 13 | **Probabilities are calibrated** | **Contested** | [§6](#6-the-open-question-calibration) |
+| 14 | Confidence is safe to route and escalate on | Contested | [§6](#6-the-open-question-calibration) |
+| 15 | Calibration holds when the model is out of its depth | Unmeasured, and the open question | [§6](#6-the-open-question-calibration) |
 
 ---
 
-## 4. Claims still unverifiable (the important ones)
+## 1. The API contract
 
-**Calibration — the central claim — has zero public evidence.** No calibration curve,
-no ECE figure, no paper. The entire "new model class" bet rests on probabilities
-meaning what they say, and nobody outside TypeSafe has measured it. My n=4 edge probes
-are suggestive (0.49 on unknowable, 0.04 confidence on forced choice) but prove nothing.
-The community Enron test (93.7% accuracy at ≥95% confidence) is suggestive but reports
-no coverage. **This is the experiment that matters, and it hasn't been run publicly.**
+Verified across 7 live calls on `jev-1.13.0`, 2026-09-16.
 
-**Rate limits, SLA, fine-tuning, context beyond 32k** — all unpublished.
+One endpoint, `POST https://api.typesafe.ai/v1/systemone`, taking `{state, model,
+questions}` and returning `{model, answers, usage}`. Three question types and no more.
+Noul returns P(yes) as a float with no separate confidence field. Choice returns a winner,
+the full distribution, and a confidence. Score returns a position along your ordered levels
+that may land between them, plus a distribution and confidence.
 
----
+Question IDs are yours and are echoed back rather than sent to the model, so the model
+cannot select an option you did not offer. Confidence measures how concentrated the
+distribution is. It is not a correctness estimate, which matters for rows 13–15.
 
-## 5. Demos: where Jev makes sense, with data
+Batching held up: 36 questions (12 tickets × 3 judgments) returned in one call, and 8
+rerank questions in another. Adding questions did not blow up latency. Outputs were 89–997
+tokens and are priced at zero, so the 12-ticket call cost roughly $0.00014 on 3,357 input
+tokens. Treat that as one measurement, not a rate.
 
-All run live 2026-09-16, jev-1.13.0, data + scripts in `~/workspace/jev_claims_lab/`.
+The documented limits are real and the undocumented ones are genuinely absent: the API
+reference gives 429/529 plus backoff guidance and no numeric ceiling, no SLA, no uptime
+commitment.
 
-**A. Support-ticket triage (the "decision layer" pattern).** 12 hand-labeled tickets,
-3 questions each (department Choice, urgency Noul, frustration Score), one call:
-1.61s, 3,357 in / 997 out tokens (~$0.00014). Department 10/12, urgency 12/12,
-frustration mean-abs-error 0.25. Both department "misses" were genuinely ambiguous
-labels (feature-request → "other" vs my "technical"; quote dispute → "billing" vs my
-"sales") — defensible judgments, not errors. *Makes sense when:* high-volume routing
-where you need several judgments per item in one shot and thresholds live in code.
+Four edge probes behaved the way the design intends. An unknowable question ("will the
+user renew?") returned 0.49. A Choice forced between two options that were both wrong
+returned a winner at 0.52 with confidence 0.04, so the distribution flagged the
+garbage-in case even though the answer did not. Contradictory evidence returned 0.40. A
+question unrelated to the supplied state was answered from world knowledge at 0.04. Four
+probes prove nothing about calibration, and we are not counting them as evidence for row
+13. They establish that the failure modes are visible in the distribution, which is a
+weaker and different claim.
 
-**B. RAG rerank.** 8 passages (4 relevant, 4 distractors), one Noul each, one call:
-1.69s, 975 in / 140 out tokens. 8/8 correct, perfect ranking, decisive separation
-(0.94–0.98 vs 0.01). *Makes sense when:* gating retrieved context before expensive
-generation — a cheap relevance filter.
+## 2. Speed and cost
 
-**C. Statement verification (prior session).** GPT-extracts / Jev-verifies: clean
-statement 0.99 across fields, planted transposed digit → 0.01 with auto-escalation,
-truncated doc → completeness 0.01 at 0.99 confidence. *Makes sense when:* a generative
-model produces claims and you need a cheap, typed verifier with an escalation rule.
+The multiplier is real and the headline is best-case. Official surfaces do not agree with
+each other: 193.6×/444.6× on the homepage, 40–200× in the blog, 20–200× in the founder
+thread, 100× in the launch video, while the homepage's own Doom demo (0.114 s vs 8.566 s)
+works out to 75×. TypeSafe's own caveat is that the headlines sit "on the higher end of
+real world gains."
 
-**D. Edge cases (this session).** See section 1 — the product is the *distribution*,
-not the answer. *Makes sense when:* you will actually use confidence to route,
-escalate, or abstain. If you ignore the probabilities and just take the top label,
-you've rebuilt a worse classifier.
+Independent measurements, all against different comparators, which is why they spread:
 
-**Where it does NOT make sense:** anything needing generation, reasoning traces,
-exact computation, or ground-truth-critical calls without human review. Even
-enthusiasts frame it as complement: "Jev decides, LLM writes."
+| Source | Comparator | Speed | Cost |
+|---|---|---|---|
+| Near Here (n=50) | small LLMs, moderation | ~5× | 8.6× |
+| Every | heavy-reasoning flagship | ~25× | ~580× |
+| [jev-phishing-bench](https://github.com/anisselbd/jev-phishing-bench) (n=2,000) | Claude Haiku 4.5 | 2.9× (239 ms vs 687 ms p50) | 12× ($0.038 vs $0.462 per 1k emails) |
+| [jev-rerank-bench](https://github.com/anessbelbati/jev-rerank-bench) (n=1,617) | Cohere Rerank 4 Pro | 2× (422 ms vs 844 ms) | 5.6× ($0.45 vs $2.51 per 1k queries) |
 
----
+The two largest independent studies land at 2–3× speed and 5–12× cost against a serious
+comparator. That is a good result and it is one to two orders of magnitude below the
+headline.
 
-## 6. Bottom line
+On latency specifically, row 9 is about what the number describes rather than whether it is
+true. We measured 1.6–3.7 s from our VM and could not separate model time from network and
+subprocess overhead, so our figure does not refute theirs. jev-phishing-bench does the
+measurement properly: 239 ms p50 from France against a measured 163 ms network floor,
+implying roughly 76 ms of service time, which is consistent with TypeSafe's range. The
+70–500 ms claim is fair as a service-time figure and misleading as an end-to-end one,
+because your network floor may exceed the model time by 2×.
 
-- **Camp "basically a classifier":** structurally correct, and independent tests show
-  Jev ties mid-tier LLMs on bounded classification — at ~1/75th the cost.
-- **Camp "normal LLM can do it":** true, and the open-source crowd is already
-  replicating the shape (constrained decoding + logit reading). What they can't
-  replicate is the calibration — which is also what TypeSafe hasn't proven.
-- **Camp "new model class":** unproven. One real idea (RLCD/calibration objective),
-  zero public evidence. The name is marketing until a calibration curve exists.
-- **Camp "use it as a decision layer":** the only actionable one, and the posture
-  TypeSafe's own docs push ("typed output guarantees the interface, not truth";
-  "validate performance in the target domain").
+## 3. Intelligence and accuracy
 
-The feed is arguing about taxonomy. The question is calibration. Nobody has run the
-experiment — which means the most valuable thing a Jev user can do right now is run it
-on their own data: a few hundred judgments against ground truth, predicted probability
-vs. hit rate. Everything else is commentary.
+TypeSafe's own evals (evals.typesafe.ai, 711 cases over four workflows) put Jev at 67.8%
+against GPT-5.6 Terra at 67.9%, GPT-5.6 Sol at 74.1% and Opus 5 at 73.1%, at $0.0004 per
+case against $0.0304–$0.1761 and 0.4 s against 10–38 s. So Jev ties a mid-tier model and
+trails the top reasoning models on their own benchmark. The reference answers are the
+average of GPT-6 Astra and Fable 5.1 rather than ground truth, which TypeSafe
+acknowledges. The site publishes summary statistics and examples, not full raw predictions.
+
+Independent accuracy varies enormously by task, and this spread is the most useful thing in
+the ledger:
+
+| Study | Task | n | Jev | Comparator |
+|---|---|---|---|---|
+| [jev-spam-eval](https://github.com/bitnovus/jev-spam-eval) | spam, in-distribution | 18,514 | 98.3% | TF-IDF logreg 98.4% |
+| jev-spam-eval | spam, out-of-distribution | 2,876 | 98.6% | TF-IDF logreg 73.0% |
+| [jev-benchmark](https://github.com/themsquared/jev-benchmark) | agent tool-call risk | 60 | 91.7% | — |
+| [jev-rerank-bench](https://github.com/anessbelbati/jev-rerank-bench) | rerank, 14 datasets | 1,617 | 0.692 nDCG@10 | Cohere Pro 0.691 (tie) |
+| [jev-phishing-bench](https://github.com/anisselbd/jev-phishing-bench) | phishing | 2,000 | 62.6% | Haiku 4.5 81.3%, regex 91.6% |
+
+The spam result is the strongest case anyone has made for Jev: it matches a trained
+classifier in-distribution and destroys it out-of-distribution, which is exactly what
+zero-shot semantic judgment should buy you. The phishing result is the strongest case
+against: 62.6% accuracy and 43.2% recall, beaten by a regex on shorteners and domain
+mismatch, with McNemar p < 0.0001 against Haiku.
+
+Row 12 is settled. [openjev](https://github.com/TheoLeeCJ/openjev) reproduces the interface
+by reading typed option probabilities directly from Qwen3.5-4B in a single forward pass,
+reaching 0.845 modal agreement against 0.883 for published Jev on 102 aligned rows, at
+5.21× the speed of generating and parsing a JSON array. The interface is not the moat. The
+open question is whether the training is.
+
+## 4. Refuted
+
+**"Can't hallucinate."** False as stated, including by TypeSafe. The 0% chart carries the
+footnote *"Our number is not empirical. Schema matching is guaranteed, thus we can
+confidently add 0% into the plots."* Their docs say *"Typed output guarantees the
+interface, not truth."* Jev cannot emit a malformed answer; it can emit a confident wrong
+valid one, and jev-phishing-bench measured it doing so 37.4% of the time. Constrained
+decoding gives any model the same shape guarantee.
+
+**"0% structured-output error rate."** Definitional, not measured, per the footnote above.
+
+**"New model class."** No weights, no paper, no parameter count, no architecture details.
+"System One Model" is a product category name. RLCD (Reinforcement Learning for Calibrated
+Decisions) is a name plus a stated objective, epistemically honest probabilities, and
+nothing further is public. Unfalsifiable as stated, so the useful question is not whether
+the category is real but whether the calibration is, which is row 13.
+
+## 5. Our own runs
+
+Seven live calls on 2026-09-16, `jev-1.13.0`. These are demonstrations of the API shape,
+not evidence of accuracy, and the ledger does not cite them for any accuracy claim. The
+reason is in [`review-and-roadmap.md`](review-and-roadmap.md): at n=12 and n=8 every result
+we got has a 95% interval that overlaps a trivial non-AI baseline on the same data.
+
+| Run | Setup | Result | Baseline on the same data |
+|---|---|---|---|
+| Triage | 12 tickets × 3 judgments, one call, 1.61 s | dept 10/12, urgency 12/12, frustration MAE 0.25 | majority class 5/12; urgency regex 9/12 |
+| Rerank | 8 passages, one Noul each, one call, 1.69 s | 8/8, clean separation (0.94–0.98 vs 0.01) | word-overlap ≥2: 7/8 |
+| Statement verification | extract-then-verify, planted transposed digit | clean fields 0.99; planted error 0.01; truncation flagged | none |
+| Edge probes | 4 unanswerable/contradictory questions | see [§1](#1-the-api-contract) | none |
+
+Reproduce the baselines with `python3 lab/baselines.py` (no API key required). Raw
+responses for these runs were not committed, which is being fixed; see the roadmap.
+
+## 6. The open question: calibration
+
+This is the claim the whole product rests on, and it is the row that changed most since
+launch week. It is no longer unmeasured. It is contested.
+
+| Study | n | Accuracy | Calibration |
+|---|---|---|---|
+| [jev-benchmark](https://github.com/themsquared/jev-benchmark) | 60 | 91.7% | ECE 0.0505 (preview) / 0.0712 (latest) |
+| [jev-spam-eval](https://github.com/bitnovus/jev-spam-eval) | 18,514 | 98.3% | 0.1% spam below 0.1; 99.9% above 0.9; but the 0.5–0.6 band overestimates at 38% |
+| [jev-phishing-bench](https://github.com/anisselbd/jev-phishing-bench) | 2,000 | 62.6% | ECE 0.154, worse than Haiku 4.5 at 0.097 |
+
+They disagree about whether confidence is safe to act on. jev-benchmark found zero
+misclassifications at confidence 1.000, incorrect answers confined to the 0.130–0.785
+range, and 98.0% accuracy in the 0.9–1.0 bin, which is a working escalation rule.
+jev-phishing-bench found the worst ECE of any model it tested, on the task where Jev was
+least accurate.
+
+**The hypothesis those three rows suggest, which nobody has tested: Jev's calibration
+tracks its accuracy rather than holding independently of it.** ECE runs close to
+(1 − accuracy) across all three points. If that is real it is a material problem for the
+product thesis, because calibration is supposed to be the property that survives when the
+model is out of its depth. A model that is well-calibrated only where it is already
+accurate has not given you anything you could not get by measuring accuracy directly, and
+the confidence signal would be least trustworthy exactly where you most need it.
+
+Three points is not a curve, and the confound is obvious: these are three different tasks,
+teams, binning choices and label qualities, so task difficulty and calibration are
+completely entangled. Distinguishing them needs the same model measured across a
+difficulty gradient with one consistent binning. That is the experiment worth running now,
+and it is tracked as an issue.
+
+The community Enron test (93.7% accuracy at ≥95% confidence, n=9,840) is still uncited
+here for calibration because it reports no coverage: without knowing what fraction of cases
+cleared the threshold, the number is unreadable.
+
+## Sources
+
+Ours: live API calls 2026-09-16, TypeSafe docs and launch post read directly.
+
+Third-party benchmarks: [jev-benchmark](https://github.com/themsquared/jev-benchmark),
+[jev-phishing-bench](https://github.com/anisselbd/jev-phishing-bench),
+[jev-spam-eval](https://github.com/bitnovus/jev-spam-eval),
+[jev-rerank-bench](https://github.com/anessbelbati/jev-rerank-bench),
+[openjev](https://github.com/TheoLeeCJ/openjev),
+[typesafe-ai-benchmark](https://github.com/iammrduncan/typesafe-ai-benchmark). Directory:
+[awesome-typesafe](https://github.com/Hawxy/awesome-typesafe).
+
+Launch coverage consulted for §2 and §3: HN (1,797 pts), The Register, SiliconANGLE, The
+Rundown, Cherry Creek audit, Actionbox, LumaDock, Every, Near Here, Good Start Labs,
+DataCamp, Developers Digest, and founder posts.

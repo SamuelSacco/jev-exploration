@@ -1,14 +1,24 @@
-# Jev: an exploratory thread
+# Jev: an evidence ledger
 
-Everything from a two-day deep dive into [TypeSafe's Jev](https://typesafe.ai) (launched Sept 15, 2026) — a "System One" judgment API that returns typed probabilities instead of generated text. Claim audit, live demos with measured numbers, the full thread, and runnable code.
+Tracking what is actually known about [TypeSafe's Jev](https://typesafe.ai), the "System
+One" judgment API that returns typed probabilities instead of generated text. Started as a
+two-day deep dive during launch week (Sept 2026); now maintained as a ledger of claims and
+the evidence for them, including other people's benchmarks.
 
-**TL;DR:** Jev is classifier-shaped and LLM-emulable, but its bet — training for *calibrated* decisions — is the one claim nobody has verified yet. The right posture is using it as a decision layer inside code-owned workflows, and the decisive experiment is a calibration curve on your own data.
+**Where the argument stands.** Jev is classifier-shaped and its interface is reproducible
+with open models, so the mechanism is not the interesting part. Its bet is that the
+probabilities are *calibrated*. Four independent benchmarks have now measured that, and
+they disagree: ECE ranges from 0.05 to 0.154, and it tracks how accurate Jev was on the
+task. That suggests Jev's calibration may hold only where it is already accurate, which
+would defeat the point. Nobody has tested it, and it is the experiment worth running.
+
+→ **[The ledger](docs/claims-audit.md)** — every claim, its status, and the evidence.
 
 ---
 
 ## The API in 60 seconds
 
-One endpoint. That's the whole surface area:
+One endpoint. That is the whole surface area:
 
 ```http
 POST https://api.typesafe.ai/v1/systemone
@@ -30,121 +40,89 @@ Content-Type: application/json
 }
 ```
 
-Three primitives, that's the entire expressive surface:
+Three primitives:
 
 | Primitive | Returns | Shape |
 |---|---|---|
-| **Noul** | P(yes) as a float | `{"type": "noul", "noul": 0.92}` |
-| **Choice** | winner + full probability distribution + confidence | `{"type": "choice", "choice": "technical", "probabilities": {...}, "confidence": 0.82}` |
-| **Score** | position along your ordered descriptive levels (can land between them) | `{"type": "score", "score": 1.6, "legend": {...}, "probabilities": {...}, "confidence": 0.78}` |
+| Noul | P(yes) as a float | `{"type": "noul", "noul": 0.92}` |
+| Choice | winner + distribution + confidence | `{"type": "choice", "choice": "technical", "probabilities": {...}, "confidence": 0.82}` |
+| Score | position along ordered levels, may land between them | `{"type": "score", "score": 1.6, "legend": {...}, "probabilities": {...}, "confidence": 0.78}` |
 
-Key semantics (verified live, model `jev-1.13.0`):
+Semantics worth knowing, verified on `jev-1.13.0`:
 
-- **Question IDs are yours** and are echoed back — they are *not* sent to the model. The model cannot choose an option you omitted.
-- **Noul near 0.5** means yes/no are similarly probable (uncertainty), *not* "medium intensity". Noul has no separate confidence field.
-- **Confidence = concentration of the distribution**, not proof of correctness and not permission to act.
-- **State = evidence, instructions = the judgment, criteria = the answer space.** You're designing a measurement instrument, not writing a prompt.
-- Code owns the workflow: Jev never generates text, never calls your functions, never decides what happens next. Thresholds, routing, escalation — all in your code.
-- Errors: `401` bad key, `422` malformed question, `429` / `529` → back off with exponential retries (official SDKs do this by default). No public numeric rate limits, no SLA, no uptime commitment. Limits: 255 Choice options, ~32k input tokens/request.
-- Pricing: **$0.042 / million input tokens, output tokens free.**
+- Question IDs are yours and are echoed back. They are not sent to the model, and the model
+  cannot pick an option you did not offer.
+- Noul near 0.5 means yes and no are similarly probable, not "medium intensity". Noul has
+  no separate confidence field.
+- Confidence is how concentrated the distribution is. It is not a correctness estimate and
+  not permission to act.
+- State is the evidence, instructions are the judgment, criteria are the answer space. You
+  are designing a measurement instrument, not writing a prompt.
+- Code owns the workflow. Jev never generates text, calls your functions, or decides what
+  happens next. Thresholds, routing and escalation live in your code.
+- Errors: 401 bad key, 422 malformed question, 429/529 back off with exponential retries.
+  Limits: 255 Choice options, ~32k input tokens. No published rate limits, SLA or uptime
+  commitment.
+- Pricing: $0.042 per million input tokens, output tokens free.
 
----
-
-## What I measured (live, 7 API calls)
-
-| Demo | Setup | Result | Cost |
-|---|---|---|---|
-| **Support triage** | 12 hand-labeled tickets × 3 judgments (department, urgency, frustration), **one call**, 1.61 s | Dept 10/12, urgency 12/12, frustration MAE 0.25. Both "misses" were ambiguous labels (defensible judgments, not errors) | 3,357 in / 997 out tokens ≈ **$0.00014** |
-| **RAG rerank** | 8 passages (4 relevant, 4 distractors), one Noul each, **one call**, 1.69 s | 8/8 correct, perfect ranking — relevant 0.94–0.98 vs distractors 0.01 | 975 in / 140 out tokens |
-| **Statement verification** | GPT-extracts → Jev-verifies brokerage statement | Clean fields 0.99; planted transposed digit ($1,274,392.11 → $1,284,392.11) → **0.01** with auto-escalation; truncated doc → completeness 0.01 at 0.99 confidence | — |
-| **Edge cases** | Unknowable question → **0.49**; contradictory evidence → **0.40**; forced Choice with no valid option → picked at 0.52 with **0.04 confidence** (the distribution flags garbage-in); irrelevant-state question answered from world knowledge (0.04) | The product is the *distribution*, not the answer | — |
-
-Reproduce: `lab/` holds the data (`tickets.json`, `rerank.json`), the runner (`run_demos.py`), and the measured `results.json`. See [Run it yourself](#run-it-yourself).
-
----
-
-## Claim audit: verified / true-but-smaller / debunked / unproven
-
-Full write-up: [`docs/claims-audit.md`](docs/claims-audit.md). The short version:
-
-**Verified**
-- The HTTP contract, parallel batching, tiny free outputs, and honest-uncertainty behaviors above.
-- 255-option Choice cap and ~32k-token budget are documented; numeric rate limits, SLA, and uptime commitments are confirmed *absent*.
-
-**True, but smaller than the marketing**
-- **Speed/cost multipliers**: official surfaces say 193.6×/444.6×, 40–200×, 20–200×, and 100× — and TypeSafe admits the headlines are "on the higher end of real world gains." Independent tests: ~5× faster / 8.6× cheaper (Near Here, n=50 real moderation decisions), ~25× faster / ~580× cheaper (Every, vs a heavy-reasoning flagship). Direction true; headlines best-case.
-- **"Frontier intelligence"**: TypeSafe's own evals show Jev *tying a mid-tier LLM* (67.8% vs 67.9%) and trailing top reasoning models — and the reference answers were averages of two other LLMs, not ground truth. Independent tests: competitive on bounded classification at ~1/75th the cost. Not frontier.
-- **Latency**: they claim 70–500 ms end-to-end; I measured 1.6–3.7 s from my machine (network included). Independent testers got 0.35–0.59 s. Plausible near their infra; not reproduced from here.
-
-**Debunked (partly by TypeSafe itself)**
-- **"Can't hallucinate"**: false as stated. Their 0% chart carries the footnote *"Our number is not empirical. Schema matching is guaranteed."* Their own docs: *"Typed output guarantees the interface, not truth."* Jev can't emit a malformed answer; it can emit a confident wrong valid value. Constrained decoding gives any LLM the same shape guarantee.
-- **"New model class" as science**: no weights, no paper, no parameter count, no architecture details. "System One Model" is a product category name. The RLCD training method is a name plus a stated objective ("epistemically honest probabilities") — nothing more is public.
-
-**Still unproven — the important one**
-- **Calibration.** The central claim has *zero* public evidence: no calibration curve, no ECE figure, no paper. My edge probes are suggestive but prove nothing. The community Enron test (93.7% accuracy at ≥95% confidence, n=9,840) is suggestive but reports no coverage data. **This is the experiment that matters and it hasn't been run.**
-
----
-
-## The four-camp verdict
-
-| Camp | Verdict |
-|---|---|
-| "Basically a classifier" | Structurally correct (Noul = binary, Choice = multiclass, Score = ordinal regression). It's a classifier with a natural-language API — that's not nothing. |
-| "A normal LLM can do this" | True. The open-source crowd is already replicating the shape (constrained decoding + logit reading). What they can't replicate is the calibration — which TypeSafe also hasn't proven. |
-| "New model class" | Unproven. One real idea (calibration as the optimization target), zero public evidence. Marketing until a calibration curve exists. |
-| "Use it as a decision layer" | The only actionable camp — and the posture TypeSafe's own docs push: *"validate their performance in the target domain."* |
-
-The feed is arguing about taxonomy. The question is calibration.
-
----
-
-## The thread
-
-[`docs/thread.md`](docs/thread.md) — 24 posts, beginner-friendly: normal LLM APIs → Ollama → prompt-and-parse → function calling → the trust problem → Jev's contract → the three primitives → the four camps → the verdict.
-
----
-
-## Repo map
+## What is in here
 
 ```
-├── README.md                      # this file
-├── docs/
-│   ├── thread.md                  # the 24-post exploratory thread
-│   └── claims-audit.md            # full claim audit with sources
-├── lab/
-│   ├── run_demos.py               # triage + rerank demos, scored vs ground truth
-│   ├── tickets.json               # 12 hand-labeled support tickets
-│   ├── rerank.json                # query + 8 passages (4 relevant, 4 distractors)
-│   ├── results.json               # measured results from the 2026-09-16 run
-│   └── edge_payload.json          # edge-case probe payload
-├── jev_statement_verifier.py      # brokerage-statement verifier prototype
-└── skills/
-    ├── jev/
-    │   ├── SKILL.md               # Jev skill notes
-    │   └── bin/jev.py             # minimal Jev CLI (TYPESAFE_API_KEY from env)
-    └── typesafe-ai-SKILL.md       # TypeSafe builder skill (patterns, cookbooks)
+docs/
+  claims-audit.md          the ledger: every claim, status, evidence
+  review-and-roadmap.md    audit of this repo's own methodology, and the plan
+  thread.md                the original 24-post narrative (frozen snapshot)
+lab/
+  baselines.py             non-AI baselines + Wilson intervals, no API key needed
+  run_demos.py             triage + rerank demos, scored against ground truth
+  tickets.json             12 hand-labeled support tickets
+  rerank.json              query + 8 passages
+  results.json             measured results from the 2026-09-16 run
+  edge_payload.json        edge-case probe payload
+skills/
+  jev/                     minimal Jev CLI + skill notes
+  typesafe-ai-SKILL.md     TypeSafe builder skill
+jev_statement_verifier.py  extract-then-verify prototype
 ```
 
 ## Run it yourself
 
+No API key needed:
+
 ```bash
-export TYPESAFE_API_KEY=ts-...          # your key, from your TypeSafe account
-python3 skills/jev/bin/jev.py lab/edge_payload.json   # single raw call
-python3 lab/run_demos.py                # both demos, scored vs ground truth (2 API calls)
+python3 lab/baselines.py     # non-AI baselines on the bundled datasets
 ```
 
-`jev.py` is stdlib-only (urllib) — no dependencies. `run_demos.py` shells out to it; override with `JEV_CLI=/path/to/other/client`.
+With a key:
 
-## The decisive experiment (not yet run)
+```bash
+export TYPESAFE_API_KEY=ts-...
+python3 skills/jev/bin/jev.py lab/edge_payload.json   # single raw call
+python3 lab/run_demos.py                              # both demos (2 API calls)
+```
 
-A calibration curve on a few hundred domain-specific labeled cases: predicted probability vs. actual hit rate. If 0.9 ≈ 90%, camp 1 earns the name. If not, it's camp 2 with good marketing. The statement-verifier prototype in this repo is already shaped to run it once fed real extractions.
+`jev.py` is stdlib-only. `run_demos.py` shells out to it; override with `JEV_CLI=`.
 
-## Key doc quotes
+## A caveat about our own demos
 
-- *"Typed output guarantees the interface, not truth."*
-- *"System One models are trained for calibrated decisions; validate their performance in the target domain."*
-- The "can't hallucinate" footnote, their own words: *"Our number is not empirical. Schema matching is guaranteed, thus we can confidently add 0% into the plots."*
+The triage and rerank demos in `lab/` are n=12 and n=8. Every result they produce has a
+95% interval that overlaps a trivial non-AI baseline on the same data, which
+`lab/baselines.py` demonstrates. They show what the API shape is good for. They are not
+evidence about accuracy, and the ledger does not cite them as such. See
+[review-and-roadmap.md](docs/review-and-roadmap.md) for the full methodology critique and
+what it would take to fix them.
 
----
+## Contributing
 
-*Explored 2026-09-16/17. All API calls within normal use (7 total); 429s never hit. Discussion was ~48h old at writing — treat third-party numbers as early signals, not settled science.*
+The ledger is the point: if you have measured something, open a PR adding a row with a
+citation. Open issues cover the work in flight, including the calibration-versus-difficulty
+experiment.
+
+## Other work worth reading
+
+[jev-benchmark](https://github.com/themsquared/jev-benchmark) ·
+[jev-phishing-bench](https://github.com/anisselbd/jev-phishing-bench) ·
+[jev-spam-eval](https://github.com/bitnovus/jev-spam-eval) ·
+[jev-rerank-bench](https://github.com/anessbelbati/jev-rerank-bench) ·
+[openjev](https://github.com/TheoLeeCJ/openjev) ·
+[awesome-typesafe](https://github.com/Hawxy/awesome-typesafe)
