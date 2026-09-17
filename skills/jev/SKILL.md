@@ -9,12 +9,14 @@ description: "Call TypeSafe's Jev model (System One judgments: Noul, Choice, Sco
 Run Jev evaluations over a state with typed questions; verify extracted statement fields, classify brokers, score completeness in one parallel call.
 
 ## Tooling
-`bin/jev.py` — minimal CLI, standard library only (urllib), no dependencies.
-It reads the key from the environment:
+`bin/jev.py` — minimal CLI. Standard library only; transport (including 429/529
+exponential backoff) lives in this repo's `jevlab` package, which the CLI imports,
+so the skill is not portable outside the repo. It reads the key from the environment:
 
 ```
-export TYPESAFE_API_KEY=<redacted>
+export TYPESAFE_API_KEY=ts-...
 python3 bin/jev.py request.json   # POST the JSON payload in request.json
+python3 bin/jev.py --floor        # measure the network floor, no key needed
 ```
 
 Payload shape: `{"state": "...", "model": "jev-latest", "questions": {"q1": {"type": "noul", "instructions": "...", "criteria": {...}}}}`.
