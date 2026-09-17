@@ -44,12 +44,22 @@ cares about.
 - jev-spam-eval: nearly perfect at the extremes (0.1% spam below 0.1, 99.9% above 0.9)
   but the 0.5–0.6 band overestimates spam prevalence at 38%.
 
-Read together these suggest a hypothesis nobody has tested: **Jev's calibration tracks its
-accuracy rather than holding independently of it.** ECE roughly follows (1 − accuracy)
-across the three: 91.7% accuracy → ECE 0.07, 62.6% accuracy → ECE 0.154. If that holds, it
-is a direct refutation of the marketing position, because calibration is supposed to be
-the property that survives when the model is out of its depth. A model that is
-well-calibrated only when it is already right has not solved anything.
+Read together these look like a hypothesis nobody has tested: that Jev's calibration
+tracks its accuracy rather than holding independently of it. That framing needs one
+correction, which came out of building the analysis tooling in `jevlab/stats.py`.
+
+ECE is biased upward at small n, and the bias is large. Simulating a model that is
+calibrated by construction, drawing Jev-like probabilities concentrated near 0 and 1, a
+*perfect* model scores ECE ≈ 0.061 at n=60, 0.025 at n=500 and 0.012 at n=2,000
+(`jevlab.stats.ece_noise_floor`). jev-benchmark's 0.0505–0.0712 at n=60 therefore sits at
+the noise floor: it is what perfect calibration and what serious miscalibration both look
+like at that sample size. It is not evidence in either direction. jev-phishing-bench's
+0.154 at n=2,000 is about 12× its floor and is real.
+
+So the count is two studies that can measure calibration, not three, and they reach
+opposite conclusions: spam (98.3% accurate, well calibrated at the extremes) and phishing
+(62.6% accurate, materially miscalibrated). The accuracy-coupling hypothesis survives on
+two confounded points, which is suggestive and nothing more.
 
 That is the thing to write. It is answerable from data that is already public, it has not
 been said anywhere, and it is a sharper claim than "someone should run a calibration
@@ -164,12 +174,13 @@ adjudicated the claims; lean into that rather than competing on demos, where fou
 already have 100x the sample size.
 
 **The one experiment worth running.** Test whether Jev's calibration degrades with its
-accuracy. Most of the data is already public — jev-phishing-bench, jev-benchmark and
-jev-spam-eval all commit raw outputs — so this starts as a re-analysis rather than a data
-collection: pull their per-call results, recompute ECE and reliability curves on a single
-consistent binning, and plot ECE against accuracy per task. If you then add one or two
-tasks of your own at deliberately varied difficulty, you have the first cross-task
-calibration picture of Jev that exists. Budget is trivial at $0.042/MTok.
+accuracy, with the noise floor reported next to every ECE. Part of this is re-analysis:
+jev-phishing-bench, jev-benchmark and jev-spam-eval all commit raw outputs, so their
+numbers can be recomputed on one consistent binning and checked against their floors. But
+the re-analysis alone cannot separate difficulty from calibration, because the three
+studies differ in every other respect too. That needs one model, one harness, one binning,
+across a deliberate difficulty gradient. Budget is trivial at $0.042/MTok; the work is in
+building the gradient and labelling it honestly.
 
 **Fix the lab or drop it.** If the demos stay, they need: pre-registered labels, a
 committed baseline (`lab/baselines.py` is a start), intervals on every number, at least

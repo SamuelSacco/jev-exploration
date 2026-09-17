@@ -7,10 +7,14 @@ the evidence for them, including other people's benchmarks.
 
 **Where the argument stands.** Jev is classifier-shaped and its interface is reproducible
 with open models, so the mechanism is not the interesting part. Its bet is that the
-probabilities are *calibrated*. Four independent benchmarks have now measured that, and
-they disagree: ECE ranges from 0.05 to 0.154, and it tracks how accurate Jev was on the
-task. That suggests Jev's calibration may hold only where it is already accurate, which
-would defeat the point. Nobody has tested it, and it is the experiment worth running.
+probabilities are *calibrated*, and that is now measured rather than merely asserted — but
+by fewer studies than it first appears. ECE is badly biased at small n: a perfectly
+calibrated model scores about 0.06 at n=60, which is exactly the range one widely cited
+benchmark reports, so that result cannot distinguish good calibration from bad. Of the
+studies large enough to measure it, one finds Jev well calibrated (spam, n=18.5k, 98.3%
+accurate) and one finds it materially miscalibrated and worse than a cheap LLM (phishing,
+n=2k, 62.6% accurate). Whether calibration holds when Jev is out of its depth, or only
+where it is already accurate, is the open question and the experiment worth running.
 
 → **[The ledger](docs/claims-audit.md)** — every claim, its status, and the evidence.
 
