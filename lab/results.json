@@ -1,0 +1,245 @@
+{
+  "triage": {
+    "latency_s": 1.61,
+    "usage": {
+      "input_tokens": 3357,
+      "output_tokens": 997
+    },
+    "dept_accuracy": "10/12",
+    "urgent_accuracy": "12/12",
+    "frustration_mean_abs_error": 0.248,
+    "detail": [
+      {
+        "id": "t1",
+        "dept": [
+          "billing",
+          "billing"
+        ],
+        "urgent": [
+          0.91,
+          true
+        ],
+        "frustration": [
+          1.25,
+          1
+        ]
+      },
+      {
+        "id": "t2",
+        "dept": [
+          "technical",
+          "technical"
+        ],
+        "urgent": [
+          0.96,
+          true
+        ],
+        "frustration": [
+          1.05,
+          2
+        ]
+      },
+      {
+        "id": "t3",
+        "dept": [
+          "sales",
+          "sales"
+        ],
+        "urgent": [
+          0.05,
+          false
+        ],
+        "frustration": [
+          0.0,
+          0
+        ]
+      },
+      {
+        "id": "t4",
+        "dept": [
+          "other",
+          "technical"
+        ],
+        "urgent": [
+          0.03,
+          false
+        ],
+        "frustration": [
+          0.0,
+          0
+        ]
+      },
+      {
+        "id": "t5",
+        "dept": [
+          "billing",
+          "billing"
+        ],
+        "urgent": [
+          0.58,
+          true
+        ],
+        "frustration": [
+          0.99,
+          1
+        ]
+      },
+      {
+        "id": "t6",
+        "dept": [
+          "technical",
+          "technical"
+        ],
+        "urgent": [
+          0.96,
+          true
+        ],
+        "frustration": [
+          1.07,
+          2
+        ]
+      },
+      {
+        "id": "t7",
+        "dept": [
+          "sales",
+          "sales"
+        ],
+        "urgent": [
+          0.04,
+          false
+        ],
+        "frustration": [
+          0.0,
+          0
+        ]
+      },
+      {
+        "id": "t8",
+        "dept": [
+          "technical",
+          "technical"
+        ],
+        "urgent": [
+          0.84,
+          true
+        ],
+        "frustration": [
+          1.19,
+          2
+        ]
+      },
+      {
+        "id": "t9",
+        "dept": [
+          "billing",
+          "billing"
+        ],
+        "urgent": [
+          0.15,
+          false
+        ],
+        "frustration": [
+          0.0,
+          0
+        ]
+      },
+      {
+        "id": "t10",
+        "dept": [
+          "sales",
+          "sales"
+        ],
+        "urgent": [
+          0.1,
+          false
+        ],
+        "frustration": [
+          0.0,
+          0
+        ]
+      },
+      {
+        "id": "t11",
+        "dept": [
+          "technical",
+          "technical"
+        ],
+        "urgent": [
+          0.88,
+          true
+        ],
+        "frustration": [
+          2.0,
+          2
+        ]
+      },
+      {
+        "id": "t12",
+        "dept": [
+          "billing",
+          "sales"
+        ],
+        "urgent": [
+          0.47,
+          false
+        ],
+        "frustration": [
+          0.97,
+          1
+        ]
+      }
+    ]
+  },
+  "rerank": {
+    "latency_s": 1.69,
+    "usage": {
+      "input_tokens": 975,
+      "output_tokens": 140
+    },
+    "relevance_accuracy": "8/8",
+    "relevant_in_top4": "4/4",
+    "ranking": [
+      [
+        "p1",
+        0.98,
+        true
+      ],
+      [
+        "p3",
+        0.97,
+        true
+      ],
+      [
+        "p5",
+        0.95,
+        true
+      ],
+      [
+        "p7",
+        0.94,
+        true
+      ],
+      [
+        "p2",
+        0.01,
+        false
+      ],
+      [
+        "p4",
+        0.01,
+        false
+      ],
+      [
+        "p6",
+        0.01,
+        false
+      ],
+      [
+        "p8",
+        0.01,
+        false
+      ]
+    ]
+  }
+}

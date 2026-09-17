@@ -1,0 +1,26 @@
+{
+  "state": "Ticket A: The user reports the export button is blue. Ticket B: The user reports the export button is green. Internal note: no one has checked the actual color.",
+  "model": "jev-latest",
+  "questions": {
+    "empty_state_noul": {
+      "type": "noul",
+      "instructions": "Is the moon made of cheese?",
+      "criteria": {"true": "Yes", "false": "No"}
+    },
+    "contradiction": {
+      "type": "noul",
+      "instructions": "Is the export button blue?",
+      "criteria": {"true": "The evidence indicates blue", "false": "The evidence does not indicate blue"}
+    },
+    "no_good_option": {
+      "type": "choice",
+      "instructions": "Which planet is the export button on?",
+      "criteria": {"mars": "Mars", "venus": "Venus"}
+    },
+    "unknowable": {
+      "type": "noul",
+      "instructions": "Will the user renew their subscription next year?",
+      "criteria": {"true": "Yes, will renew", "false": "No, will not renew"}
+    }
+  }
+}
