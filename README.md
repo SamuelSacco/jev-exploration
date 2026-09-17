@@ -76,6 +76,8 @@ docs/
   claims-audit.md          the ledger: every claim, status, evidence
   review-and-roadmap.md    audit of this repo's own methodology, and the plan
   thread.md                the original 24-post narrative (frozen snapshot)
+tests/                     52 tests, no API key and no network required
+ci/                        CI definition (see ci/README.md to enable it)
 jevlab/
   client.py                the one HTTP client: retries, network floor, escalation
   stats.py                 ECE, reliability, Brier, Wilson/bootstrap, ECE noise floor
@@ -98,7 +100,8 @@ jev_statement_verifier.py  extract-then-verify prototype
 No API key needed:
 
 ```bash
-python3 lab/baselines.py     # non-AI baselines on the bundled datasets
+pip install -e ".[dev]" && pytest   # the whole suite runs offline
+python3 lab/baselines.py            # non-AI baselines on the bundled datasets
 ```
 
 With a key:
