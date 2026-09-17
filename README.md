@@ -130,8 +130,21 @@ what it would take to fix them.
 ## Contributing
 
 The ledger is the point: if you have measured something, open a PR adding a row with a
-citation. Open issues cover the work in flight, including the calibration-versus-difficulty
-experiment.
+citation. Any calibration figure needs n, the binning, the ECE, the simulated noise floor
+for that sample size, the ratio between them, and coverage at whatever threshold is quoted
+— `jevlab.stats.ece_with_floor` and `coverage_at` produce all of it.
+
+Work in flight:
+
+| Issue | Needs a key |
+|---|---|
+| [#1 Does calibration survive difficulty, or only track accuracy?](../../issues/1) | yes |
+| [#2 Re-analyse published benchmarks against the ECE noise floor](../../issues/2) | no |
+| [#3 Re-run the lab demos and commit raw JSONL](../../issues/3) | yes |
+| [#4 Settle the latency row against the network floor](../../issues/4) | partly |
+| [#5 Replace the rerank dataset](../../issues/5) | at the end |
+| [#6 Settle the two disputed triage labels](../../issues/6) | no |
+| [#7 Enable CI, pick a licence](../../issues/7) | no |
 
 ## Other work worth reading
 
