@@ -1,5 +1,5 @@
-"""
-Jev verification layer for a brokerage statement extraction pipeline.
+#!/usr/bin/env python3
+"""Jev verification layer for a brokerage statement extraction pipeline.
 
 Jev cannot generate text, so it CANNOT extract fields. The pattern here:
   1. Your existing extractor (e.g. GPT-5.4 on Azure OpenAI) pulls fields from the PDF.
@@ -8,20 +8,17 @@ Jev cannot generate text, so it CANNOT extract fields. The pattern here:
      in ONE parallel call, ~70-500ms, input tokens only ($0.042/MTok).
 
 Usage:
+  export TYPESAFE_API_KEY=<redacted>
   python jev_statement_verifier.py statement.txt fields.json
 
 statement.txt is text extracted from the PDF; fields.json is your extractor's
-JSON output (e.g. from GPT-5.4). No raw API key needed -- calls go through the
-jev skill CLI, which attaches the stored TypeSafe credential.
+JSON output (e.g. from GPT-5.4). Standard library only, no dependencies.
 """
 import json
 import os
-import subprocess
 import sys
-
-# API calls go through the jev skill CLI (~/workspace/skills/jev/bin/jev.py),
-# which attaches the stored TypeSafe credential via authd surrogates.
-JEV_CLI = os.path.expanduser("~/workspace/skills/jev/bin/jev.py")
+import urllib.request
+import urllib.error
 
 API_URL = "https://api.typesafe.ai/v1/systemone"
 MODEL = "jev-latest"
@@ -68,15 +65,25 @@ def build_questions(fields: dict) -> dict:
 
 
 def call_jev(state: str, questions: dict) -> dict:
+    api_key = os.environ.get("TYPESAFE_API_KEY")
+    if not api_key:
+        sys.exit("TYPESAFE_API_KEY is not set. Export your TypeSafe API key first.")
     payload = {"state": state, "model": MODEL, "questions": questions}
-    with open("/tmp/jev_payload.json", "w") as f:
-        json.dump(payload, f)
-    out = subprocess.run(
-        [JEV_CLI, "/tmp/jev_payload.json"], capture_output=True, text=True, timeout=120
+    req = urllib.request.Request(
+        API_URL,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {api_key}",
+        },
+        method="POST",
     )
-    if out.returncode != 0:
-        sys.exit(f"Jev call failed: {out.stderr.strip()}")
-    return json.loads(out.stdout)
+    try:
+        with urllib.request.urlopen(req, timeout=120) as resp:
+            return json.load(resp)
+    except urllib.error.HTTPError as exc:
+        body = exc.read().decode("utf-8", errors="replace")
+        sys.exit(f"Jev call failed: HTTP {exc.code}: {body}")
 
 
 def main() -> None:

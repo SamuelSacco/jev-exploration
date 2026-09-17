@@ -1,0 +1,9 @@
+# Secrets / local config
+.env
+
+# Python bytecode
+__pycache__/
+*.pyc
+
+# Demo runner's working payload (regenerated on each run)
+lab/_payload.json
