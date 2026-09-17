@@ -9,9 +9,13 @@ No API key and no network needed:
     python3 lab/baselines.py
 """
 import json
-import math
 import os
 import re
+import sys
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+from jevlab.stats import wilson
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 
@@ -21,17 +25,6 @@ URGENCY_RE = re.compile(
     r"down|crash|error|500|deadline|month-end",
     re.I,
 )
-
-
-def wilson(hits: int, n: int, z: float = 1.96) -> tuple:
-    """95% Wilson score interval for a binomial proportion."""
-    if n == 0:
-        return (0.0, 1.0)
-    p = hits / n
-    denom = 1 + z * z / n
-    center = (p + z * z / (2 * n)) / denom
-    margin = z * math.sqrt(p * (1 - p) / n + z * z / (4 * n * n)) / denom
-    return (max(0.0, center - margin), min(1.0, center + margin))
 
 
 def report(label: str, hits: int, n: int) -> None:

@@ -76,13 +76,17 @@ docs/
   claims-audit.md          the ledger: every claim, status, evidence
   review-and-roadmap.md    audit of this repo's own methodology, and the plan
   thread.md                the original 24-post narrative (frozen snapshot)
+jevlab/
+  client.py                the one HTTP client: retries, network floor, escalation
+  stats.py                 ECE, reliability, Brier, Wilson/bootstrap, ECE noise floor
 lab/
   baselines.py             non-AI baselines + Wilson intervals, no API key needed
   run_demos.py             triage + rerank demos, scored against ground truth
+  runs/                    raw per-call JSONL, committed so numbers stay auditable
   tickets.json             12 hand-labeled support tickets
   rerank.json              query + 8 passages
-  results.json             measured results from the 2026-09-16 run
   edge_payload.json        edge-case probe payload
+  results-2026-09-16-legacy.json   the original run, kept as a non-reproducible record
 skills/
   jev/                     minimal Jev CLI + skill notes
   typesafe-ai-SKILL.md     TypeSafe builder skill
@@ -102,10 +106,14 @@ With a key:
 ```bash
 export TYPESAFE_API_KEY=ts-...
 python3 skills/jev/bin/jev.py lab/edge_payload.json   # single raw call
-python3 lab/run_demos.py                              # both demos (2 API calls)
+python3 lab/run_demos.py                              # both demos, one pass each
+python3 lab/run_demos.py --repeat 3                   # three passes, variance reported
+python3 lab/run_demos.py --dry-run                    # payloads only, no calls
+python3 skills/jev/bin/jev.py --floor                 # network floor, no key needed
 ```
 
-`jev.py` is stdlib-only. `run_demos.py` shells out to it; override with `JEV_CLI=`.
+Everything is standard library only. Raw responses land in `lab/runs/*.jsonl` and the
+summary in `lab/results.json`; the JSONL is committed, the summary is derived.
 
 ## A caveat about our own demos
 
