@@ -96,6 +96,8 @@ lab/
   run_demos.py             triage + rerank demos, scored against ground truth
   runs/                    raw per-call JSONL, committed so numbers stay auditable
   negation.json            40 minimal pairs (n=80); lexical methods pinned at chance
+  tiers/                   800-item difficulty gradient for the calibration experiment (#1)
+  run_tiers.py             batched runner for the gradient, per-tier calibration
   tickets.json             12 labelled support tickets + their criteria (see LABELS.md)
   LABELS.md                label decisions, versioned and dated
   rerank.json              retired (issue #5): word overlap scores 7/8 on it
@@ -115,6 +117,8 @@ No API key needed:
 pip install -e ".[dev]" && pytest   # the whole suite runs offline
 python3 lab/baselines.py            # non-AI baselines on the bundled datasets
 python3 analysis/external/run.py --base ~   # recompute other studies' ECEs
+python3 lab/tiers/baselines.py      # difficulty-gradient controls
+python3 lab/run_tiers.py --dry-run  # size the flagship experiment
 ```
 
 With a key:
@@ -125,6 +129,7 @@ python3 skills/jev/bin/jev.py lab/edge_payload.json   # single raw call
 python3 lab/run_demos.py                              # triage + negation, one pass
 python3 lab/run_demos.py --repeat 3                   # three passes, variance reported
 python3 lab/run_demos.py --dry-run                    # payloads only, no calls
+python3 lab/run_tiers.py --repeat 3                    # the gradient experiment (#1)
 python3 skills/jev/bin/jev.py --floor                 # network floor, no key needed
 ```
 
