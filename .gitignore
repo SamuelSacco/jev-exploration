@@ -7,3 +7,6 @@ __pycache__/
 
 # Demo runner's working payload (regenerated on each run)
 lab/_payload.json
+
+# Lab outputs from local runs (raw JSONL is committed deliberately, see lab/runs/README.md)
+lab/results.json

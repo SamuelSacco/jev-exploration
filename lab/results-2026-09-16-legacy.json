@@ -1,4 +1,7 @@
 {
+  "_note": "Legacy result from the 2026-09-16 run, kept as the historical record. It predates the current harness and is not reproducible: no raw responses were retained, no model version or timestamp was recorded, and it is a single pass with no intervals. Read it next to lab/baselines.py, whose trivial heuristics have overlapping confidence intervals with every number here. New runs write lab/results.json and lab/runs/*.jsonl.",
+  "_model": "jev-1.13.0 (recorded in prose at the time, not in this file)",
+  "_date": "2026-09-16",
   "triage": {
     "latency_s": 1.61,
     "usage": {

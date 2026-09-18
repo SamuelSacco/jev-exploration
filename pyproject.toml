@@ -1,0 +1,19 @@
+[project]
+name = "jev-exploration"
+version = "0.2.0"
+description = "An evidence ledger for TypeSafe's Jev, with a reproducible lab"
+requires-python = ">=3.10"
+dependencies = []          # standard library only, on purpose
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["jevlab"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
