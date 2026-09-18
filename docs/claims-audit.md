@@ -98,12 +98,20 @@ comparator. That is a good result and it is one to two orders of magnitude below
 headline.
 
 On latency specifically, row 9 is about what the number describes rather than whether it is
-true. We measured 1.6–3.7 s from our VM and could not separate model time from network and
-subprocess overhead, so our figure does not refute theirs. jev-phishing-bench does the
-measurement properly: 239 ms p50 from France against a measured 163 ms network floor,
-implying roughly 76 ms of service time, which is consistent with TypeSafe's range. The
-70–500 ms claim is fair as a service-time figure and misleading as an end-to-end one,
-because your network floor may exceed the model time by 2×.
+true. The new harness measures in-process latency (no subprocess): 5 passes each of
+triage and rerank from our VM, p50 1.47 s and 1.48 s. The network floor, measured as
+TCP + TLS to api.typesafe.ai, is p50 0.67 s from here — but that floor is dominated
+by our egress proxy's CONNECT setup (~0.63 s), which is environment overhead, not
+distance. Implied service time from this VM is therefore ~0.8 s, an upper bound that
+cannot judge TypeSafe's claim. (Caveat on the tooling: `measure_network_floor()` in
+`jevlab/client.py` opens a direct socket, which fails behind a transparent proxy;
+the floor above was measured through the proxy's CONNECT tunnel instead.)
+
+jev-phishing-bench remains the clean measurement: 239 ms p50 from France against a
+measured 163 ms network floor, implying roughly 76 ms of service time, which is
+consistent with TypeSafe's range. The 70–500 ms claim is fair as a service-time figure
+and misleading as an end-to-end one, because your network floor may exceed the model
+time by 2×.
 
 ## 3. Intelligence and accuracy
 
@@ -170,6 +178,31 @@ we got has a 95% interval that overlaps a trivial non-AI baseline on the same da
 
 Reproduce the baselines with `python3 lab/baselines.py` (no API key required). Raw
 responses for these runs were not committed, which is being fixed; see the roadmap.
+
+### Re-run on the new harness, 2026-09-17
+
+Ten more calls (5 passes × 2 demos), model still `jev-1.13.0` — it has not moved
+since 09-16. Raw responses are committed in `lab/runs/`; this is the first run the
+ledger can cite at the response level.
+
+| Demo | Result (pass 1 of 5) | Baseline, same data |
+|---|---|---|
+| Triage | dept 10/12, urgency 11/12, frustration MAE 0.25 | majority 5/12; urgency regex 9/12 |
+| Rerank | 8/8 | word-overlap 7/8 |
+
+The new information is the variance, which nobody has published for these tasks:
+
+- **Triage urgency**: 1 of 12 questions flipped its label across the 5 passes
+  (flip rate 8.3%), mean absolute spread 0.016, max 0.06. Urgency also moved
+  *between* runs: 12/12 on 09-16, 11/12 on 09-17. A point estimate from one pass
+  overstates what it knows.
+- **Rerank**: 0 flips, mean spread 0.003 — the 8/8 is stable, which is unsurprising
+  given the distractors.
+- All three calibration blocks printed **at the noise floor** (ECE 0.026–0.100 vs
+  floors 0.044–0.143), exactly as the harness predicts for n=8–12. These demos
+  cannot speak to calibration; §6 stands on the third-party studies.
+
+Run it yourself: `python3 lab/run_demos.py --repeat 5` (~10 calls, under $0.01).
 
 ## 6. The open question: calibration
 
