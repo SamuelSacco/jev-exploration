@@ -1,0 +1,217 @@
+{
+  "started_at": "20260918T013027Z",
+  "repeat": 3,
+  "batch_size": 40,
+  "baselines": {
+    "cue": {
+      "t1_trivial": {
+        "hits": 191,
+        "n": 200,
+        "rate": 0.955,
+        "ci95": [
+          0.9167,
+          0.9761
+        ]
+      },
+      "t2_ordinary": {
+        "hits": 176,
+        "n": 200,
+        "rate": 0.88,
+        "ci95": [
+          0.8277,
+          0.918
+        ]
+      },
+      "t3_hard": {
+        "hits": 98,
+        "n": 200,
+        "rate": 0.49,
+        "ci95": [
+          0.4216,
+          0.5588
+        ]
+      },
+      "t4_adversarial": {
+        "hits": 3,
+        "n": 200,
+        "rate": 0.015,
+        "ci95": [
+          0.0051,
+          0.0432
+        ]
+      }
+    },
+    "decisive": {
+      "t1_trivial": {
+        "hits": 166,
+        "n": 200,
+        "rate": 0.83,
+        "ci95": [
+          0.7718,
+          0.8757
+        ]
+      },
+      "t2_ordinary": {
+        "hits": 151,
+        "n": 200,
+        "rate": 0.755,
+        "ci95": [
+          0.691,
+          0.8094
+        ]
+      },
+      "t3_hard": {
+        "hits": 147,
+        "n": 200,
+        "rate": 0.735,
+        "ci95": [
+          0.6698,
+          0.7913
+        ]
+      },
+      "t4_adversarial": {
+        "hits": 139,
+        "n": 200,
+        "rate": 0.695,
+        "ci95": [
+          0.628,
+          0.7546
+        ]
+      }
+    }
+  },
+  "tiers": {
+    "t1_trivial": {
+      "label": "t1_trivial",
+      "n": 200,
+      "accuracy": 0.975,
+      "accuracy_ci95": [
+        0.9428,
+        0.9893
+      ],
+      "ece": 0.1153,
+      "noise_floor_mean": 0.0539,
+      "ratio_to_floor": 2.14,
+      "informative": true,
+      "mce": 0.46,
+      "brier": 0.0313,
+      "coverage": {
+        "0.9": {
+          "threshold": 0.9,
+          "coverage": 0.315,
+          "n": 63,
+          "hit_rate": 1.0
+        },
+        "0.95": {
+          "threshold": 0.95,
+          "coverage": 0.11,
+          "n": 22,
+          "hit_rate": 1.0
+        }
+      },
+      "variance": {
+        "passes": 3,
+        "label_flip_rate": 0.01
+      }
+    },
+    "t2_ordinary": {
+      "label": "t2_ordinary",
+      "n": 200,
+      "accuracy": 0.98,
+      "accuracy_ci95": [
+        0.9497,
+        0.9922
+      ],
+      "ece": 0.1224,
+      "noise_floor_mean": 0.0533,
+      "ratio_to_floor": 2.3,
+      "informative": true,
+      "mce": 0.3411,
+      "brier": 0.0312,
+      "coverage": {
+        "0.9": {
+          "threshold": 0.9,
+          "coverage": 0.325,
+          "n": 65,
+          "hit_rate": 1.0
+        },
+        "0.95": {
+          "threshold": 0.95,
+          "coverage": 0.04,
+          "n": 8,
+          "hit_rate": 1.0
+        }
+      },
+      "variance": {
+        "passes": 3,
+        "label_flip_rate": 0.02
+      }
+    },
+    "t3_hard": {
+      "label": "t3_hard",
+      "n": 200,
+      "accuracy": 0.935,
+      "accuracy_ci95": [
+        0.892,
+        0.9616
+      ],
+      "ece": 0.1377,
+      "noise_floor_mean": 0.0546,
+      "ratio_to_floor": 2.52,
+      "informative": true,
+      "mce": 0.5457,
+      "brier": 0.0448,
+      "coverage": {
+        "0.9": {
+          "threshold": 0.9,
+          "coverage": 0.235,
+          "n": 47,
+          "hit_rate": 1.0
+        },
+        "0.95": {
+          "threshold": 0.95,
+          "coverage": 0.015,
+          "n": 3,
+          "hit_rate": 1.0
+        }
+      },
+      "variance": {
+        "passes": 3,
+        "label_flip_rate": 0.02
+      }
+    },
+    "t4_adversarial": {
+      "label": "t4_adversarial",
+      "n": 200,
+      "accuracy": 0.9,
+      "accuracy_ci95": [
+        0.8506,
+        0.9343
+      ],
+      "ece": 0.1469,
+      "noise_floor_mean": 0.0676,
+      "ratio_to_floor": 2.17,
+      "informative": true,
+      "mce": 0.23,
+      "brier": 0.103,
+      "coverage": {
+        "0.9": {
+          "threshold": 0.9,
+          "coverage": 0.215,
+          "n": 43,
+          "hit_rate": 1.0
+        },
+        "0.95": {
+          "threshold": 0.95,
+          "coverage": 0.035,
+          "n": 7,
+          "hit_rate": 1.0
+        }
+      },
+      "variance": {
+        "passes": 3,
+        "label_flip_rate": 0.025
+      }
+    }
+  }
+}
