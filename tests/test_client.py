@@ -156,3 +156,147 @@ def test_escalation_bands_are_configurable():
     )
     assert escalations(resp) == []
     assert len(escalations(resp, noul_band=(0.05, 0.95))) == 1
+
+
+# ------------------------------------------------------------------------ proxy
+
+
+def _clear_proxy_env(monkeypatch):
+    """Both spellings of every proxy variable. A CI runner or a sandbox may set
+    either, and a test that clears only one silently reads the environment's."""
+    for name in ("https_proxy", "HTTPS_PROXY", "all_proxy", "ALL_PROXY",
+                 "no_proxy", "NO_PROXY"):
+        monkeypatch.delenv(name, raising=False)
+
+
+@pytest.mark.parametrize(
+    "no_proxy,host,exempt",
+    [
+        ("typesafe.ai", "api.typesafe.ai", True),   # bare name covers subdomains
+        (".typesafe.ai", "api.typesafe.ai", True),  # leading dot form
+        ("typesafe.ai", "typesafe.ai", True),       # and the name itself
+        ("*", "anything.example", True),
+        ("typesafe.ai", "nottypesafe.ai", False),   # suffix, not subdomain
+        ("other.example", "api.typesafe.ai", False),
+        ("", "api.typesafe.ai", False),
+    ],
+)
+def test_no_proxy_matching(monkeypatch, no_proxy, host, exempt):
+    from jevlab.client import _no_proxy_matches
+
+    _clear_proxy_env(monkeypatch)
+    monkeypatch.setenv("no_proxy", no_proxy)
+    assert _no_proxy_matches(host) is exempt
+
+
+def test_both_no_proxy_spellings_are_honoured(monkeypatch):
+    """Reading only the lowercase form silently ignores an exemption set in the other."""
+    from jevlab.client import _no_proxy_matches
+
+    _clear_proxy_env(monkeypatch)
+    monkeypatch.setenv("no_proxy", "somewhere.else")
+    monkeypatch.setenv("NO_PROXY", "typesafe.ai")
+    assert _no_proxy_matches("api.typesafe.ai") is True
+
+
+def test_proxy_is_read_from_the_environment(monkeypatch):
+    from jevlab.client import _proxy_for
+
+    _clear_proxy_env(monkeypatch)
+    monkeypatch.setenv("https_proxy", "http://gateway.internal:8080")
+    assert _proxy_for("https", "api.typesafe.ai") == ("gateway.internal", 8080)
+
+
+def test_uppercase_proxy_is_read_when_lowercase_is_unset(monkeypatch):
+    from jevlab.client import _proxy_for
+
+    _clear_proxy_env(monkeypatch)
+    monkeypatch.setenv("HTTPS_PROXY", "http://gateway.internal:8080")
+    assert _proxy_for("https", "api.typesafe.ai") == ("gateway.internal", 8080)
+
+
+def test_lowercase_proxy_takes_precedence(monkeypatch):
+    """Conventional precedence, and the reason two earlier hand-tests misread."""
+    from jevlab.client import _proxy_for
+
+    _clear_proxy_env(monkeypatch)
+    monkeypatch.setenv("https_proxy", "http://lower.internal:1")
+    monkeypatch.setenv("HTTPS_PROXY", "http://upper.internal:2")
+    assert _proxy_for("https", "api.typesafe.ai") == ("lower.internal", 1)
+
+
+def test_proxy_defaults_to_443_without_an_explicit_port(monkeypatch):
+    from jevlab.client import _proxy_for
+
+    _clear_proxy_env(monkeypatch)
+    monkeypatch.setenv("https_proxy", "gateway.internal")
+    assert _proxy_for("https", "api.typesafe.ai") == ("gateway.internal", 443)
+
+
+def test_no_proxy_wins_over_a_configured_proxy(monkeypatch):
+    from jevlab.client import _proxy_for
+
+    _clear_proxy_env(monkeypatch)
+    monkeypatch.setenv("https_proxy", "http://gateway.internal:8080")
+    monkeypatch.setenv("no_proxy", "typesafe.ai")
+    assert _proxy_for("https", "api.typesafe.ai") is None
+
+
+def test_connect_tunnel_parses_a_success_response(monkeypatch):
+    """The bug this fixes: a direct socket behind a proxy fails the TLS handshake
+    with WRONG_VERSION_NUMBER, because the proxy answers in HTTP."""
+    from jevlab import client as mod
+
+    sent = []
+
+    class FakeSocket:
+        def sendall(self, data):
+            sent.append(data)
+
+        def recv(self, _n):
+            return b"HTTP/1.1 200 Connection established\r\n\r\n"
+
+        def close(self):
+            pass
+
+    monkeypatch.setattr(mod.socket, "create_connection", lambda *a, **k: FakeSocket())
+    sock, elapsed = mod._connect_via_proxy(("p", 1), "api.typesafe.ai", 443, 5)
+    assert b"CONNECT api.typesafe.ai:443" in sent[0]
+    assert elapsed >= 0
+    sock.close()
+
+
+def test_connect_tunnel_raises_on_refusal(monkeypatch):
+    from jevlab import client as mod
+
+    class Refusing:
+        def sendall(self, data):
+            pass
+
+        def recv(self, _n):
+            return b"HTTP/1.1 403 Forbidden\r\n\r\n"
+
+        def close(self):
+            pass
+
+    monkeypatch.setattr(mod.socket, "create_connection", lambda *a, **k: Refusing())
+    with pytest.raises(OSError, match="403"):
+        mod._connect_via_proxy(("p", 1), "api.typesafe.ai", 443, 5)
+
+
+def test_connect_tunnel_raises_when_the_proxy_hangs_up(monkeypatch):
+    from jevlab import client as mod
+
+    class Dropping:
+        def sendall(self, data):
+            pass
+
+        def recv(self, _n):
+            return b""
+
+        def close(self):
+            pass
+
+    monkeypatch.setattr(mod.socket, "create_connection", lambda *a, **k: Dropping())
+    with pytest.raises(OSError, match="closed the connection"):
+        mod._connect_via_proxy(("p", 1), "api.typesafe.ai", 443, 5)

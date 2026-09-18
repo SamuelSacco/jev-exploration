@@ -20,6 +20,7 @@ import socket
 import ssl
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from dataclasses import dataclass, field
 from typing import Any
@@ -199,35 +200,130 @@ def _parse_retry_after(value: str | None) -> float | None:
         return None  # HTTP-date form; fall back to exponential backoff.
 
 
+def _no_proxy_matches(host: str) -> bool:
+    """True if NO_PROXY exempts this host. '*' exempts everything; '.foo' matches
+    any subdomain of foo; a bare name matches itself and its subdomains."""
+    # Both spellings are merged rather than one taking precedence: a caller that
+    # exempts a host in either place means it, and silently reading only one is
+    # the kind of surprise that costs an afternoon.
+    raw = ",".join(
+        v for v in (os.environ.get("no_proxy"), os.environ.get("NO_PROXY")) if v
+    )
+    host = host.lower().rstrip(".")
+    for entry in (e.strip().lower().rstrip(".") for e in raw.split(",")):
+        if not entry:
+            continue
+        if entry == "*":
+            return True
+        entry = entry.lstrip(".")
+        if host == entry or host.endswith("." + entry):
+            return True
+    return False
+
+
+def _proxy_for(scheme: str = "https", host: str | None = None) -> tuple | None:
+    """The configured proxy as (host, port), or None if unset or NO_PROXY exempts host."""
+    if host and _no_proxy_matches(host):
+        return None
+    for var in (f"{scheme}_proxy", f"{scheme.upper()}_PROXY", "all_proxy", "ALL_PROXY"):
+        value = os.environ.get(var)
+        if value:
+            parsed = urllib.parse.urlparse(value if "//" in value else f"//{value}")
+            if parsed.hostname:
+                return (parsed.hostname, parsed.port or (443 if scheme == "https" else 80))
+    return None
+
+
+def _connect_via_proxy(proxy: tuple, host: str, port: int, timeout: float):
+    """Open a tunnel through an HTTP proxy with CONNECT. Returns (socket, seconds)."""
+    started = time.monotonic()
+    sock = socket.create_connection(proxy, timeout=timeout)
+    try:
+        sock.sendall(
+            f"CONNECT {host}:{port} HTTP/1.1\r\nHost: {host}:{port}\r\n\r\n".encode()
+        )
+        # Read just the status line and headers, not the tunnelled body.
+        buf = b""
+        while b"\r\n\r\n" not in buf:
+            chunk = sock.recv(4096)
+            if not chunk:
+                raise OSError("proxy closed the connection during CONNECT")
+            buf += chunk
+            if len(buf) > 65536:
+                raise OSError("proxy sent an oversized CONNECT response")
+        status = buf.split(b"\r\n", 1)[0].decode("latin-1")
+        if " 200" not in status:
+            raise OSError(f"proxy refused CONNECT: {status}")
+    except Exception:
+        sock.close()
+        raise
+    return sock, time.monotonic() - started
+
+
 def measure_network_floor(
     host: str = "api.typesafe.ai",
     port: int = 443,
     samples: int = 5,
 ) -> dict:
-    """Time TCP connect plus TLS handshake to the API host.
+    """Time the transport setup that every request pays before the model sees it.
 
     This is the floor any end-to-end latency figure sits on top of. Reporting
     request latency without it makes the model look slow in proportion to how
     far you are from the service: jev-phishing-bench measured a 163 ms floor
     under a 239 ms p50, so most of what looked like model time was distance.
 
+    Behind an HTTP proxy a direct socket fails the TLS handshake (the proxy
+    answers with an HTTP response, which reads as WRONG_VERSION_NUMBER), so the
+    tunnel is established with CONNECT first. The two phases are reported
+    separately because they mean different things: `connect_s` through a proxy
+    is environment overhead that a differently deployed caller would not pay,
+    while `tls_s` is closer to genuine distance. Subtracting the whole floor
+    from a request time therefore gives an *upper* bound on service time.
+
     Costs nothing and needs no API key.
     """
+    proxy = _proxy_for("https", host)
     ctx = ssl.create_default_context()
-    timings = []
+    totals, connects, handshakes = [], [], []
+
     for _ in range(samples):
-        started = time.monotonic()
-        with socket.create_connection((host, port), timeout=10) as sock:
+        if proxy:
+            sock, connect_s = _connect_via_proxy(proxy, host, port, timeout=10)
+        else:
+            started = time.monotonic()
+            sock = socket.create_connection((host, port), timeout=10)
+            connect_s = time.monotonic() - started
+        try:
+            started = time.monotonic()
             with ctx.wrap_socket(sock, server_hostname=host):
-                timings.append(time.monotonic() - started)
-    timings.sort()
-    return {
+                tls_s = time.monotonic() - started
+        finally:
+            sock.close()
+        connects.append(connect_s)
+        handshakes.append(tls_s)
+        totals.append(connect_s + tls_s)
+
+    def p50(values: list) -> float:
+        return round(sorted(values)[len(values) // 2], 4)
+
+    totals.sort()
+    result = {
         "host": host,
         "samples": samples,
-        "min_s": round(timings[0], 4),
-        "p50_s": round(timings[len(timings) // 2], 4),
-        "max_s": round(timings[-1], 4),
+        "via_proxy": f"{proxy[0]}:{proxy[1]}" if proxy else None,
+        "min_s": round(totals[0], 4),
+        "p50_s": p50(totals),
+        "max_s": round(totals[-1], 4),
+        "connect_p50_s": p50(connects),
+        "tls_p50_s": p50(handshakes),
     }
+    if proxy:
+        result["note"] = (
+            "Measured through an HTTP proxy. connect_p50_s is the proxy's CONNECT "
+            "setup, which is environment overhead rather than distance to the API. "
+            "Treat the implied service time as an upper bound."
+        )
+    return result
 
 
 def escalations(
