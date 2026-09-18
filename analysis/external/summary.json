@@ -1,0 +1,290 @@
+[
+  {
+    "repo": "jev-benchmark",
+    "task": "agent tool-call risk",
+    "variant": "jev-latest",
+    "quantity": "confidence",
+    "provenance": "raw",
+    "n": 60,
+    "bins": 10,
+    "bin_range": [
+      0.0,
+      1.0
+    ],
+    "occupied_bins": 8,
+    "accuracy": 0.9167,
+    "accuracy_ci": [
+      0.8193,
+      0.9639
+    ],
+    "reported_ece": 0.0712,
+    "ece": 0.0712,
+    "reproduced": true,
+    "floor_mean": 0.0456,
+    "floor_p95": 0.0738,
+    "ratio": 1.56,
+    "informative": false,
+    "edge": "right",
+    "mce": 0.57,
+    "brier": 0.0487,
+    "coverage_at_0.9": {
+      "threshold": 0.9,
+      "coverage": 0.85,
+      "n": 51,
+      "hit_rate": 0.9804
+    },
+    "notes": ""
+  },
+  {
+    "repo": "jev-benchmark",
+    "task": "agent tool-call risk",
+    "variant": "jev-preview",
+    "quantity": "confidence",
+    "provenance": "raw",
+    "n": 60,
+    "bins": 10,
+    "bin_range": [
+      0.0,
+      1.0
+    ],
+    "occupied_bins": 7,
+    "accuracy": 0.9167,
+    "accuracy_ci": [
+      0.8193,
+      0.9639
+    ],
+    "reported_ece": 0.0505,
+    "ece": 0.0505,
+    "reproduced": true,
+    "floor_mean": 0.0452,
+    "floor_p95": 0.0737,
+    "ratio": 1.12,
+    "informative": false,
+    "edge": "right",
+    "mce": 0.46,
+    "brier": 0.0472,
+    "coverage_at_0.9": {
+      "threshold": 0.9,
+      "coverage": 0.85,
+      "n": 51,
+      "hit_rate": 0.9804
+    },
+    "notes": ""
+  },
+  {
+    "repo": "jev-phishing-bench",
+    "task": "phishing email",
+    "variant": "verdict confidence",
+    "quantity": "confidence",
+    "provenance": "reconstructed",
+    "n": 2000,
+    "bins": 10,
+    "bin_range": [
+      0.5,
+      1.0
+    ],
+    "occupied_bins": 10,
+    "accuracy": 0.626,
+    "accuracy_ci": [
+      0.6046,
+      0.6469
+    ],
+    "reported_ece": 0.15361000000000002,
+    "ece": 0.1536,
+    "reproduced": true,
+    "floor_mean": 0.0209,
+    "floor_p95": 0.0304,
+    "ratio": 7.34,
+    "informative": true,
+    "edge": "left",
+    "mce": 0.3152,
+    "brier": 0.253,
+    "coverage_at_0.9": {
+      "threshold": 0.9,
+      "coverage": 0.308,
+      "n": 616,
+      "hit_rate": 0.7386
+    },
+    "notes": "Rebuilt from published ece_bins; within-bin spread is lost."
+  },
+  {
+    "repo": "jev-phishing-bench",
+    "task": "phishing email",
+    "variant": "P(phishing)",
+    "quantity": "probability",
+    "provenance": "reconstructed",
+    "n": 2000,
+    "bins": 10,
+    "bin_range": [
+      0.0,
+      1.0
+    ],
+    "occupied_bins": 10,
+    "accuracy": 0.626,
+    "accuracy_ci": [
+      0.6046,
+      0.6469
+    ],
+    "reported_ece": null,
+    "ece": 0.1701,
+    "reproduced": null,
+    "floor_mean": 0.0206,
+    "floor_p95": 0.0296,
+    "ratio": 8.27,
+    "informative": true,
+    "edge": "left",
+    "mce": 0.3079,
+    "brier": 0.2532,
+    "coverage_at_0.9": {
+      "threshold": 0.9,
+      "coverage": 0.064,
+      "n": 128,
+      "hit_rate": 1.0
+    },
+    "notes": "Their reliability table; they report no ECE for this quantity."
+  },
+  {
+    "repo": "jev-spam-eval",
+    "task": "spam",
+    "variant": "spam_generic_criteria",
+    "quantity": "probability",
+    "provenance": "raw",
+    "n": 19528,
+    "bins": 10,
+    "bin_range": [
+      0.0,
+      1.0
+    ],
+    "occupied_bins": 10,
+    "accuracy": 0.9663,
+    "accuracy_ci": [
+      0.9636,
+      0.9687
+    ],
+    "reported_ece": null,
+    "ece": 0.0556,
+    "reproduced": null,
+    "floor_mean": 0.0039,
+    "floor_p95": 0.0059,
+    "ratio": 14.1,
+    "informative": true,
+    "edge": "left",
+    "mce": 0.3706,
+    "brier": 0.024,
+    "coverage_at_0.9": {
+      "threshold": 0.9,
+      "coverage": 0.4086,
+      "n": 7980,
+      "hit_rate": 0.9965
+    },
+    "notes": "ECE computed by us; the study reports bin hit rates only."
+  },
+  {
+    "repo": "jev-spam-eval",
+    "task": "spam",
+    "variant": "spam_plain",
+    "quantity": "probability",
+    "provenance": "raw",
+    "n": 19528,
+    "bins": 10,
+    "bin_range": [
+      0.0,
+      1.0
+    ],
+    "occupied_bins": 10,
+    "accuracy": 0.9596,
+    "accuracy_ci": [
+      0.9568,
+      0.9623
+    ],
+    "reported_ece": null,
+    "ece": 0.0792,
+    "reproduced": null,
+    "floor_mean": 0.0045,
+    "floor_p95": 0.0067,
+    "ratio": 17.76,
+    "informative": true,
+    "edge": "left",
+    "mce": 0.3894,
+    "brier": 0.0318,
+    "coverage_at_0.9": {
+      "threshold": 0.9,
+      "coverage": 0.4105,
+      "n": 8017,
+      "hit_rate": 0.9965
+    },
+    "notes": "ECE computed by us; the study reports bin hit rates only."
+  },
+  {
+    "repo": "jev-spam-eval",
+    "task": "spam",
+    "variant": "spam_structured_criteria",
+    "quantity": "probability",
+    "provenance": "raw",
+    "n": 19528,
+    "bins": 10,
+    "bin_range": [
+      0.0,
+      1.0
+    ],
+    "occupied_bins": 10,
+    "accuracy": 0.9829,
+    "accuracy_ci": [
+      0.981,
+      0.9846
+    ],
+    "reported_ece": null,
+    "ece": 0.0508,
+    "reproduced": null,
+    "floor_mean": 0.0039,
+    "floor_p95": 0.0058,
+    "ratio": 12.96,
+    "informative": true,
+    "edge": "left",
+    "mce": 0.2837,
+    "brier": 0.0174,
+    "coverage_at_0.9": {
+      "threshold": 0.9,
+      "coverage": 0.3901,
+      "n": 7617,
+      "hit_rate": 0.9993
+    },
+    "notes": "ECE computed by us; the study reports bin hit rates only."
+  },
+  {
+    "repo": "jev-spam-eval",
+    "task": "spam",
+    "variant": "spam_structured_focus",
+    "quantity": "probability",
+    "provenance": "raw",
+    "n": 19528,
+    "bins": 10,
+    "bin_range": [
+      0.0,
+      1.0
+    ],
+    "occupied_bins": 10,
+    "accuracy": 0.9795,
+    "accuracy_ci": [
+      0.9774,
+      0.9814
+    ],
+    "reported_ece": null,
+    "ece": 0.0594,
+    "reproduced": null,
+    "floor_mean": 0.0041,
+    "floor_p95": 0.006,
+    "ratio": 14.34,
+    "informative": true,
+    "edge": "left",
+    "mce": 0.285,
+    "brier": 0.0194,
+    "coverage_at_0.9": {
+      "threshold": 0.9,
+      "coverage": 0.3832,
+      "n": 7483,
+      "hit_rate": 0.9993
+    },
+    "notes": "ECE computed by us; the study reports bin hit rates only."
+  }
+]

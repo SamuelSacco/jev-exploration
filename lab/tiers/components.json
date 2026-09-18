@@ -1,0 +1,337 @@
+{
+  "version": 1,
+  "created": "2026-09-18",
+  "note": "Hand-written building blocks for the difficulty-gradient generator (issue #1). Every message carries exactly one DECISIVE element that determines its label and is always present, in every tier. Difficulty comes from the surrounding CUES, which may point the wrong way. This keeps the label recoverable from the text at every difficulty level; an earlier design varied the decisive element itself and produced unlabelable items -- see README.md.",
+  "companies": [
+    "Northwind Logistics",
+    "Marrow Health",
+    "Calder & Voss LLP",
+    "Pelham Foods",
+    "Brightseam Analytics",
+    "Hallow Bay Credit Union",
+    "Tessellate Robotics",
+    "Orkney Press",
+    "Vantage Mill",
+    "Kestrel Dynamics"
+  ],
+  "domains": [
+    "northwindlog.com",
+    "marrowhealth.org",
+    "caldervoss.law",
+    "pelhamfoods.com",
+    "brightseam.io",
+    "hallowbaycu.org",
+    "tessellate.tech",
+    "orkneypress.co",
+    "vantagemill.com",
+    "kestreldyn.com"
+  ],
+  "people": [
+    "Dana Ruiz",
+    "Marcus Okonkwo",
+    "Priya Raman",
+    "Tomas Lindqvist",
+    "Aisha Bello",
+    "Grant Whitlock",
+    "Nadia Farouk",
+    "Eli Brandt",
+    "Sofia Categno",
+    "Ronan Mbeki"
+  ],
+  "roles": [
+    "Accounts Payable",
+    "IT Operations",
+    "People Team",
+    "Facilities",
+    "Legal",
+    "Procurement",
+    "Customer Success",
+    "Finance"
+  ],
+  "lookalike_tricks": [
+    "rn-for-m",
+    "hyphen-insert",
+    "tld-swap",
+    "subdomain-fake",
+    "digit-swap"
+  ],
+  "phish_subjects": [
+    "Action required: verify your account within 24 hours",
+    "Your password expires today",
+    "Unusual sign-in detected on your account",
+    "Payroll update: confirm your bank details",
+    "Final notice before account suspension",
+    "Document shared with you — sign in to view",
+    "Mailbox storage full: revalidate now",
+    "Urgent: invoice payment redirected"
+  ],
+  "phish_bodies": [
+    "Our records show your credentials could not be validated. Confirm your username and password using the secure portal below or access will be revoked.",
+    "We detected a sign-in from an unrecognised device. If this was not you, re-enter your login details immediately to lock the account.",
+    "Your direct deposit details are out of date. Submit your bank account and routing number through the link to avoid a missed payment.",
+    "A document is waiting for your signature. Sign in with your work email and password to retrieve it before it expires.",
+    "Your mailbox has exceeded its quota and outgoing mail is being held. Revalidate your account to restore service."
+  ],
+  "phish_asks": [
+    "Confirm your password here:",
+    "Verify your identity at:",
+    "Update your banking details at:",
+    "Re-authenticate now:",
+    "Retrieve the secure document:"
+  ],
+  "phish_urls": [
+    "http://bit.ly/3xKq9Wm",
+    "http://tinyurl.com/acct-verify-now",
+    "http://secure-login-portal.co/auth",
+    "http://account-verify.duckdns.org/session",
+    "http://192.0.2.44/webmail/login"
+  ],
+  "urgency_phrases": [
+    "This must be completed within 24 hours.",
+    "Failure to act will result in immediate suspension.",
+    "This is your final notice.",
+    "Access will be terminated at end of day.",
+    "Do not ignore this message."
+  ],
+  "legit_subjects": [
+    "Q3 planning doc — comments by Friday",
+    "Reminder: fire drill Thursday 10am",
+    "Updated travel policy effective next month",
+    "Invoice 4471 attached for your records",
+    "Notes from Tuesday's supplier call",
+    "Desk move on the 3rd floor next week",
+    "Contract review — two open questions",
+    "Onboarding checklist for the new starter"
+  ],
+  "legit_bodies": [
+    "I've added the section on regional volumes we discussed. Happy to walk through the assumptions if any of it looks off.",
+    "Building management is running the drill on Thursday morning. The stairwell on the east side will be the assembly route.",
+    "The updated policy raises the per-diem and simplifies the receipt threshold. Nothing else changes.",
+    "Attaching the invoice for last month's shipment. Terms are unchanged at net 30.",
+    "Summarising what we agreed so nothing gets lost: they'll confirm lead times by Wednesday and we'll revisit pricing next quarter.",
+    "Facilities will move the pods on Tuesday. Nothing needs packing beyond personal items.",
+    "Two clauses still need a decision before I send it back. Neither is blocking, but both change the renewal terms.",
+    "Here's the checklist we use for new starters. The accounts get created automatically once HR files the start date."
+  ],
+  "legit_asks": [
+    "Let me know if that works.",
+    "No action needed, just flagging it.",
+    "Comments welcome by Friday.",
+    "Shout if you'd rather discuss on a call.",
+    "I'll pick this up again on Monday."
+  ],
+  "legit_context": [
+    "Following up on what we discussed at Tuesday's standup.",
+    "Per the thread with Procurement last week.",
+    "As agreed in the planning session.",
+    "Continuing from the note I sent before the holiday.",
+    "Further to the supplier call this morning."
+  ],
+  "benign_link_paths": [
+    "/docs/q3-planning",
+    "/wiki/travel-policy",
+    "/files/invoice-4471.pdf",
+    "/handbook/onboarding",
+    "/notes/supplier-call"
+  ],
+  "generic_greetings": [
+    "Dear User,",
+    "Dear Valued Customer,",
+    "Dear Account Holder,",
+    "Hello,",
+    "Dear Member,"
+  ],
+  "signals": {
+    "phish": [
+      "lookalike_sender",
+      "shortener_or_ip_url",
+      "credential_request",
+      "urgency_threat",
+      "generic_greeting",
+      "payment_redirect"
+    ],
+    "legit": [
+      "internal_sender",
+      "first_party_link_or_none",
+      "specific_context",
+      "named_greeting",
+      "routine_ask"
+    ]
+  },
+  "cue_phish_flavour": [
+    {
+      "kind": "urgency_threat",
+      "text": "This must be completed within 24 hours or access will be suspended."
+    },
+    {
+      "kind": "urgency_threat",
+      "text": "This is a final notice. Do not ignore this message."
+    },
+    {
+      "kind": "generic_greeting",
+      "greeting": true
+    },
+    {
+      "kind": "alarming_subject",
+      "subject": true
+    },
+    {
+      "kind": "pressure",
+      "text": "Please treat this as confidential and do not discuss it with the wider team."
+    }
+  ],
+  "cue_legit_flavour": [
+    {
+      "kind": "specific_context",
+      "text": "Following up on what we discussed at Tuesday's standup."
+    },
+    {
+      "kind": "specific_context",
+      "text": "Per the thread with Procurement last week."
+    },
+    {
+      "kind": "named_greeting",
+      "greeting": true
+    },
+    {
+      "kind": "routine_subject",
+      "subject": true
+    },
+    {
+      "kind": "casual_close",
+      "text": "No rush on this one, whenever you get a minute."
+    }
+  ],
+  "alarming_subjects": [
+    "Action required: verify your account within 24 hours",
+    "Your password expires today",
+    "Final notice before account suspension",
+    "Unusual sign-in detected on your account",
+    "Urgent: immediate response needed"
+  ],
+  "routine_subjects": [
+    "Q3 planning doc — comments by Friday",
+    "Reminder: fire drill Thursday 10am",
+    "Updated travel policy effective next month",
+    "Invoice 4471 attached for your records",
+    "Notes from Tuesday's supplier call",
+    "Desk move on the 3rd floor next week",
+    "Contract review — two open questions",
+    "Onboarding checklist for the new starter"
+  ],
+  "accounts": [
+    "8842-11907",
+    "6610-44821",
+    "2219-70563",
+    "9034-11288",
+    "4471-90310"
+  ],
+  "sort_codes": [
+    "40-22-19",
+    "60-11-04",
+    "23-88-71",
+    "09-44-62"
+  ],
+  "decisive_pairs": [
+    {
+      "topic": "payroll_bank",
+      "phish": "Payroll is switching providers. Confirm your bank account and routing number at {url} before Friday's run.",
+      "legit": "Payroll is switching providers. You'll be asked to confirm your bank account in the usual portal — we never email a link for it, so ignore anything that does."
+    },
+    {
+      "topic": "mfa_code",
+      "phish": "Reply to this email with the six-digit code from your authenticator so I can approve the transfer.",
+      "legit": "You'll get a six-digit code from your authenticator when you sign in. Don't share it with anyone, including us."
+    },
+    {
+      "topic": "remittance",
+      "phish": "Our banking details changed last week; send this month's payment to account {acct}.",
+      "legit": "Our banking details have not changed. If you get a message saying they have, call {role} before paying anything."
+    },
+    {
+      "topic": "password_expiry",
+      "phish": "Your password expires tonight — set a new one at {url} to avoid losing access.",
+      "legit": "Your password expires tonight. Change it from the settings page you normally use; we won't send you a link."
+    },
+    {
+      "topic": "shared_doc",
+      "phish": "The contract is in the shared folder; sign in with your work email and password at {url} to open it.",
+      "legit": "The contract is in the shared folder you already have access to, under {path}. No extra sign-in needed."
+    },
+    {
+      "topic": "invoice_attach",
+      "phish": "The attached invoice has our updated account number on it — please pay to that one, not the one in your system.",
+      "legit": "The attached invoice has the same account number as always; flag it with {role} if anything on it looks different."
+    },
+    {
+      "topic": "vendor_change",
+      "phish": "We've moved to a new supplier account. Update the payee details on file to account {acct} today.",
+      "legit": "We've moved to a new supplier. Procurement will update the payee details themselves; nothing for you to change."
+    },
+    {
+      "topic": "mailbox_quota",
+      "phish": "Your mailbox is full and mail is being held. Revalidate your credentials at {url} to restore delivery.",
+      "legit": "Your mailbox is nearly full. Clear space from the client you already use; IT won't ask you to revalidate anything."
+    },
+    {
+      "topic": "expense_reimb",
+      "phish": "To release your expense reimbursement, confirm your card number and the account it settles to at {url}.",
+      "legit": "To release your expense reimbursement, submit the receipts in the expense tool; it already has your account on file."
+    },
+    {
+      "topic": "ceo_request",
+      "phish": "I'm travelling and can't reach {role}. Handle this quietly and don't loop anyone else in before it's done.",
+      "legit": "I'm travelling this week, so check with {role} rather than waiting on me if anything needs a decision."
+    },
+    {
+      "topic": "hr_portal",
+      "phish": "Annual benefits enrolment closes Friday. Log in with your network username and password at {url} to keep your cover.",
+      "legit": "Annual benefits enrolment closes Friday. It's on the intranet at https://{domain}{path}, behind the sign-in you already have."
+    },
+    {
+      "topic": "device_signin",
+      "phish": "We saw a sign-in from a new device. Re-enter your credentials at {url} to confirm it was you.",
+      "legit": "We saw a sign-in from a new device. If it wasn't you, change your password yourself and tell {role}; don't use any link you're sent."
+    },
+    {
+      "topic": "tax_form",
+      "phish": "Your tax form needs your national insurance number and bank details re-entered at {url}.",
+      "legit": "Your tax form is ready. It already has your national insurance number and bank details; just check and confirm in the portal."
+    },
+    {
+      "topic": "account_suspend",
+      "phish": "Your account will be suspended in 24 hours unless you verify your password at {url}.",
+      "legit": "Your account will be suspended in 24 hours if the training isn't done. The module is at https://{domain}{path}; it asks for nothing but your staff number."
+    },
+    {
+      "topic": "wire_approval",
+      "phish": "Approve the wire to account {acct} and send me the confirmation code when it lands.",
+      "legit": "The wire needs a second approver. Use the banking system's own approval queue; nothing goes by email."
+    },
+    {
+      "topic": "it_migration",
+      "phish": "We're migrating mailboxes tonight. Enter your current network credentials at {url} so your profile carries over.",
+      "legit": "We're migrating mailboxes tonight. Nothing is needed from you, and we won't ask you to enter credentials anywhere."
+    },
+    {
+      "topic": "supplier_onboard",
+      "phish": "Attached is our new bank mandate. Update your records to account {acct} and confirm by reply.",
+      "legit": "Attached is our bank mandate for your records. It matches what's already on file; verify it with {role} by phone if you like."
+    },
+    {
+      "topic": "docusign",
+      "phish": "The signature request expires in two hours. Authenticate with your work password at {url} to complete it.",
+      "legit": "The signature request expires in two hours. It goes through the signing tool we already use; no password needed beyond that."
+    },
+    {
+      "topic": "refund",
+      "phish": "To process your refund, reply with the card number and the security code on the back.",
+      "legit": "To process your refund, nothing is needed from you; it goes back to the card it came from."
+    },
+    {
+      "topic": "vpn_access",
+      "phish": "VPN certificates are being reissued. Submit your username and password at {url} to get the new profile.",
+      "legit": "VPN certificates are being reissued. The new profile pushes automatically; if it doesn't, raise it with {role}."
+    }
+  ]
+}
