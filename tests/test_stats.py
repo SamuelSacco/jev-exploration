@@ -196,3 +196,55 @@ def test_summarize_returns_the_full_reporting_block():
     block = summarize(calibrated(200, seed=13), resamples=100)
     assert set(block) >= {"n", "accuracy", "accuracy_ci", "ece", "ece_ci", "mce", "brier"}
     assert block["n"] == 200
+
+
+# ------------------------------------------------------- binning is a parameter
+
+
+def test_bin_range_changes_ece_on_identical_pairs():
+    """ECE is not a property of the predictions alone. jev-benchmark bins
+    confidence over [0,1] and jev-phishing-bench over [0.5,1]; comparing their
+    numbers without saying so compares two different statistics."""
+    pairs = [(0.52, True), (0.58, False), (0.97, True), (0.93, True)]
+    wide = ece(pairs, bin_range=(0.0, 1.0))
+    narrow = ece(pairs, bin_range=(0.5, 1.0))
+    assert narrow > wide * 3
+
+
+def test_bin_range_narrows_occupancy():
+    pairs = [(0.52, True), (0.58, False), (0.97, True), (0.93, True)]
+    assert len(reliability(pairs, bin_range=(0.0, 1.0))) == 2
+    assert len(reliability(pairs, bin_range=(0.5, 1.0))) == 4
+
+
+def test_values_outside_the_range_are_clamped_not_dropped():
+    """Dropping them would silently change n and under-weight the ECE."""
+    pairs = [(0.1, True), (0.7, True), (0.99, True)]
+    bins = reliability(pairs, bins=5, bin_range=(0.5, 1.0))
+    assert sum(b.count for b in bins) == 3
+
+
+def test_edge_convention_moves_values_sitting_on_a_boundary():
+    """Jev returns round numbers constantly, so this is not a corner case."""
+    pairs = [(0.9, True)] * 4
+    left = reliability(pairs, edge="left")
+    right = reliability(pairs, edge="right")
+    assert (left[0].lo, left[0].hi) == (0.9, 1.0)
+    assert (right[0].lo, right[0].hi) == pytest.approx((0.8, 0.9))
+
+
+def test_edge_right_keeps_the_bottom_edge_in_the_first_bin():
+    assert reliability([(0.0, True)], edge="right")[0].lo == 0.0
+
+
+def test_edge_right_keeps_the_top_value_in_the_last_bin():
+    assert reliability([(1.0, True)], edge="right")[0].hi == 1.0
+
+
+def test_noise_floor_rises_with_narrower_bins():
+    """Narrower bins hold fewer points, so the floor is higher. This is why a
+    floor has to be computed with the study's own binning."""
+    probs = [i / 200 for i in range(100, 200)]  # spread over [0.5, 1.0]
+    wide = ece_noise_floor(probs, bins=5, bin_range=(0.5, 1.0), trials=300)
+    narrow = ece_noise_floor(probs, bins=25, bin_range=(0.5, 1.0), trials=300)
+    assert narrow["mean"] > wide["mean"]

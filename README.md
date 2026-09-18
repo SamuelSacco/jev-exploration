@@ -5,16 +5,25 @@ One" judgment API that returns typed probabilities instead of generated text. St
 two-day deep dive during launch week (Sept 2026); now maintained as a ledger of claims and
 the evidence for them, including other people's benchmarks.
 
-**Where the argument stands.** Jev is classifier-shaped and its interface is reproducible
-with open models, so the mechanism is not the interesting part. Its bet is that the
-probabilities are *calibrated*, and that is now measured rather than merely asserted — but
-by fewer studies than it first appears. ECE is badly biased at small n: a perfectly
-calibrated model scores about 0.06 at n=60, which is exactly the range one widely cited
-benchmark reports, so that result cannot distinguish good calibration from bad. Of the
-studies large enough to measure it, one finds Jev well calibrated (spam, n=18.5k, 98.3%
-accurate) and one finds it materially miscalibrated and worse than a cheap LLM (phishing,
-n=2k, 62.6% accurate). Whether calibration holds when Jev is out of its depth, or only
-where it is already accurate, is the open question and the experiment worth running.
+**Where the argument stands.** Jev is classifier-shaped and its interface is
+reproducible with open models, so the mechanism is not the interesting part. Its bet
+is that the probabilities are *calibrated*. We recomputed every public ECE from each
+study's own committed data, with its own binning, against the noise floor for that
+sample size ([working](analysis/external/)). All three published figures reproduce
+exactly, and the picture is not the one the summaries suggest:
+
+- The n=60 study everyone cites for good calibration **cannot measure calibration**.
+  A perfectly calibrated model scores ECE ≈ 0.045 at that size and binning; its
+  reported 0.0505–0.0712 sits on top of the floor.
+- The two studies large enough to measure it **both find real miscalibration**. Spam
+  (n=19.5k, 98.3% accurate) looks excellent at the extremes, which is all its authors
+  reported, but its curve crosses over near 0.6 and the mid-range values are not
+  thresholdable. Phishing (n=2k, 62.6% accurate) is overconfident in every bin:
+  confidence ≥ 0.9 buys a 73.9% hit rate.
+
+So typed probabilities are not automatically trustworthy probabilities, and the
+open question is narrower than it was: not whether calibration holds, but whether
+it fails the same way as tasks get harder. That is the experiment worth running.
 
 → **[The ledger](docs/claims-audit.md)** — every claim, its status, and the evidence.
 
@@ -72,6 +81,7 @@ Semantics worth knowing, verified on `jev-1.13.0`:
 ## What is in here
 
 ```
+analysis/external/         re-analysis of other studies' published figures (#2)
 docs/
   claims-audit.md          the ledger: every claim, status, evidence
   review-and-roadmap.md    audit of this repo's own methodology, and the plan
@@ -102,6 +112,7 @@ No API key needed:
 ```bash
 pip install -e ".[dev]" && pytest   # the whole suite runs offline
 python3 lab/baselines.py            # non-AI baselines on the bundled datasets
+python3 analysis/external/run.py --base ~   # recompute other studies' ECEs
 ```
 
 With a key:
@@ -139,9 +150,6 @@ Work in flight:
 | Issue | Needs a key |
 |---|---|
 | [#1 Does calibration survive difficulty, or only track accuracy?](../../issues/1) | yes |
-| [#2 Re-analyse published benchmarks against the ECE noise floor](../../issues/2) | no |
-| [#3 Re-run the lab demos and commit raw JSONL](../../issues/3) | yes |
-| [#4 Settle the latency row against the network floor](../../issues/4) | partly |
 | [#5 Replace the rerank dataset](../../issues/5) | at the end |
 | [#6 Settle the two disputed triage labels](../../issues/6) | no |
 | [#7 Enable CI, pick a licence](../../issues/7) | no |

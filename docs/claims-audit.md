@@ -3,7 +3,7 @@
 One row per claim made about Jev, with its current status and the best evidence for or
 against it. This file is meant to be edited as evidence appears; it is not a snapshot.
 
-**Last updated:** 2026-09-17 · **Model version in our own runs:** `jev-1.13.0`
+**Last updated:** 2026-09-18 · **Model version in our own runs:** `jev-1.13.0`
 
 Status vocabulary:
 
@@ -38,8 +38,8 @@ reported.
 | 10 | "Can't hallucinate" / 0% structured-output errors | Refuted | [§4](#4-refuted) |
 | 11 | "New model class" as a scientific category | Unmeasured | [§4](#4-refuted) |
 | 12 | An ordinary LLM can reproduce the interface | Verified | [§3](#3-intelligence-and-accuracy) — openjev |
-| 13 | **Probabilities are calibrated** | **Contested** | [§6](#6-the-open-question-calibration) |
-| 14 | Confidence is safe to route and escalate on | Contested | [§6](#6-the-open-question-calibration) |
+| 13 | **Probabilities are calibrated** | **Refuted at scale** | [§6](#6-the-open-question-calibration) — both studies large enough to measure it find real miscalibration |
+| 14 | Confidence is safe to route and escalate on | Task-dependent; refuted on phishing | [§6](#6-the-open-question-calibration) — conf ≥0.9 gives a 73.9% hit rate there |
 | 15 | Calibration holds when the model is out of its depth | Unmeasured, and the open question | [§6](#6-the-open-question-calibration) |
 
 ---
@@ -216,54 +216,64 @@ numbers suggest.
 | [jev-spam-eval](https://github.com/bitnovus/jev-spam-eval) | 18,514 | 98.3% | 0.1% spam below 0.1; 99.9% above 0.9; the 0.5–0.6 band overestimates at 38% |
 | [jev-phishing-bench](https://github.com/anisselbd/jev-phishing-bench) | 2,000 | 62.6% | ECE 0.154, worse than Haiku 4.5 at 0.097 |
 
-### One of those rows cannot carry the weight put on it
+### Every published figure, recomputed
 
-ECE is biased upward at small n. With few predictions per bin, each bin's hit rate is a
-noisy estimate of its own mean probability, and that noise reads as miscalibration. So an
-ECE figure is uninterpretable without the floor it sits on.
+Issue #2 re-derived each of these from the study's own committed data, with the
+study's own binning, against a simulated noise floor for that sample size. Full
+working and the reliability curves: [`analysis/external/`](../analysis/external/).
 
-We simulated that floor (`jevlab.stats.ece_noise_floor`): draw probabilities the way the
-model actually draws them, generate outcomes from those same probabilities so the
-simulated model is calibrated *by construction*, and record the ECE it scores anyway. For
-Jev-like probabilities concentrated near 0 and 1, at 10 bins:
+| Study | n | binning | accuracy | ECE | floor | ratio |
+|---|---|---|---|---|---|---|
+| jev-spam-eval `structured_criteria` | 19,528 | 10 @ [0,1] | 98.3% | 0.0508 | 0.0039 | 13.0 |
+| jev-phishing-bench P(phishing) | 2,000 | 10 @ [0,1] | 62.6% | 0.1701 | 0.0206 | 8.3 |
+| jev-phishing-bench confidence | 2,000 | 10 @ [0.5,1] | 62.6% | 0.1536 | 0.0209 | 7.3 |
+| jev-benchmark `jev-latest` | 60 | 10 @ [0,1] | 91.7% | 0.0712 | 0.0456 | **1.6** |
+| jev-benchmark `jev-preview` | 60 | 10 @ [0,1] | 91.7% | 0.0505 | 0.0452 | **1.1** |
 
-| n | ECE a perfectly calibrated model scores |
-|---|---|
-| 60 | ~0.061 |
-| 500 | ~0.025 |
-| 2,000 | ~0.012 |
-| 18,514 | ~0.004 |
+All three published ECEs reproduce exactly. Ratio is detectability, not severity:
+a large n lowers the floor, so it says whether a study can speak, not how bad the
+miscalibration is.
 
-jev-benchmark's 0.0505–0.0712 at n=60 is the floor. It is what perfect calibration looks
-like at that sample size, and equally what substantial miscalibration looks like, because
-at n=60 the two are not separable. Their result is not wrong, it is simply not evidence
-about calibration in either direction. (Their *other* finding, that no error occurred at
-confidence 1.000 and that incorrect answers clustered in 0.130–0.785, is a different and
-more robust observation, because it does not depend on binning.)
+**jev-benchmark cannot measure calibration in either direction.** At n=60 with 10
+bins a perfectly calibrated model scores ECE ≈ 0.045, and both reported figures sit
+on top of that. Fifty of its sixty predictions land in one bin; its own `analyze.py`
+warns about exactly this. The study's binding finding is the binning-independent
+one — none of its five misses came at confidence 1.000 — and that stands.
 
-jev-phishing-bench's 0.154 at n=2,000 is roughly 12× its floor. That one is real.
+**jev-spam-eval, usually cited as the evidence Jev is well calibrated, shows real
+miscalibration once the middle is included.** Its reported extremes are genuinely
+excellent (0.1% spam below 0.1, 99.9% above 0.9). But the curve crosses over around
+0.6: below that Jev overstates P(spam) by up to 0.28, above it understates by up to
+0.15. Those mid-range numbers are not thresholdable probabilities, they are a
+monotone score whose calibrated boundary sits near 0.6. It matters less than it
+sounds — bins 0.2–0.8 hold 7.9% of the corpus — which is precisely why reporting
+only the extremes looked clean.
 
-So the honest count is not three studies disagreeing. It is **two studies that can measure
-calibration, reaching opposite conclusions**: spam, where Jev is very well calibrated at
-the extremes and drifts in the middle band, and phishing, where it is materially
-miscalibrated and worse than a cheap LLM.
+**jev-phishing-bench is overconfident in every bin**, worst at 0.85–0.95 where
+stated confidence ~0.90 buys a 60% hit rate. At confidence ≥ 0.9: 30.8% coverage,
+73.9% hit rate. There is no threshold at which its confidence is safe to route on,
+which is the sharpest evidence yet against row 14.
 
 ### The hypothesis, and what is wrong with it
 
-The two remaining points are consistent with Jev's calibration tracking its accuracy
-rather than holding independently of it: well calibrated at 98.3% accuracy, badly
-calibrated at 62.6%. If true it matters a great deal, because calibration is supposed to be
-the property that survives when the model is out of its depth, and a model calibrated only
-where it is already accurate gives you nothing you could not get by measuring accuracy.
+The framing recorded on 2026-09-17 — that Jev's calibration tracks its accuracy
+rather than holding independently of it — survives the re-analysis only weakly, and
+the mechanism argues against it being a single scalar relationship:
 
-Two points do not make a curve, and they are confounded to the point of uselessness:
-different tasks, teams, label qualities, binning choices and prompts. Spam may also be
-contaminated, since the corpora are public and old enough to be in training data, which
-would inflate both its accuracy and its calibration at once.
+- Spam, 98.3% accurate: ECE 0.051, sigmoid-shaped, wrong in a thin middle band.
+- Phishing, 62.6% accurate: ECE 0.154, uniformly overconfident across the range.
 
-Distinguishing task difficulty from calibration needs one model, one harness, one binning,
-across a deliberate difficulty gradient, with the noise floor reported next to every ECE.
-That is the experiment worth running, and it is tracked as an issue.
+Absolute ECE does move with accuracy across those two points. But one is a shifted
+decision boundary and the other is systematic overconfidence, and two points with
+two different failure modes are not a trend. They are also confounded by task,
+team, labels and prompt, and spam may be contaminated: its corpora are public and
+old enough to sit in training data, which would inflate accuracy and calibration
+together.
+
+Distinguishing task difficulty from calibration needs one model, one harness, one
+binning, across a deliberate difficulty gradient, reporting the reliability curve
+per tier rather than a scalar — because the scalar hides which of those two
+failure modes is occurring. That is issue #1.
 
 ### A reporting standard for this repo
 

@@ -14,9 +14,13 @@ The Choice form measures *confidence* calibration ("when it says 0.8, is it righ
 80% of the time?"), which is the operational question for routing, not full
 multiclass calibration. Say which one you mean when you publish a number.
 
-Binning is fixed at 10 equal-width bins by default because that is what the
-published Jev benchmarks report, and ECE is not comparable across different
-binning choices.
+Binning defaults to 10 equal-width bins over [0, 1]. It is a parameter rather
+than a constant because ECE is NOT comparable across binning choices and the
+published Jev benchmarks do not agree on one: jev-benchmark bins confidence
+over [0, 1], while jev-phishing-bench bins it over [0.5, 1] (the natural range
+for binary max-probability confidence), giving half-width bins. Narrower bins
+hold fewer points, which raises the noise floor. When reproducing someone
+else's ECE, pass their `bin_range`, not ours.
 """
 from __future__ import annotations
 
@@ -57,16 +61,40 @@ class Bin:
         return self.mean_p - self.hit_rate
 
 
-def reliability(pairs: list, bins: int = DEFAULT_BINS) -> list:
-    """Group predictions into equal-width probability bins.
+def reliability(
+    pairs: list,
+    bins: int = DEFAULT_BINS,
+    bin_range: tuple = (0.0, 1.0),
+    edge: str = "left",
+) -> list:
+    """Group predictions into equal-width bins across `bin_range`.
 
     Returns only non-empty bins. Empty bins contribute nothing to ECE and
-    printing them as 0% hit rate invites misreading.
+    printing them as 0% hit rate invites misreading. Values outside the range
+    are clamped into the end bins rather than dropped, so every prediction is
+    still weighted in the ECE.
+
+    `edge` selects the half-open convention: "left" makes bins [lo, hi) with the
+    top bin closed, "right" makes them (lo, hi] with the bottom bin closed. This
+    is not pedantry. Jev concentrates probability on round numbers, so values sit
+    exactly on bin edges constantly, and jev-benchmark uses the right-closed form.
+    At n=60 one item changing bins moved their ECE by 0.02, a third of the
+    reported figure.
     """
+    lo_r, hi_r = bin_range
+    width = (hi_r - lo_r) / bins
     buckets: list = [[] for _ in range(bins)]
     for p, hit in pairs:
-        idx = min(int(p * bins), bins - 1)
-        buckets[idx].append((p, bool(hit)))
+        if not width:
+            idx = 0
+        elif edge == "right":
+            # (lo, hi], with the first bin also including its lower edge.
+            idx = math.ceil((p - lo_r) / width) - 1
+            if p <= lo_r:
+                idx = 0
+        else:
+            idx = int((p - lo_r) / width)
+        buckets[min(max(idx, 0), bins - 1)].append((p, bool(hit)))
 
     out = []
     for i, bucket in enumerate(buckets):
@@ -74,8 +102,8 @@ def reliability(pairs: list, bins: int = DEFAULT_BINS) -> list:
             continue
         out.append(
             Bin(
-                lo=i / bins,
-                hi=(i + 1) / bins,
+                lo=lo_r + i * width,
+                hi=lo_r + (i + 1) * width,
                 count=len(bucket),
                 mean_p=sum(p for p, _ in bucket) / len(bucket),
                 hit_rate=sum(1 for _, h in bucket if h) / len(bucket),
@@ -84,22 +112,35 @@ def reliability(pairs: list, bins: int = DEFAULT_BINS) -> list:
     return out
 
 
-def ece(pairs: list, bins: int = DEFAULT_BINS) -> float:
+def ece(
+    pairs: list,
+    bins: int = DEFAULT_BINS,
+    bin_range: tuple = (0.0, 1.0),
+    edge: str = "left",
+) -> float:
     """Expected Calibration Error: count-weighted mean |mean_p - hit_rate|."""
     if not pairs:
         return float("nan")
     n = len(pairs)
-    return sum(b.count / n * abs(b.gap) for b in reliability(pairs, bins))
+    return sum(
+        b.count / n * abs(b.gap)
+        for b in reliability(pairs, bins, bin_range, edge)
+    )
 
 
-def mce(pairs: list, bins: int = DEFAULT_BINS) -> float:
+def mce(
+    pairs: list,
+    bins: int = DEFAULT_BINS,
+    bin_range: tuple = (0.0, 1.0),
+    edge: str = "left",
+) -> float:
     """Maximum Calibration Error: the worst single bin.
 
     Worth reporting next to ECE. A model can carry a respectable ECE while being
     badly wrong in one band, which is exactly the failure that matters if your
     routing threshold sits in that band.
     """
-    gaps = [abs(b.gap) for b in reliability(pairs, bins)]
+    gaps = [abs(b.gap) for b in reliability(pairs, bins, bin_range, edge)]
     return max(gaps) if gaps else float("nan")
 
 
@@ -208,6 +249,9 @@ def ece_noise_floor(
     bins: int = DEFAULT_BINS,
     trials: int = 1_000,
     seed: int = 0,
+    bin_range: tuple = (0.0, 1.0),
+    edge: str = "left",
+    outcome_probs: list | None = None,
 ) -> dict:
     """What ECE a *perfectly calibrated* model would score on a sample this size.
 
@@ -231,10 +275,16 @@ def ece_noise_floor(
         return {"n": 0, "mean": float("nan"), "p95": float("nan")}
     rng = random.Random(seed)
     n = len(probs)
+    # For confidence calibration the reported value is P(correct), which is the
+    # confidence itself; pass outcome_probs when the two differ.
+    truth = outcome_probs if outcome_probs is not None else probs
+    pairs0 = list(zip(probs, truth))
     scores = []
     for _ in range(trials):
-        sample = [probs[rng.randrange(n)] for _ in range(n)]
-        scores.append(ece([(p, rng.random() < p) for p in sample], bins))
+        sample = [pairs0[rng.randrange(n)] for _ in range(n)]
+        scores.append(
+            ece([(p, rng.random() < q) for p, q in sample], bins, bin_range, edge)
+        )
     scores.sort()
     return {
         "n": n,
@@ -245,14 +295,26 @@ def ece_noise_floor(
     }
 
 
-def ece_with_floor(pairs: list, bins: int = DEFAULT_BINS, trials: int = 1_000) -> dict:
+def ece_with_floor(
+    pairs: list,
+    bins: int = DEFAULT_BINS,
+    trials: int = 1_000,
+    bin_range: tuple = (0.0, 1.0),
+    edge: str = "left",
+) -> dict:
     """Observed ECE next to its noise floor, and the ratio between them.
 
     A ratio at or below 1 means the sample cannot distinguish this model from a
     perfectly calibrated one, whatever the raw ECE looks like.
     """
-    observed = ece(pairs, bins)
-    floor = ece_noise_floor([p for p, _ in pairs], bins=bins, trials=trials)
+    observed = ece(pairs, bins, bin_range, edge)
+    floor = ece_noise_floor(
+        [p for p, _ in pairs],
+        bins=bins,
+        trials=trials,
+        bin_range=bin_range,
+        edge=edge,
+    )
     ratio = observed / floor["mean"] if floor["mean"] else float("nan")
     return {
         "ece": observed,
@@ -261,4 +323,6 @@ def ece_with_floor(pairs: list, bins: int = DEFAULT_BINS, trials: int = 1_000) -
         "ratio": ratio,
         "informative": bool(observed > floor["p95"]),
         "n": len(pairs),
+        "bins": bins,
+        "bin_range": list(bin_range),
     }
