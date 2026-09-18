@@ -172,12 +172,34 @@ we got has a 95% interval that overlaps a trivial non-AI baseline on the same da
 | Run | Setup | Result | Baseline on the same data |
 |---|---|---|---|
 | Triage | 12 tickets × 3 judgments, one call, 1.61 s | dept 10/12, urgency 12/12, frustration MAE 0.25 | majority class 5/12; urgency regex 9/12 |
-| Rerank | 8 passages, one Noul each, one call, 1.69 s | 8/8, clean separation (0.94–0.98 vs 0.01) | word-overlap ≥2: 7/8 |
+| Rerank *(retired, #5)* | 8 passages, one Noul each | 8/8 | word-overlap ≥2: 7/8 |
 | Statement verification | extract-then-verify, planted transposed digit | clean fields 0.99; planted error 0.01; truncation flagged | none |
 | Edge probes | 4 unanswerable/contradictory questions | see [§1](#1-the-api-contract) | none |
 
-Reproduce the baselines with `python3 lab/baselines.py` (no API key required). Raw
-responses for these runs were not committed, which is being fixed; see the roadmap.
+**The rerank demo is retired** (issue #5). Its four distractors were a company
+picnic, a revenue report, a sourdough recipe and an office lease, while every
+relevant passage contained the literal string "PostgreSQL": a word-overlap rule
+scores 7/8 on it, so the task had no discriminative power. For reranking numbers see
+[jev-rerank-bench](https://github.com/anessbelbati/jev-rerank-bench) — 14 datasets,
+1,617 queries, 30 BM25 candidates each, bootstrap intervals, Jev at 0.692 nDCG@10
+against Cohere Rerank 4 Pro at 0.691 for a fifth of the cost.
+
+**Its replacement is a negation probe** ([`lab/negation.json`](../lab/negation.json),
+n=80). Forty minimal pairs: a claim, a passage that asserts it, and a passage that
+denies it differing by one word or short phrase. Because both halves share the same
+vocabulary — 37 of the 40 pairs have identical content-word overlap with the claim —
+any bag-of-words method is pinned at chance by construction, measured at 51.2%
+[40.5%, 61.9%]. That makes it the first dataset in this repo where a Jev result
+could actually separate from its baseline: at n=80, 85% would give [75.6%, 91.1%],
+which does not overlap chance. Scoring also reports pairs *fully* resolved, since
+answering yes to everything gets every supporting half right and resolves nothing.
+
+Negation is also where the strongest independent evidence for Jev sits —
+jev-rerank-bench found its clearest win there, 71% against Cohere's 67% — so this is
+the slice worth owning rather than competing on general reranking at n=8.
+
+Reproduce the baselines with `python3 lab/baselines.py` (no API key required). The
+negation probe has not been run against the live API yet; that needs a key.
 
 ### Re-run on the new harness, 2026-09-17
 

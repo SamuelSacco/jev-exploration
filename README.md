@@ -95,8 +95,10 @@ lab/
   baselines.py             non-AI baselines + Wilson intervals, no API key needed
   run_demos.py             triage + rerank demos, scored against ground truth
   runs/                    raw per-call JSONL, committed so numbers stay auditable
-  tickets.json             12 hand-labeled support tickets
-  rerank.json              query + 8 passages
+  negation.json            40 minimal pairs (n=80); lexical methods pinned at chance
+  tickets.json             12 labelled support tickets + their criteria (see LABELS.md)
+  LABELS.md                label decisions, versioned and dated
+  rerank.json              retired (issue #5): word overlap scores 7/8 on it
   edge_payload.json        edge-case probe payload
   results-2026-09-16-legacy.json   the original run, kept as a non-reproducible record
 skills/
@@ -120,7 +122,7 @@ With a key:
 ```bash
 export TYPESAFE_API_KEY=ts-...
 python3 skills/jev/bin/jev.py lab/edge_payload.json   # single raw call
-python3 lab/run_demos.py                              # both demos, one pass each
+python3 lab/run_demos.py                              # triage + negation, one pass
 python3 lab/run_demos.py --repeat 3                   # three passes, variance reported
 python3 lab/run_demos.py --dry-run                    # payloads only, no calls
 python3 skills/jev/bin/jev.py --floor                 # network floor, no key needed
@@ -131,12 +133,17 @@ summary in `lab/results.json`; the JSONL is committed, the summary is derived.
 
 ## A caveat about our own demos
 
-The triage and rerank demos in `lab/` are n=12 and n=8. Every result they produce has a
-95% interval that overlaps a trivial non-AI baseline on the same data, which
-`lab/baselines.py` demonstrates. They show what the API shape is good for. They are not
-evidence about accuracy, and the ledger does not cite them as such. See
-[review-and-roadmap.md](docs/review-and-roadmap.md) for the full methodology critique and
-what it would take to fix them.
+The triage demo is n=12, and every result it produces has a 95% interval that overlaps
+a trivial non-AI baseline on the same data (`python3 lab/baselines.py`). It shows what
+the API shape is good for; it is not evidence about accuracy, and the ledger does not
+cite it as such.
+
+The rerank demo is retired: a word-overlap rule scored 7/8 on it, so it measured
+nothing. Its replacement, the n=80 negation probe, is built so that no lexical method
+can beat chance — the baseline measures 51.2% — which makes it the first dataset here
+where a result could separate from its baseline at all.
+
+[review-and-roadmap.md](docs/review-and-roadmap.md) has the full methodology critique.
 
 ## Contributing
 
@@ -150,8 +157,6 @@ Work in flight:
 | Issue | Needs a key |
 |---|---|
 | [#1 Does calibration survive difficulty, or only track accuracy?](../../issues/1) | yes |
-| [#5 Replace the rerank dataset](../../issues/5) | at the end |
-| [#6 Settle the two disputed triage labels](../../issues/6) | no |
 | [#7 Enable CI, pick a licence](../../issues/7) | no |
 
 ## Other work worth reading

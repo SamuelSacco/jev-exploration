@@ -237,3 +237,105 @@ def test_dry_run_makes_no_calls(capsys, monkeypatch):
     monkeypatch.setattr(run_demos.JevClient, "ask", explode)
     assert run_demos.main(["--dry-run", "--only", "rerank"]) == 0
     assert "questions" in capsys.readouterr().out
+
+
+# --------------------------------------------------------------------- negation
+
+
+@pytest.fixture
+def negation():
+    with open(os.path.join(HERE, "lab", "negation.json"), encoding="utf-8") as fh:
+        return json.load(fh)
+
+
+def test_negation_flattens_to_two_items_per_pair(negation):
+    items = run_demos.negation_items(negation)
+    assert len(items) == 2 * len(negation["pairs"])
+    assert sum(1 for *_, gold in items if gold) == len(negation["pairs"])
+
+
+def test_negation_asks_one_noul_per_item(negation):
+    _, questions = run_demos.negation_payload(negation)
+    assert len(questions) == 2 * len(negation["pairs"])
+    assert all(q["type"] == "noul" for q in questions.values())
+
+
+def test_negation_claim_travels_in_the_instructions(negation):
+    """Each judgment must be about its own passage, not the whole corpus."""
+    _, questions = run_demos.negation_payload(negation)
+    first = negation["pairs"][0]
+    assert first["claim"] in questions[f"{first['id']}_s"]["instructions"]
+
+
+def test_negation_baseline_is_pinned_at_chance(negation):
+    """The reason this dataset exists: unlike rerank.json it cannot be solved
+    lexically, so beating the baseline means something."""
+    result = run_demos.negation_baselines(negation)["word_overlap"]
+    assert 0.35 < result["rate"] < 0.65
+
+
+def test_negation_pair_halves_have_near_identical_lexical_overlap(negation):
+    """If the supporting and refuting passages differed in vocabulary, word
+    overlap could separate them and the probe would be worthless."""
+    from lab.baselines import content_words
+
+    differing = 0
+    for pair in negation["pairs"]:
+        claim = content_words(pair["claim"])
+        if len(claim & content_words(pair["supports"])) != len(
+            claim & content_words(pair["refutes"])
+        ):
+            differing += 1
+    assert differing <= len(negation["pairs"]) // 8
+
+
+def test_negation_pairs_are_not_degenerate(negation):
+    ids = [p["id"] for p in negation["pairs"]]
+    assert len(set(ids)) == len(ids)
+    for pair in negation["pairs"]:
+        assert pair["supports"] != pair["refutes"]
+        assert pair["claim"] and pair["edit"]
+
+
+def test_negation_scoring_requires_both_halves_of_a_pair(negation):
+    """Always answering yes gets every supporting half right and resolves nothing."""
+    answers = {
+        item_id: {"type": "noul", "noul": 0.95}
+        for item_id, *_ in run_demos.negation_items(negation)
+    }
+    resp = JevResponse(raw={"model": "m", "answers": answers}, elapsed_s=1.0)
+    scored = run_demos.score_negation(resp, negation)
+    assert scored["item_accuracy"]["rate"] == pytest.approx(0.5)
+    assert scored["pairs_fully_resolved"]["hits"] == 0
+
+
+def test_negation_perfect_answers_resolve_every_pair(negation):
+    answers = {
+        item_id: {"type": "noul", "noul": 0.97 if gold else 0.03}
+        for item_id, _, _, gold in run_demos.negation_items(negation)
+    }
+    resp = JevResponse(raw={"model": "m", "answers": answers}, elapsed_s=1.0)
+    scored = run_demos.score_negation(resp, negation)
+    assert scored["pairs_fully_resolved"]["hits"] == len(negation["pairs"])
+
+
+def test_negation_is_large_enough_to_beat_its_baseline(negation):
+    """At n=80 a plausible result separates from chance, which was never true of
+    the n=8 rerank demo. This is the whole justification for the replacement."""
+    from jevlab.stats import wilson
+
+    baseline = run_demos.negation_baselines(negation)["word_overlap"]
+    jev_lo, _ = wilson(round(0.85 * 80), 80)  # a hypothetical 85% result
+    assert jev_lo > baseline["ci95"][1], "intervals must be separable at this n"
+
+
+def test_rerank_is_not_in_the_default_demo_set(capsys, monkeypatch):
+    """Retired in issue #5; still reachable with --only rerank for reproduction."""
+    def explode(*a, **kw):
+        raise AssertionError("--dry-run must not call the API")
+
+    monkeypatch.setattr(run_demos.JevClient, "ask", explode)
+    run_demos.main(["--dry-run"])
+    printed = capsys.readouterr().out
+    assert '"demo": "negation"' in printed
+    assert '"demo": "rerank"' not in printed

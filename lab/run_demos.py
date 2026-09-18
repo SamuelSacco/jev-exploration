@@ -4,15 +4,21 @@ One API call per demo per pass. Every raw response is written to lab/runs/ befor
 anything is scored, so a paid call is never lost to a crash in the scoring code and
 every published number can be traced back to the response that produced it.
 
-    python3 lab/run_demos.py                 # both demos, one pass
+    python3 lab/run_demos.py                 # triage + negation, one pass
     python3 lab/run_demos.py --repeat 3      # three passes, variance reported
-    python3 lab/run_demos.py --only rerank
+    python3 lab/run_demos.py --only negation
     python3 lab/run_demos.py --dry-run       # print payloads, make no calls
     python3 lab/run_demos.py --no-floor      # skip the network-floor measurement
 
-Read the caveat in the README before quoting anything this prints. At n=12 and n=8
-these results cannot separate Jev from the baselines in lab/baselines.py, which are
-printed alongside for exactly that reason.
+Every proportion is printed next to a non-AI baseline on the same data, because a
+score without one is not interpretable. Triage is n=12 and cannot separate Jev from
+its baseline; negation (n=80) is built so that no lexical method can beat chance,
+which is what makes it worth running.
+
+The rerank demo is retired (issue #5) and no longer runs by default: its distractors
+were separable by word overlap, so it measured nothing. `--only rerank` still works
+for reproducing the committed 2026-09-17 run. For real reranking numbers see
+jev-rerank-bench (14 datasets, 1,617 queries, bootstrap intervals).
 """
 from __future__ import annotations
 
@@ -87,6 +93,76 @@ def triage_payload(tickets: list, criteria: dict | None = None) -> tuple:
             "criteria": ["Calm or positive", "Mildly annoyed or concerned", "Angry or very upset"],
         }
     return state, questions
+
+
+def negation_items(doc: dict) -> list:
+    """Flatten 40 minimal pairs into 80 (id, claim, passage, gold) items.
+
+    Each pair's supporting and refuting passages differ by one word or short
+    phrase, so their lexical overlap with the claim is effectively identical and
+    a bag-of-words method is pinned at chance. 37 of the 40 pairs have literally
+    identical overlap; see lab/baselines.py.
+    """
+    items = []
+    for pair in doc["pairs"]:
+        items.append((f"{pair['id']}_s", pair["claim"], pair["supports"], True))
+        items.append((f"{pair['id']}_r", pair["claim"], pair["refutes"], False))
+    return items
+
+
+def negation_payload(doc: dict) -> tuple:
+    """One Noul per item. The claim travels in the instructions, not the state,
+    so each judgment is about its own passage rather than the whole corpus."""
+    items = negation_items(doc)
+    state = "Passages:\n" + "\n".join(f"[{i}] {passage}" for i, _, passage, _ in items)
+    questions = {
+        item_id: {
+            "type": "noul",
+            "instructions": (
+                f"Does passage {item_id} support this claim: \"{claim}\"? "
+                "Support means the passage asserts the claim, not merely that it "
+                "discusses the same subject."
+            ),
+            "criteria": {
+                "true": "The passage supports the claim",
+                "false": "The passage does not support the claim, or contradicts it",
+            },
+        }
+        for item_id, claim, _, _ in items
+    }
+    return state, questions
+
+
+def score_negation(resp, doc: dict) -> dict:
+    items = negation_items(doc)
+    pairs = [(resp.noul(i), gold) for i, _, _, gold in items]
+    hits = sum(1 for p, gold in pairs if (p >= 0.5) == gold)
+    # A pair is only "resolved" if both halves land on the right side. Getting one
+    # half right by always answering yes is not evidence of anything.
+    by_pair = {}
+    for (item_id, _, _, gold), (p, _) in zip(items, pairs):
+        by_pair.setdefault(item_id.rsplit("_", 1)[0], []).append((p >= 0.5) == gold)
+    resolved = sum(1 for halves in by_pair.values() if all(halves))
+    return {
+        "item_accuracy": _proportion(hits, len(pairs)),
+        "pairs_fully_resolved": _proportion(resolved, len(by_pair)),
+        "pairs": pairs,
+        "detail": [
+            {"id": i, "p": round(resp.noul(i), 3), "gold": gold}
+            for i, _, _, gold in items
+        ],
+    }
+
+
+def negation_baselines(doc: dict) -> dict:
+    """Pinned at chance by construction. Reported anyway, because 'the baseline
+    cannot do better than chance' is a claim that should be checked, not asserted."""
+    hits = 0
+    items = negation_items(doc)
+    for _, claim, passage, gold in items:
+        pred = len(content_words(claim) & content_words(passage)) >= 2
+        hits += pred == gold
+    return {"word_overlap": _proportion(hits, len(items))}
 
 
 def rerank_payload(rr: dict) -> tuple:
@@ -272,7 +348,11 @@ def calibration_block(pairs: list, label: str) -> dict:
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--repeat", type=int, default=1, help="passes per demo (default 1)")
-    ap.add_argument("--only", choices=["triage", "rerank"], help="run one demo")
+    ap.add_argument(
+        "--only",
+        choices=["triage", "negation", "rerank"],
+        help="run one demo ('rerank' is retired; see issue #5)",
+    )
     ap.add_argument("--dry-run", action="store_true", help="print payloads, make no calls")
     ap.add_argument("--no-floor", action="store_true", help="skip the network-floor probe")
     args = ap.parse_args(argv)
@@ -280,11 +360,20 @@ def main(argv=None) -> int:
     tickets, criteria, labels_version = load_tickets(os.path.join(BASE, "tickets.json"))
     rr = json.load(open(os.path.join(BASE, "rerank.json"), encoding="utf-8"))
 
+    negation = json.load(open(os.path.join(BASE, "negation.json"), encoding="utf-8"))
+
     demos = {
         "triage": (triage_payload(tickets, criteria), lambda r: score_triage(r, tickets)),
-        "rerank": (rerank_payload(rr), lambda r: score_rerank(r, rr)),
+        "negation": (negation_payload(negation), lambda r: score_negation(r, negation)),
     }
-    if args.only:
+    if args.only == "rerank":
+        print(
+            "rerank is retired (issue #5): its distractors were separable by word "
+            "overlap. Running it for reproduction only.",
+            file=sys.stderr,
+        )
+        demos = {"rerank": (rerank_payload(rr), lambda r: score_rerank(r, rr))}
+    elif args.only:
         demos = {args.only: demos[args.only]}
 
     if args.dry_run:
@@ -298,7 +387,10 @@ def main(argv=None) -> int:
         "started_at": started_at,
         "repeat": args.repeat,
         "labels_version": labels_version,
-        "baselines": {"triage": triage_baselines(tickets), "rerank": rerank_baselines(rr)},
+        "baselines": {
+            "triage": triage_baselines(tickets),
+            "negation": negation_baselines(negation),
+        },
     }
     out_path = os.path.join(BASE, "results.json")
 
@@ -350,6 +442,13 @@ def main(argv=None) -> int:
                 [f"{t['id']}_urgent" for t in tickets],
                 lambda p, q: p.noul(q),
             )
+        elif name == "negation":
+            block["calibration"] = [calibration_block(first["pairs"], "supports claim (noul)")]
+            block["variance"] = variance(
+                passes,
+                [i for i, _, _, _ in negation_items(negation)],
+                lambda p, q: p.noul(q),
+            )
         else:
             block["calibration"] = [calibration_block(first["pairs"], "relevance (noul)")]
             block["variance"] = variance(
@@ -370,7 +469,7 @@ def _write(path: str, results: dict) -> None:
 
 def _report(results: dict) -> None:
     print("\n=== summary ===")
-    for name in ("triage", "rerank"):
+    for name in ("triage", "negation", "rerank"):
         block = results.get(name)
         if not block or "error" in block:
             continue
