@@ -40,11 +40,33 @@ from lab.baselines import (  # noqa: E402
 BASE = os.path.dirname(os.path.abspath(__file__))
 RUNS_DIR = os.path.join(BASE, "runs")
 
+# Fallback only; the live criteria travel with the labels in tickets.json so the
+# answer space and the labels can never drift apart. See lab/LABELS.md.
+DEFAULT_DEPT_CRITERIA = {
+    "billing": "Payments, invoices, refunds, charges, subscriptions, and disputes about amounts already charged",
+    "technical": "Bugs, errors, outages, integrations, crashes, broken features",
+    "sales": "Plan comparisons, quotes, discounts, upgrades, pre-purchase questions",
+    "other": "Feature requests, product feedback, praise, or anything that is not a failure, a payment matter, or a pre-sale question",
+}
+
 
 # --------------------------------------------------------------------------- demos
 
 
-def triage_payload(tickets: list) -> tuple:
+def load_tickets(path: str) -> tuple:
+    """Return (tickets, criteria, labels_version).
+
+    tickets.json carries its criteria and a labels_version so a run records which
+    label set it was scored against; see lab/LABELS.md.
+    """
+    with open(path, encoding="utf-8") as fh:
+        doc = json.load(fh)
+    if isinstance(doc, list):  # v1 files, before the criteria were versioned
+        return doc, None, 1
+    return doc["tickets"], doc["criteria"]["dept"], doc["labels_version"]
+
+
+def triage_payload(tickets: list, criteria: dict | None = None) -> tuple:
     state = "Support tickets:\n" + "\n".join(f"[{t['id']}] {t['text']}" for t in tickets)
     questions = {}
     for t in tickets:
@@ -52,12 +74,7 @@ def triage_payload(tickets: list) -> tuple:
         questions[f"{tid}_dept"] = {
             "type": "choice",
             "instructions": f"Which team should handle ticket {tid}? Judge only this ticket's text.",
-            "criteria": {
-                "billing": "Payments, invoices, refunds, charges, subscriptions, pricing disputes",
-                "technical": "Bugs, errors, outages, integrations, crashes, broken features",
-                "sales": "Plan comparisons, quotes, discounts, upgrades, pre-purchase questions",
-                "other": "Does not fit any of the above",
-            },
+            "criteria": dict(criteria or DEFAULT_DEPT_CRITERIA),
         }
         questions[f"{tid}_urgent"] = {
             "type": "noul",
@@ -260,11 +277,11 @@ def main(argv=None) -> int:
     ap.add_argument("--no-floor", action="store_true", help="skip the network-floor probe")
     args = ap.parse_args(argv)
 
-    tickets = json.load(open(os.path.join(BASE, "tickets.json"), encoding="utf-8"))
+    tickets, criteria, labels_version = load_tickets(os.path.join(BASE, "tickets.json"))
     rr = json.load(open(os.path.join(BASE, "rerank.json"), encoding="utf-8"))
 
     demos = {
-        "triage": (triage_payload(tickets), lambda r: score_triage(r, tickets)),
+        "triage": (triage_payload(tickets, criteria), lambda r: score_triage(r, tickets)),
         "rerank": (rerank_payload(rr), lambda r: score_rerank(r, rr)),
     }
     if args.only:
@@ -280,6 +297,7 @@ def main(argv=None) -> int:
     results: dict = {
         "started_at": started_at,
         "repeat": args.repeat,
+        "labels_version": labels_version,
         "baselines": {"triage": triage_baselines(tickets), "rerank": rerank_baselines(rr)},
     }
     out_path = os.path.join(BASE, "results.json")

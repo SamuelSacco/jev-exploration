@@ -47,7 +47,8 @@ def rerank_baseline() -> None:
 
 
 def triage_baselines() -> None:
-    tickets = json.load(open(os.path.join(BASE, "tickets.json")))
+    doc = json.load(open(os.path.join(BASE, "tickets.json")))
+    tickets = doc["tickets"] if isinstance(doc, dict) else doc
     urgent_hits = sum(bool(URGENCY_RE.search(t["text"])) == t["urgent"] for t in tickets)
     report("urgency: keyword regex", urgent_hits, len(tickets))
 

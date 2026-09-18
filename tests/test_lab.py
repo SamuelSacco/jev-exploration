@@ -12,8 +12,12 @@ HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 @pytest.fixture
 def tickets():
-    with open(os.path.join(HERE, "lab", "tickets.json"), encoding="utf-8") as fh:
-        return json.load(fh)
+    return run_demos.load_tickets(os.path.join(HERE, "lab", "tickets.json"))[0]
+
+
+@pytest.fixture
+def criteria():
+    return run_demos.load_tickets(os.path.join(HERE, "lab", "tickets.json"))[1]
 
 
 @pytest.fixture
@@ -63,11 +67,57 @@ def test_rerank_payload_asks_one_noul_per_passage(rerank):
     assert all(q["type"] == "noul" for q in questions.values())
 
 
-def test_choice_criteria_include_a_no_match_option(tickets):
+def test_choice_criteria_include_a_no_match_option(tickets, criteria):
     """The docs are explicit that a forced choice with no valid option is a trap."""
-    _, questions = run_demos.triage_payload(tickets)
+    _, questions = run_demos.triage_payload(tickets, criteria)
     dept = questions[f"{tickets[0]['id']}_dept"]
     assert "other" in dept["criteria"]
+
+
+# ------------------------------------------------------------------------ labels
+
+
+def test_labels_are_versioned():
+    """A score is meaningless without the label set it was scored against."""
+    _, _, version = run_demos.load_tickets(os.path.join(HERE, "lab", "tickets.json"))
+    assert version >= 2
+
+
+def test_v1_ticket_files_still_load():
+    """Older bare-array files must not silently break."""
+    import tempfile
+
+    with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as fh:
+        json.dump([{"id": "t1", "dept": "billing"}], fh)
+    got, criteria, version = run_demos.load_tickets(fh.name)
+    assert version == 1 and criteria is None and len(got) == 1
+
+
+def test_criteria_travel_with_the_labels(tickets, criteria):
+    """The answer space and the labels must not drift apart: every label a ticket
+    carries has to be an option the model is actually offered."""
+    assert {t["dept"] for t in tickets} <= set(criteria)
+
+
+def test_each_ticket_has_exactly_one_defensible_home(criteria):
+    """Issue #6: the v1 criteria let 'pricing disputes' and 'quotes' both claim t12."""
+    assert "already charged" in criteria["billing"], "billing must scope to money moved"
+    assert criteria["other"] != "Does not fit any of the above", "other must say what it covers"
+    assert "Feature requests" in criteria["other"]
+
+
+def test_t4_is_not_technical(tickets):
+    """A working button that could remember a preference is not a bug, error,
+    outage, integration, crash or broken feature. Decided from text; see LABELS.md."""
+    t4 = next(t for t in tickets if t["id"] == "t4")
+    assert t4["dept"] == "other"
+
+
+def test_t12_stays_sales(tickets):
+    """Pre-signature quote dispute: nothing charged, so billing has nothing to act
+    on. Left standing as a miss for the committed run."""
+    t12 = next(t for t in tickets if t["id"] == "t12")
+    assert t12["dept"] == "sales"
 
 
 # ---------------------------------------------------------------------- scoring

@@ -187,7 +187,7 @@ ledger can cite at the response level.
 
 | Demo | Result (pass 1 of 5) | Baseline, same data |
 |---|---|---|
-| Triage | dept 10/12, urgency 11/12, frustration MAE 0.25 | majority 5/12; urgency regex 9/12 |
+| Triage | dept 11/12 (v2 labels; 10/12 under v1), urgency 11/12, frustration MAE 0.25 | majority 4/12; urgency regex 9/12 |
 | Rerank | 8/8 | word-overlap 7/8 |
 
 The new information is the variance, which nobody has published for these tasks:
@@ -201,6 +201,20 @@ The new information is the variance, which nobody has published for these tasks:
 - All three calibration blocks printed **at the noise floor** (ECE 0.026–0.100 vs
   floors 0.044–0.143), exactly as the harness predicts for n=8–12. These demos
   cannot speak to calibration; §6 stands on the third-party studies.
+
+**Label version.** Department scores above use label set v2
+([`lab/LABELS.md`](../lab/LABELS.md), issue #6). Two tickets had no single
+defensible home under v1 because the criteria overlapped: `technical` listed only
+failure modes, leaving a feature request nowhere to go, and both `billing`
+("pricing disputes") and `sales` ("quotes") claimed a pre-signature quote dispute.
+Both criteria were tightened. One label moved as a result (t4 technical → other),
+which raises the committed run from 10/12 to 11/12; the other was left standing as
+a miss (t12 stays sales, Jev answered billing).
+
+That correction moves a number in Jev's favour after the fact, which is the pattern
+this ledger criticises elsewhere, so the reasoning in LABELS.md cites only ticket
+text and criteria wording. Quote department scores with their label version. At
+n=12 neither figure separates from the baseline: 11/12 is [65.1%, 97.9%].
 
 Run it yourself: `python3 lab/run_demos.py --repeat 5` (~10 calls, under $0.01).
 
