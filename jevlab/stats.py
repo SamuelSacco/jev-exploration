@@ -326,3 +326,69 @@ def ece_with_floor(
         "bins": bins,
         "bin_range": list(bin_range),
     }
+
+
+def decompose_ece(
+    baseline_pairs: list,
+    compare_pairs: list,
+    bins: int = DEFAULT_BINS,
+    bin_range: tuple = (0.0, 1.0),
+    edge: str = "left",
+) -> dict:
+    """Why did ECE change between two samples: worse calibration, or moved mass?
+
+    ECE is a mass-weighted average of per-bin gaps, so it moves for two quite
+    different reasons. The calibration *function* can get worse (each bin's gap
+    widens), or the predictions can simply relocate into bins that were already
+    badly calibrated. Those have opposite implications: the first means the model
+    degrades, the second means it has one fixed miscalibration curve and harder
+    inputs land in a worse part of it -- which is correctable with a calibration
+    map fitted anywhere.
+
+    The two counterfactuals separate them:
+
+      compare's gaps under baseline's mass  -> isolates the calibration change
+      baseline's gaps under compare's mass  -> isolates the mass shift
+
+    If the first is no higher than baseline's own ECE, the calibration function
+    did not get worse and the whole move is mass.
+
+    Only bins occupied in both samples are recombined, so an empty bin cannot
+    contribute a phantom gap. `shared_mass` reports how much of each sample that
+    covers; a low value means the two distributions barely overlap and the
+    decomposition is not telling you much.
+    """
+    def table(pairs):
+        rows = reliability(pairs, bins, bin_range, edge)
+        n = len(pairs)
+        mass = {round(b.lo, 6): b.count / n for b in rows}
+        gaps = {round(b.lo, 6): b.gap for b in rows}
+        return mass, gaps
+
+    base_mass, base_gaps = table(baseline_pairs)
+    comp_mass, comp_gaps = table(compare_pairs)
+
+    def recombine(gaps: dict, mass: dict) -> float:
+        shared = [k for k in mass if k in gaps]
+        total = sum(mass[k] for k in shared)
+        if not total:
+            return float("nan")
+        return sum(mass[k] * abs(gaps[k]) for k in shared) / total
+
+    base_ece = ece(baseline_pairs, bins, bin_range, edge)
+    comp_ece = ece(compare_pairs, bins, bin_range, edge)
+    calibration_effect = recombine(comp_gaps, base_mass)
+    mass_effect = recombine(base_gaps, comp_mass)
+
+    return {
+        "baseline_ece": base_ece,
+        "compare_ece": comp_ece,
+        "delta": comp_ece - base_ece,
+        "compare_gaps_under_baseline_mass": calibration_effect,
+        "baseline_gaps_under_compare_mass": mass_effect,
+        "calibration_worsened": bool(calibration_effect > base_ece),
+        "shared_mass": {
+            "baseline": sum(v for k, v in base_mass.items() if k in comp_gaps),
+            "compare": sum(v for k, v in comp_mass.items() if k in base_gaps),
+        },
+    }

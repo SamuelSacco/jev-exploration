@@ -39,8 +39,8 @@ reported.
 | 11 | "New model class" as a scientific category | Unmeasured | [§4](#4-refuted) |
 | 12 | An ordinary LLM can reproduce the interface | Verified | [§3](#3-intelligence-and-accuracy) — openjev |
 | 13 | **Probabilities are calibrated** | **Refuted at scale** | [§6](#6-the-open-question-calibration) — both studies large enough to measure it find real miscalibration |
-| 14 | Confidence is safe to route and escalate on | Task-dependent; refuted on phishing | [§6](#6-the-open-question-calibration) — conf ≥0.9 gives a 73.9% hit rate there |
-| 15 | Calibration holds when the model is out of its depth | Unmeasured, and the open question | [§6](#6-the-open-question-calibration) |
+| 14 | Confidence is safe to route and escalate on | Depends on the *sign* of the error | [§6](#6-the-open-question-calibration) — p≥0.9 gave 1.000 on our data, 0.739 on phishing |
+| 15 | Calibration holds when the model is out of its depth | **Yes, as a function** — but harder inputs land where it is worst | [§6](#6-the-open-question-calibration) — our 800-item gradient |
 
 ---
 
@@ -290,26 +290,69 @@ stated confidence ~0.90 buys a 60% hit rate. At confidence ≥ 0.9: 30.8% covera
 73.9% hit rate. There is no threshold at which its confidence is safe to route on,
 which is the sharpest evidence yet against row 14.
 
-### The hypothesis, and what is wrong with it
+### Our own experiment: the calibration function does not track difficulty
+
+Issue #1, run `20260918T013027Z` on `jev-1.13.0`: 800 items over four difficulty
+tiers, one domain, one fixed question wording, labels frozen before the run, three
+passes. Full write-up and caveats: [`lab/tiers/FINDINGS.md`](../lab/tiers/FINDINGS.md);
+re-derive it from the committed raw responses with `python3 lab/tiers/analyse.py`.
+
+| Tier | accuracy | ECE | floor | ratio | coverage at p≥0.9 | hit rate |
+|---|---|---|---|---|---|---|
+| t1_trivial | 97.5% [94.3, 98.9] | 0.115 | 0.054 | 2.14 | 31.5% | 1.000 |
+| t2_ordinary | 98.0% [95.0, 99.2] | 0.122 | 0.053 | 2.30 | 32.5% | 1.000 |
+| t3_hard | 93.5% [89.2, 96.2] | 0.138 | 0.055 | 2.52 | 23.5% | 1.000 |
+| t4_adversarial | 90.0% [85.1, 93.4] | 0.147 | 0.068 | 2.17 | 21.5% | 1.000 |
+
+The accuracy gradient is real: the t1 and t4 intervals do not overlap. **The ECE
+gradient is not.** The point estimates rise monotonically, but a bootstrap interval
+on the *difference* — the correct test, rather than checking whether two independent
+intervals overlap — includes zero at every step, and the ratio to floor is not
+monotone either (it peaks at t3 and falls back at t4, whose floor is itself higher).
+
+Decomposing the change settles what the scalar cannot. ECE moves either because each
+bin's gap widened or because predictions relocated into bins that were already bad;
+`jevlab.stats.decompose_ece` separates the two by swapping one sample's gaps onto the
+other's mass. Applying t4's calibration curve to t1's distribution gives ECE 0.099
+–0.114 across the three passes, at or *below* t1's own 0.1155. **t4 is not worse
+calibrated than t1.** Applying t1's curve to t4's distribution gives 0.179–0.191,
+which over-explains the observed rise. The whole movement is mass, in every pass.
+
+So Jev carries one miscalibration curve that is roughly invariant to difficulty, and
+it is not small: ECE sits at 2.1–2.5× its noise floor even where accuracy is 97.5%.
+Harder inputs do not corrupt the curve, they push probabilities into the middle of
+it, which is where it is worst.
+
+**The shape is compression toward the middle**, identical in every tier: Jev
+overstates low probabilities and understates high ones, crossing over near 0.5. On
+t4 a stated 0.25 meant 2.6% and a stated 0.925 meant 100%. That is the same
+distortion [`analysis/external/`](../analysis/external/) found in jev-spam-eval on
+19,528 real emails, where the crossover sits near 0.6 — two independent datasets, one
+synthetic and one not, with the same systematic squeeze. It is the opposite of
+jev-phishing-bench, which is overconfident in every bin.
+
+Which decides the practical question. Because Jev is *under*confident at the top
+here, a high threshold is conservative: p≥0.9 gave a 1.000 hit rate in all four
+tiers, at 21.5–32.5% coverage. Where Jev is overconfident instead, the same rule
+bought 73.9%. **The sign of the error, not the size of the ECE, determines whether
+thresholding is safe** — and a scalar ECE does not carry the sign.
+
+The middle band is unusable as a probability at any difficulty. But because the curve
+is stable, the miscalibration is correctable: fit an isotonic or Platt map on a few
+hundred labelled cases and apply it, rather than reading raw Jev output as
+probabilities. Whether such a map transfers across domains is untested and is the
+obvious next experiment.
+
+### The earlier hypothesis, and how it fared
 
 The framing recorded on 2026-09-17 — that Jev's calibration tracks its accuracy
-rather than holding independently of it — survives the re-analysis only weakly, and
-the mechanism argues against it being a single scalar relationship:
-
-- Spam, 98.3% accurate: ECE 0.051, sigmoid-shaped, wrong in a thin middle band.
-- Phishing, 62.6% accurate: ECE 0.154, uniformly overconfident across the range.
-
-Absolute ECE does move with accuracy across those two points. But one is a shifted
-decision boundary and the other is systematic overconfidence, and two points with
-two different failure modes are not a trend. They are also confounded by task,
-team, labels and prompt, and spam may be contaminated: its corpora are public and
-old enough to sit in training data, which would inflate accuracy and calibration
-together.
-
-Distinguishing task difficulty from calibration needs one model, one harness, one
-binning, across a deliberate difficulty gradient, reporting the reliability curve
-per tier rather than a scalar — because the scalar hides which of those two
-failure modes is occurring. That is issue #1.
+rather than holding independently of it — is **not supported**. It was built on two
+confounded points from different studies; a controlled gradient shows the calibration
+function holding roughly constant while accuracy falls by 7.5 points. What varies
+with difficulty is where predictions land on that curve, which raises ECE without
+any degradation in calibration. The cross-study pattern that suggested the hypothesis
+is better explained by spam and phishing having different *directions* of error than
+by difficulty.
 
 ### A reporting standard for this repo
 

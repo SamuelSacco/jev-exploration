@@ -8,22 +8,28 @@ the evidence for them, including other people's benchmarks.
 **Where the argument stands.** Jev is classifier-shaped and its interface is
 reproducible with open models, so the mechanism is not the interesting part. Its bet
 is that the probabilities are *calibrated*. We recomputed every public ECE from each
-study's own committed data, with its own binning, against the noise floor for that
-sample size ([working](analysis/external/)). All three published figures reproduce
-exactly, and the picture is not the one the summaries suggest:
+study's own data against the noise floor for its sample size
+([working](analysis/external/)), then ran a controlled 800-item difficulty gradient
+of our own ([findings](lab/tiers/FINDINGS.md)). What that shows:
 
-- The n=60 study everyone cites for good calibration **cannot measure calibration**.
-  A perfectly calibrated model scores ECE ≈ 0.045 at that size and binning; its
-  reported 0.0505–0.0712 sits on top of the floor.
-- The two studies large enough to measure it **both find real miscalibration**. Spam
-  (n=19.5k, 98.3% accurate) looks excellent at the extremes, which is all its authors
-  reported, but its curve crosses over near 0.6 and the mid-range values are not
-  thresholdable. Phishing (n=2k, 62.6% accurate) is overconfident in every bin:
-  confidence ≥ 0.9 buys a 73.9% hit rate.
+- **The probabilities are not calibrated, at any difficulty.** ECE runs 2.1–2.5× its
+  noise floor across all four tiers, including where accuracy is 97.5%.
+- **But calibration does not degrade with difficulty either.** Decomposing the ECE
+  rise shows it is entirely predictions relocating into the badly-calibrated middle,
+  not the calibration curve getting worse. Jev carries one fixed distortion.
+- **The shape is compression toward the middle** — overstating low probabilities,
+  understating high ones. The same distortion appears in jev-spam-eval on 19,528 real
+  emails. It is the opposite of jev-phishing-bench, which is overconfident throughout.
+- **So the sign of the error, not the size of the ECE, decides whether you can
+  threshold.** Underconfident here: p≥0.9 gave a 1.000 hit rate in every tier at
+  21.5–32.5% coverage. Overconfident there: the same rule bought 73.9%.
+- **The widely cited n=60 benchmark cannot measure calibration at all** — a perfect
+  model scores ECE ≈0.045 at that size, which is the range it reports.
 
-So typed probabilities are not automatically trustworthy probabilities, and the
-open question is narrower than it was: not whether calibration holds, but whether
-it fails the same way as tasks get harder. That is the experiment worth running.
+Practical upshot: treat Jev's output as a monotone score, not a probability, and fit
+your own calibration map on a few hundred labelled cases. It should transfer across
+difficulty, since the curve is stable. Whether it transfers across domains is the
+next open question.
 
 → **[The ledger](docs/claims-audit.md)** — every claim, its status, and the evidence.
 
@@ -96,7 +102,7 @@ lab/
   run_demos.py             triage + rerank demos, scored against ground truth
   runs/                    raw per-call JSONL, committed so numbers stay auditable
   negation.json            40 minimal pairs (n=80); lexical methods pinned at chance
-  tiers/                   800-item difficulty gradient for the calibration experiment (#1)
+  tiers/                   800-item difficulty gradient (#1) + FINDINGS.md, the flagship result
   run_tiers.py             batched runner for the gradient, per-tier calibration
   tickets.json             12 labelled support tickets + their criteria (see LABELS.md)
   LABELS.md                label decisions, versioned and dated
@@ -118,6 +124,7 @@ pip install -e ".[dev]" && pytest   # the whole suite runs offline
 python3 lab/baselines.py            # non-AI baselines on the bundled datasets
 python3 analysis/external/run.py --base ~   # recompute other studies' ECEs
 python3 lab/tiers/baselines.py      # difficulty-gradient controls
+python3 lab/tiers/analyse.py        # re-derive the flagship result from raw responses
 python3 lab/run_tiers.py --dry-run  # size the flagship experiment
 ```
 
@@ -161,7 +168,6 @@ Work in flight:
 
 | Issue | Needs a key |
 |---|---|
-| [#1 Does calibration survive difficulty, or only track accuracy?](../../issues/1) | yes |
 | [#7 Enable CI, pick a licence](../../issues/7) | no |
 
 ## Other work worth reading

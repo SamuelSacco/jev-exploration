@@ -8,6 +8,7 @@ from jevlab.stats import (
     bootstrap_ci,
     brier,
     coverage_at,
+    decompose_ece,
     ece,
     ece_noise_floor,
     ece_with_floor,
@@ -248,3 +249,49 @@ def test_noise_floor_rises_with_narrower_bins():
     wide = ece_noise_floor(probs, bins=5, bin_range=(0.5, 1.0), trials=300)
     narrow = ece_noise_floor(probs, bins=25, bin_range=(0.5, 1.0), trials=300)
     assert narrow["mean"] > wide["mean"]
+
+
+# ------------------------------------------------- mass vs calibration attribution
+
+
+def _at(prob, hit_rate, n):
+    """n predictions all at `prob`, with `hit_rate` of them correct."""
+    hits = round(hit_rate * n)
+    return [(prob, True)] * hits + [(prob, False)] * (n - hits)
+
+
+def test_decompose_attributes_a_pure_mass_shift_to_mass():
+    """Same miscalibration curve, predictions relocated into its bad region.
+    ECE rises, but the calibration function never changed."""
+    good, bad = (0.95, 0.95), (0.25, 0.05)  # (prob, actual hit rate)
+    baseline = _at(*good, 180) + _at(*bad, 20)
+    compare = _at(*good, 20) + _at(*bad, 180)
+    result = decompose_ece(baseline, compare)
+    assert result["delta"] > 0.05, "ECE should rise"
+    assert result["calibration_worsened"] is False
+    assert result["compare_gaps_under_baseline_mass"] <= result["baseline_ece"] + 1e-9
+
+
+def test_decompose_attributes_a_pure_gap_widening_to_calibration():
+    """Same mass distribution, each bin's gap widened."""
+    baseline = _at(0.95, 0.95, 100) + _at(0.25, 0.25, 100)
+    compare = _at(0.95, 0.55, 100) + _at(0.25, 0.75, 100)
+    result = decompose_ece(baseline, compare)
+    assert result["calibration_worsened"] is True
+    assert result["compare_gaps_under_baseline_mass"] > result["baseline_ece"] * 2
+
+
+def test_decompose_is_flat_when_nothing_changed():
+    pairs = _at(0.9, 0.9, 100) + _at(0.2, 0.2, 100)
+    result = decompose_ece(pairs, list(pairs))
+    assert result["delta"] == pytest.approx(0.0, abs=1e-9)
+    assert result["calibration_worsened"] is False
+
+
+def test_decompose_reports_shared_mass():
+    """Disjoint distributions make the decomposition meaningless, so it says so."""
+    baseline = _at(0.05, 0.05, 100)
+    compare = _at(0.95, 0.95, 100)
+    result = decompose_ece(baseline, compare)
+    assert result["shared_mass"]["baseline"] == 0.0
+    assert result["shared_mass"]["compare"] == 0.0
