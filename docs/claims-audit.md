@@ -33,7 +33,7 @@ it. Third-party figures are recorded as published, except where §6 states other
 | 6 | Returns honest uncertainty on unanswerable questions | Verified, small n | [§1](#1-the-api-contract) (measured here, n=4) |
 | 7 | "193.6× faster / 444.6× cheaper" | Overstated | [§2](#2-speed-and-cost) |
 | 8 | "Similar intelligence to frontier LLMs" | Overstated | [§3](#3-intelligence-and-accuracy) |
-| 9 | 70–500 ms end-to-end | Overstated as a user-facing figure | [§2](#2-speed-and-cost) |
+| 9 | 70–500 ms end-to-end | Fair as service time; not reachable on every client path | [§2](#2-speed-and-cost) |
 | 10 | "Can't hallucinate" / 0% structured-output errors | Refuted | [§4](#4-refuted) |
 | 11 | "New model class" as a scientific category | Unmeasured | [§4](#4-refuted) |
 | 12 | An ordinary LLM can reproduce the interface | Verified | [§3](#3-intelligence-and-accuracy), openjev |
@@ -105,11 +105,20 @@ cannot judge TypeSafe's claim. (Caveat on the tooling: `measure_network_floor()`
 `jevlab/client.py` opens a direct socket, which fails behind a transparent proxy;
 the floor above was measured through the proxy's CONNECT tunnel instead.)
 
-jev-phishing-bench remains the clean measurement: 239 ms p50 from France against a
-measured 163 ms network floor, implying roughly 76 ms of service time,
-consistent with TypeSafe's range. The 70-500 ms claim is fair as a service-time figure
-and misleading as an end-to-end one, since a network floor can exceed the model time by
-a factor of two.
+jev-phishing-bench remains the cleanest single measurement: 239 ms p50 from France
+against a measured 163 ms network floor, implying roughly 76 ms of service time.
+
+Four independent direct-client measurements now land inside the band, collected by the
+2026-09-18 external sweep (reviewed in [`analysis/sweep/`](../analysis/sweep/)): an
+openchamber.dev survey median of 76 ms (n=333 user-reported figures), anisselbd's
+239 ms p50, robipop22's 294 ms median, and chetaslua's 415 ms median over 1,191 calls.
+The sweep's own CLI path also stays above 1.35 s, matching the finding here that a
+subprocess-per-call harness measures its own overhead rather than the service.
+
+The band is therefore reachable. The claim is fair as service time and misleading as an
+end-to-end figure, since a client path can cost more than the model does. Selection
+bias applies to the survey median, which the sweep flags: successful results are
+published more readily.
 
 ## 3. Intelligence and accuracy
 
@@ -129,6 +138,8 @@ Independent accuracy varies widely by task:
 | [jev-benchmark](https://github.com/themsquared/jev-benchmark) | agent tool-call risk | 60 | 91.7% |, |
 | [jev-rerank-bench](https://github.com/anessbelbati/jev-rerank-bench) | rerank, 14 datasets | 1,617 | 0.692 nDCG@10 | Cohere Pro 0.691 (tie) |
 | [jev-phishing-bench](https://github.com/anisselbd/jev-phishing-bench) | phishing | 2,000 | 62.6% | Haiku 4.5 81.3%, regex 91.6% |
+| [Verdict-open-jev](https://github.com/Heman10x-NGU/Verdict-open-jev) | typed decisions, 4 workflows | 2,000 | 68.0% | TF-IDF+LogReg 66.1% |
+| gemanor/jev-code-review-benchmark | 4-rule Python review | 360 calls/model | 98% | Gemini Flash 100%, Fable 100% |
 
 The spam result is the strongest published case for Jev: it matches a trained
 classifier in-distribution and destroys it out-of-distribution, which is what zero-shot
@@ -285,6 +296,20 @@ jev-phishing-bench is overconfident in every bin, worst at 0.85–0.95 where
 stated confidence ~0.90 buys a 60% hit rate. At confidence ≥ 0.9: 30.8% coverage,
 73.9% hit rate. There is no threshold at which its confidence is safe to route on,
 which is the sharpest evidence yet against row 14.
+
+### A third independent calibration figure
+
+[Verdict-open-jev](https://github.com/Heman10x-NGU/Verdict-open-jev) reports Jev at ECE
+0.144 over 2,000 typed decisions on four enterprise workflows, against a TF-IDF logistic
+regression at ECE 0.0207 with comparable accuracy (68.0% against 66.1%). That sits
+beside jev-phishing-bench's 0.154 and supports the reading above: calibration is
+task-dependent, and worse on realistic tasks than on synthetic verification. A trivial
+trained baseline calibrating seven times better than Jev at the same accuracy is the
+sharper half of that result.
+
+Caveat, flagged by the sweep that surfaced it: the Jev row may be derived from
+TypeSafe's published dashboard rather than measured live, so the provenance of the
+0.144 is unclear. It is recorded here as a third datapoint rather than a replication.
 
 ### The difficulty gradient: the calibration function does not track difficulty
 

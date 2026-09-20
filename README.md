@@ -102,6 +102,7 @@ Semantics, verified on `jev-1.13.0`:
 ```
 analysis/
   external/                published figures recomputed against their noise floors
+  sweep/                   review of the external claim sweep, plus its audit tool
   calibration_transfer.py  whether a fitted correction transfers
 docs/
   claims-audit.md          the ledger
@@ -112,6 +113,7 @@ jevlab/
   calibration.py           Platt and isotonic maps, slope transfer, intercept refit
 lab/
   baselines.py             non-AI baselines with Wilson intervals
+  probe_structure.py       isolation, batching-scale and Choice-vs-Noul probes
   run_demos.py             triage and negation demos, scored against ground truth
   run_tiers.py             batched runner for the difficulty gradient
   runs/                    raw per-call JSONL, committed so results stay auditable
@@ -137,6 +139,8 @@ python3 lab/tiers/baselines.py       # difficulty-gradient controls
 python3 lab/tiers/analyse.py         # re-derive the gradient result from raw responses
 python3 analysis/calibration_transfer.py
 python3 analysis/external/run.py --base ~    # needs the other repos cloned
+python3 analysis/sweep/audit.py      # audit external calibration figures
+python3 lab/probe_structure.py --dry-run
 python3 lab/run_tiers.py --dry-run   # size the gradient experiment
 ```
 
@@ -147,6 +151,7 @@ export TYPESAFE_API_KEY=ts-...
 python3 skills/jev/bin/jev.py lab/edge_payload.json   # one raw call
 python3 lab/run_demos.py --repeat 3                   # triage + negation, variance reported
 python3 lab/run_tiers.py --repeat 3                   # the difficulty gradient
+python3 lab/probe_structure.py --repeat 3             # structural probes, 24 calls
 python3 skills/jev/bin/jev.py --floor                 # network floor, no key needed
 ```
 
@@ -167,6 +172,11 @@ probe, constructed so that no lexical method beats chance (measured: 51.2%).
 The difficulty gradient is synthetic, generated from a 20-pair template pool. A regex
 on the decisive-act vocabulary scores 69.5–83.0% across its tiers, so that, not
 chance, is the bar any result there has to clear.
+
+Both the gradient and the negation probe are built from Noul questions. An external
+sweep reports that binary-per-item formulations leave much more probability on wrong
+answers than a single Choice does; `lab/probe_structure.py` tests that directly, and if
+it holds, those results measure a formulation as well as a model.
 
 ## Contributing
 

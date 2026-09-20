@@ -10,3 +10,4 @@ lab/_payload.json
 
 # Lab outputs from local runs (raw JSONL is committed deliberately, see lab/runs/README.md)
 lab/results.json
+lab/probe_structure_results.json
