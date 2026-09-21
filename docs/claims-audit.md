@@ -42,6 +42,11 @@ it. Third-party figures are recorded as published, except where §6 states other
 | 15 | Calibration holds when the model is out of its depth | Yes, as a function, but harder inputs land where it is worst | [§6](#6-the-open-question-calibration), the 800-item gradient |
 | 16 | Returned probabilities are full-precision floats | Refuted | [§1](#numeric-resolution), every value on a 0.01 grid across 71 direct responses (measured here) |
 | 17 | A returned probability can be exactly 0 or 1, which no rescaling can repair | Verified for Choice and Score; no instance for Noul | [§1](#numeric-resolution) (measured here), [#10](../../issues/10) |
+| 18 | Questions batched into one request cannot see each other's instructions | Verified | [lab/PROBES.md](../lab/PROBES.md) (measured here, 0.02 against 0.99) |
+| 19 | Batching is near-free: ~0.33 ms per extra question on ~1.4 s of overhead | Verified | [lab/PROBES.md](../lab/PROBES.md) (measured here) |
+| 20 | Choice and independent Nouls measure the same thing | Contested | [lab/PROBES.md](../lab/PROBES.md), Nouls left 0.29 on distractors where Choice left none, n=1 item |
+| 21 | Jev's judgements are far more repeatable than an LLM judge's | Verified for repeatability, not for correctness | LangChain agent-eval, variance 1.49e-5 across 100 reps; but 5 frozen runs and one oracle, so agreement is 5/5 (95% CI 48–100%) and the LLM baselines' settings were unpinned |
+| 22 | A benchmark whose labels the model supplied is inflated by ~0.08 | Refuted as a constant | [analysis/CIRCULARITY.md](../analysis/CIRCULARITY.md) §4, premium +0.005 here against T69's +0.081; it scales with how decidable the task is |
 
 ---
 

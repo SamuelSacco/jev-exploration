@@ -160,9 +160,33 @@ def test_formulation_scoring_can_fail():
 
 def test_dry_run_makes_no_calls(capsys, monkeypatch):
     def explode(*a, **kw):
-        raise AssertionError("--dry-run must not call the API")
+        raise AssertionError("--dry-run must not resolve a transport or call out")
 
-    monkeypatch.setattr(ps.JevClient, "ask", explode)
+    monkeypatch.setattr(ps, "resolve_sender", explode)
+    monkeypatch.setattr(ps, "ask", explode)
     assert ps.main(["--dry-run"]) == 0
     out = capsys.readouterr().out
     assert "Total calls" in out and "prediction [isolation]" in out
+
+
+def test_probes_run_through_an_injected_transport(monkeypatch, tmp_path):
+    """The seam's point: the same file runs under an operator's own sender."""
+    sent = []
+
+    def sender(state, questions, model="jev-latest"):
+        sent.append(len(questions))
+        return {
+            "model": "test-model",
+            "answers": {q: {"type": "noul", "noul": 0.5} for q in questions},
+            "usage": {"input_tokens": 1},
+            "_elapsed_s": 0.01,
+        }
+
+    monkeypatch.setattr(ps, "resolve_sender", lambda: sender)
+    monkeypatch.setattr(ps, "RUNS_DIR", str(tmp_path))
+    assert ps.main([
+        "--probe", "isolation", "--repeat", "1",
+        "--out", str(tmp_path / "out.json"),
+    ]) == 0
+    assert sent, "the injected sender was never called"
+    assert list(tmp_path.glob("*.jsonl")), "raw responses were not recorded"

@@ -24,6 +24,17 @@ formulation  One Choice over K classes against K independent Nouls. The sweep
              Choice for classification. Both the difficulty gradient and the
              negation probe in this repo use Nouls, so this decides whether
              those under-report what the model can do.
+
+## Credentials
+
+This file contains no credential handling. It calls
+`jevlab.transport.resolve_sender()`, which defaults to the repo's client and can
+be replaced with `JEV_TRANSPORT=package.module:callable`. The replacement takes
+`(state, questions, model)` and returns the raw response dict; whatever it does
+about authentication is invisible here, so the same file runs unmodified on
+either side.
+
+    JEV_TRANSPORT=my_ops.jev:send python3 lab/probe_structure.py --repeat 3
 """
 from __future__ import annotations
 
@@ -36,7 +47,11 @@ import time
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from jevlab.client import JevClient, JevError  # noqa: E402
+from jevlab.transport import (  # noqa: E402
+    ask,
+    describe_sender,
+    resolve_sender,
+)
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 RUNS_DIR = os.path.join(BASE, "runs")
@@ -260,12 +275,12 @@ def score_formulation(choice_probs: dict, noul_probs: dict) -> dict:
 # -------------------------------------------------------------------------- main
 
 
-def run_isolation(client, started_at, repeat) -> dict:
+def run_isolation(sender, started_at, repeat) -> dict:
     per_condition = {}
     for label, state, questions in isolation_payloads():
         runs = []
         for rep in range(repeat):
-            resp = client.ask(state, questions)
+            resp = ask(sender, state, questions)
             record("isolation", resp, started_at, {"condition": label, "rep": rep})
             runs.append({q: resp.noul(q) for q in questions})
             print(f"  isolation/{label} pass {rep + 1}: {resp.elapsed_s:.2f}s", file=sys.stderr)
@@ -275,13 +290,13 @@ def run_isolation(client, started_at, repeat) -> dict:
     return {"per_condition": per_condition, **score_isolation(per_condition)}
 
 
-def run_batching(client, started_at, sizes, repeat) -> dict:
+def run_batching(sender, started_at, sizes, repeat) -> dict:
     timings: dict = {}
     for size in sizes:
         state, questions = batching_payload(size)
         timings[size] = []
         for rep in range(repeat):
-            resp = client.ask(state, questions)
+            resp = ask(sender, state, questions)
             record("batching", resp, started_at, {"size": size, "rep": rep})
             timings[size].append(resp.elapsed_s)
             print(
@@ -292,12 +307,12 @@ def run_batching(client, started_at, sizes, repeat) -> dict:
     return score_batching(timings)
 
 
-def run_formulation(client, started_at, repeat) -> dict:
+def run_formulation(sender, started_at, repeat) -> dict:
     collected: dict = {}
     for label, state, questions in formulation_payloads():
         runs = []
         for rep in range(repeat):
-            resp = client.ask(state, questions)
+            resp = ask(sender, state, questions)
             record("formulation", resp, started_at, {"form": label, "rep": rep})
             if label == "choice":
                 runs.append(dict(resp.probabilities("as_choice")))
@@ -345,24 +360,30 @@ def main(argv=None) -> int:
                 print(f"formulation  {n:>3} calls, 1 Choice vs {len(CLASSES)} Nouls")
             calls += n
         print(f"\nTotal calls: {calls}")
+        print(f"\ntransport: {describe_sender()}")
         for name in wanted:
             print(f"\nprediction [{name}]: {PREDICTIONS[name]}")
         return 0
 
     started_at = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
-    client = JevClient()
-    results = {"started_at": started_at, "repeat": args.repeat, "predictions": {}}
+    sender = resolve_sender()
+    results = {
+        "started_at": started_at,
+        "transport": describe_sender(),
+        "repeat": args.repeat,
+        "predictions": {},
+    }
 
     for name in wanted:
         results["predictions"][name] = PREDICTIONS[name]
         try:
             if name == "isolation":
-                results[name] = run_isolation(client, started_at, args.repeat)
+                results[name] = run_isolation(sender, started_at, args.repeat)
             elif name == "batching":
-                results[name] = run_batching(client, started_at, sizes, args.repeat)
+                results[name] = run_batching(sender, started_at, sizes, args.repeat)
             else:
-                results[name] = run_formulation(client, started_at, args.repeat)
-        except JevError as exc:
+                results[name] = run_formulation(sender, started_at, args.repeat)
+        except Exception as exc:  # an injected transport raises what it likes
             results[name] = {"error": str(exc)}
             print(f"{name}: {exc}", file=sys.stderr)
         with open(args.out, "w", encoding="utf-8") as fh:

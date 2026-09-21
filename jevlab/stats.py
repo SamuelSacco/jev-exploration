@@ -389,3 +389,37 @@ def decompose_ece(
             "compare": sum(v for k, v in comp_mass.items() if k in base_gaps),
         },
     }
+
+
+def auc(pairs: list) -> float:
+    """Probability that a random positive outscores a random negative.
+
+    Mann-Whitney, ties counted as half. 0.5 is no discrimination at all. Used to
+    decide whether a Platt fit is even identified: if the stated probabilities
+    carry no information about the outcome, the maximum-likelihood slope is
+    unbounded and the fitted value is noise rather than a measurement.
+    """
+    pos = [p for p, hit in pairs if hit]
+    neg = [p for p, hit in pairs if not hit]
+    if not pos or not neg:
+        return 0.5
+    wins = 0.0
+    for a in pos:
+        for b in neg:
+            wins += 1.0 if a > b else (0.5 if a == b else 0.0)
+    return wins / (len(pos) * len(neg))
+
+
+def auc_null_se(pairs: list) -> float:
+    """Standard error of AUC under the null that the score is uninformative.
+
+    The Mann-Whitney null variance, which depends on both class sizes. Used to
+    decide how far from 0.5 an observed AUC has to be before it means anything:
+    at 60 against 60 the null SE is 0.053, so a coin flip reaching 0.42 is
+    ordinary and a fixed threshold of a few points would pass it.
+    """
+    n_pos = sum(1 for _, hit in pairs if hit)
+    n_neg = len(pairs) - n_pos
+    if not n_pos or not n_neg:
+        return 0.0
+    return math.sqrt((n_pos + n_neg + 1) / (12.0 * n_pos * n_neg))

@@ -49,6 +49,17 @@ noise floor for its sample size ([method](analysis/external/)), then ran a contr
    cannot be repaired by any rescaling. Noul did not do it once in 2,580 answers, and
    every calibration result here is Noul.
 
+8. **Batching is near-free and questions cannot see each other.** ~0.33 ms per extra
+   question on ~1.4 s of fixed overhead, and a code word in one question's instructions
+   scored 0.02 on a sibling question against 0.99 in the shared state
+   ([method](lab/PROBES.md)).
+
+9. **Circularity is not a constant.** Relabelling the gradient with Jev's own labels
+   inflated its score by +0.005, against the +0.081 swing a reranking study measured.
+   The difference is how much room the task leaves for two readings to differ, so a
+   single discount factor for self-labelled benchmarks is the wrong instrument
+   ([method](analysis/CIRCULARITY.md)).
+
 In short: Jev returns a well-behaved monotone score carrying a stable distortion, not
 a probability. Converting it into one costs a slope fitted once plus roughly fifty
 labels per deployment. Whether that slope survives a change of domain or a retrain is
@@ -109,6 +120,8 @@ analysis/
   external/                published figures recomputed against their noise floors
   sweep/                   review of the external claim sweep, plus its audit tool
   circularity.py           judge-circularity audit of the gradient findings
+  headtohead.py            scores the Jev vs local-4B battery, writes the memo
+  transfer_domains.py      scores the cross-domain transfer experiment
   quantisation.py          numeric resolution of the API's returned values
   calibration_transfer.py  whether a fitted correction transfers
 docs/
@@ -122,6 +135,10 @@ jevlab/
 lab/
   baselines.py             non-AI baselines with Wilson intervals
   exp_circularity.py       what self-labelling would have inflated the score by
+  exp_headtohead.py        Jev against a local 4B, four arms
+  exp_transfer.py          does the fitted correction survive a change of domain
+  domains/                 480 items in four non-email slices, labels committed
+  PROBES.md                isolation, batching and Choice-vs-Noul results
   probe_structure.py       isolation, batching-scale and Choice-vs-Noul probes
   run_demos.py             triage and negation demos, scored against ground truth
   run_tiers.py             batched runner for the difficulty gradient
@@ -151,6 +168,9 @@ python3 analysis/external/run.py --base ~    # needs the other repos cloned
 python3 analysis/sweep/audit.py      # audit external calibration figures
 python3 analysis/circularity.py      # judge-circularity audit of B1/B2
 python3 analysis/quantisation.py     # what resolution the API actually returns
+python3 lab/domains/baselines.py     # cross-domain slices: the gate
+python3 lab/exp_transfer.py --dry-run
+python3 lab/exp_headtohead.py --dry-run
 python3 lab/probe_structure.py --dry-run
 python3 lab/run_tiers.py --dry-run   # size the gradient experiment
 ```
@@ -164,11 +184,26 @@ python3 lab/run_demos.py --repeat 3                   # triage + negation, varia
 python3 lab/run_tiers.py --repeat 3                   # the difficulty gradient
 python3 lab/probe_structure.py --repeat 3             # structural probes, 24 calls
 python3 lab/exp_circularity.py --repeat 1             # circularity premium, 40 calls
+python3 lab/exp_transfer.py --repeat 3                # cross-domain transfer, 36 calls
+python3 lab/exp_headtohead.py --repeat 3              # Jev vs a local 4B, 33 calls
 python3 skills/jev/bin/jev.py --floor                 # network floor, no key needed
 ```
 
 Runtime code is standard library only; `pytest` is the sole dev dependency. Raw
 responses land in `lab/runs/*.jsonl` and are committed; derived summaries are not.
+
+Every experiment resolves its sender through `jevlab.transport` and contains no
+credential handling of its own, so an operator who holds the key elsewhere runs the
+same files unmodified:
+
+```bash
+JEV_TRANSPORT=my_ops.jev:send python3 lab/exp_transfer.py --repeat 3
+```
+
+The callable takes `(state, questions, model)` and returns the raw response dict. The
+head-to-head battery takes a second, `JEV_LOCAL_TRANSPORT`, taking a prompt string and
+returning reply text; this repo ships no default for it and no code that can reach a
+non-Jev endpoint.
 
 ## Limits of the bundled demos
 
@@ -185,10 +220,12 @@ The difficulty gradient is synthetic, generated from a 20-pair template pool. A 
 on the decisive-act vocabulary scores 69.5–83.0% across its tiers, so that, not
 chance, is the bar any result there has to clear.
 
-Both the gradient and the negation probe are built from Noul questions. An external
-sweep reports that binary-per-item formulations leave much more probability on wrong
-answers than a single Choice does; `lab/probe_structure.py` tests that directly, and if
-it holds, those results measure a formulation as well as a model.
+Both the gradient and the negation probe are built from Noul questions, as the
+cross-domain slices are. On one classification item, independent Nouls left 0.29 of the
+probability mass on wrong labels where a single Choice left none
+([method](lab/PROBES.md)). One item is not enough to act on, but if it holds at scale
+those results measure a formulation as well as a model; `lab/exp_headtohead.py` carries
+a `typed` arm to find out.
 
 ## Contributing
 

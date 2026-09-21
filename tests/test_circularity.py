@@ -179,7 +179,16 @@ def _executable_source(path: str) -> str:
     return " ".join(out)
 
 
-@pytest.mark.parametrize("path", ["lab/exp_circularity.py", "jevlab/transport.py"])
+@pytest.mark.parametrize(
+    "path",
+    [
+        "lab/exp_circularity.py",
+        "lab/probe_structure.py",
+        "lab/exp_transfer.py",
+        "lab/exp_headtohead.py",
+        "jevlab/transport.py",
+    ],
+)
 def test_no_credential_is_read_or_emitted(path):
     """The operating constraint: these run under an operator's own credential
     handling and must contain none of their own."""

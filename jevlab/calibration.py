@@ -125,6 +125,47 @@ def fit_platt(pairs: list, iterations: int = 100, tol: float = 1e-9) -> PlattMap
     return PlattMap(a=a, b=b)
 
 
+# The widest slope this repo has any reason to believe. The e-mail gradient sits
+# at 2.11-2.61; anything past this is a diverging fit, not a squeeze.
+PLAUSIBLE_SLOPE = 25.0
+# How many null standard errors AUC must sit from 0.5 before the slope is
+# identified. A fixed threshold does not work: at n=120 a coin flip lands at
+# AUC 0.42 often enough that any constant small enough to catch real weakness
+# also passes noise. The null SE of the Mann-Whitney statistic scales with the
+# class sizes, so the threshold has to as well.
+DISCRIMINATION_SIGMAS = 2.5
+
+
+def fit_platt_checked(pairs: list, **kwargs) -> tuple:
+    """`fit_platt`, plus whether the result means anything.
+
+    Newton's method on a slice whose probabilities do not discriminate walks off
+    to a huge slope, because the likelihood has no interior maximum: any steeper
+    map fits marginally better. The returned number then looks like a
+    measurement and is not one, and a comparison against it reads as a finding.
+
+    Returns `(mapping, diagnostics)`. `identified` is False when the slice does
+    not discriminate or the fit ran away, and a caller should report
+    UNVERIFIABLE rather than treating the slope as evidence either way.
+    """
+    from jevlab.stats import auc, auc_null_se
+
+    mapping = fit_platt(pairs, **kwargs)
+    discrimination = auc(pairs)
+    separated = abs(discrimination - 0.5)
+    threshold = DISCRIMINATION_SIGMAS * auc_null_se(pairs)
+    discriminates = bool(threshold) and separated >= threshold
+    plausible = abs(mapping.a) <= PLAUSIBLE_SLOPE
+    return mapping, {
+        "n": len(pairs),
+        "auc": round(discrimination, 4),
+        "auc_threshold": round(0.5 + threshold, 4) if threshold else None,
+        "discriminates": discriminates,
+        "slope_plausible": plausible,
+        "identified": bool(pairs) and discriminates and plausible,
+    }
+
+
 def fit_isotonic(pairs: list) -> IsotonicMap:
     """Pool adjacent violators, then expose the block boundaries as knots."""
     if not pairs:

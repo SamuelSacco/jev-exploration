@@ -28,6 +28,11 @@ B2 is a statement about a 43-to-65 item bucket, not a law.
 to overturn the decomposition, and random corruption at 10% overturns it in only
 3 of 20 seeds.
 
+**The circularity premium on this benchmark is +0.005: the preregistration
+predicting +0.05 is REFUTED.** Measured over 120 calls, and §4 explains why the
+prediction was wrong and what that implies for benchmarks on less decidable
+tasks.
+
 **Residual exposure is author bias, not judge circularity: UNVERIFIABLE offline.**
 The labels are clean but the *items* were written by a language model. That is a
 different bias with a similar effect and it cannot be measured without real data.
@@ -114,28 +119,57 @@ caveat that its bodies are themselves LLM-generated, so a fully clean test needs
 genuinely human-written mail. A large accuracy gap between synthetic and real
 items at matched difficulty is author bias; a small one bounds it.
 
-## 4. The counterfactual worth measuring
+## 4. The counterfactual, measured
 
-Provenance settles whether *this* benchmark is circular. It does not say how much
-circularity is worth in general, which is what decides how far to discount
+Provenance settles whether *this* benchmark is circular. It does not say how
+much circularity is worth in general, which is what decides how far to discount
 benchmarks that did label their own task, including TypeSafe's dashboard.
 
-`lab/exp_circularity.py` measures that directly. Over the same 800 committed
-items, two regimes:
+`lab/exp_circularity.py` measured it directly, over the same 800 committed
+items, in two regimes: **truth**, the generator's labels, which is what B1 and
+B2 use, and **self**, labels elicited from Jev with deliberately different
+wording from the scoring question, in separate requests. The circularity
+premium is accuracy under self-labels minus accuracy under generator labels.
 
-- **truth**: labels from the generator, which is what B1 and B2 use.
-- **self**: labels elicited from Jev, with deliberately different wording from
-  the scoring question, in separate requests.
+Written before the run: the premium is positive in every tier, largest on
+t4_adversarial, and a premium above +0.05 overall is comparable to T69's 0.081.
 
-The circularity premium is accuracy under self-labels minus accuracy under
-generator labels. It is what this benchmark's score would have been inflated by,
-had it been built the circular way.
+Run 2026-09-20, 120 calls:
 
-Preregistered, before any run: the premium is positive in every tier, because a
-model agrees with itself more than with the world, and largest on t4_adversarial,
-where accuracy against truth is lowest and there is most room to agree with its
-own mistakes. A premium above +0.05 overall is comparable to T69's 0.081 and
-implies any Jev-labelled benchmark needs at least that discount.
+| tier | premium |
+|---|---|
+| t1_trivial | +0.015 |
+| t2_ordinary | −0.005 |
+| t3_hard | +0.015 |
+| t4_adversarial | −0.005 |
+| **mean** | **+0.005** |
+
+**The preregistration is REFUTED, on every clause.** The premium is not
+positive in every tier; it is negative in two. It is not largest on
+t4_adversarial; it is smallest there, tied. And at +0.005 overall it is an order
+of magnitude below the +0.05 threshold and sixteen times below T69's 0.081.
+
+The reasoning behind the prediction was that a model agrees with itself more
+than with the world, and most so where it is least accurate, because there is
+more room to agree with its own mistakes. That is wrong here, and the reason it
+is wrong is worth more than the prediction was. Self-agreement inflates a score
+only when the labelling judgement and the scoring judgement are the *same*
+judgement wearing different words. T69's judge re-estimated a genuinely latent
+quantity, "is this passage relevant", where two readings can differ. The
+gradient's items have a decisive element that settles the answer, so relabelling
+is not a second opinion about something uncertain; it is the same reading of the
+same fact. A model that gets an item wrong under the scoring wording tends to
+get it wrong under the labelling wording too, and the errors cancel out of the
+difference instead of compounding.
+
+So circularity is not a constant to discount by. It scales with how much room
+for disagreement the task leaves, which means a benchmark on an ambiguous task
+carries far more of it than the +0.005 measured here, and quoting this number as
+a general correction would be the same mistake in the other direction.
+
+**For B1 and B2: the discount is ~zero**, on top of provenance already showing
+the mechanism is absent by construction. That is two independent lines reaching
+the same place, which is the only reason to state it with any confidence.
 
 40 calls at default settings, about $0.008. `--dry-run` sizes it and prints the
 prediction without a credential.
