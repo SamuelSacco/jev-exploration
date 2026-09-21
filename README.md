@@ -103,16 +103,19 @@ Semantics, verified on `jev-1.13.0`:
 analysis/
   external/                published figures recomputed against their noise floors
   sweep/                   review of the external claim sweep, plus its audit tool
+  circularity.py           judge-circularity audit of the gradient findings
   calibration_transfer.py  whether a fitted correction transfers
 docs/
   claims-audit.md          the ledger
   thread.md                the original launch-week narrative (frozen)
 jevlab/
   client.py                HTTP client: retries, network floor, escalation rules
+  transport.py             seam for running under an operator's own credentials
   stats.py                 ECE, reliability, Brier, Wilson/bootstrap, ECE noise floor
   calibration.py           Platt and isotonic maps, slope transfer, intercept refit
 lab/
   baselines.py             non-AI baselines with Wilson intervals
+  exp_circularity.py       what self-labelling would have inflated the score by
   probe_structure.py       isolation, batching-scale and Choice-vs-Noul probes
   run_demos.py             triage and negation demos, scored against ground truth
   run_tiers.py             batched runner for the difficulty gradient
@@ -140,6 +143,7 @@ python3 lab/tiers/analyse.py         # re-derive the gradient result from raw re
 python3 analysis/calibration_transfer.py
 python3 analysis/external/run.py --base ~    # needs the other repos cloned
 python3 analysis/sweep/audit.py      # audit external calibration figures
+python3 analysis/circularity.py      # judge-circularity audit of B1/B2
 python3 lab/probe_structure.py --dry-run
 python3 lab/run_tiers.py --dry-run   # size the gradient experiment
 ```
@@ -152,6 +156,7 @@ python3 skills/jev/bin/jev.py lab/edge_payload.json   # one raw call
 python3 lab/run_demos.py --repeat 3                   # triage + negation, variance reported
 python3 lab/run_tiers.py --repeat 3                   # the difficulty gradient
 python3 lab/probe_structure.py --repeat 3             # structural probes, 24 calls
+python3 lab/exp_circularity.py --repeat 1             # circularity premium, 40 calls
 python3 skills/jev/bin/jev.py --floor                 # network floor, no key needed
 ```
 

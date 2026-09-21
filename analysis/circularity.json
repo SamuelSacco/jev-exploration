@@ -1,0 +1,90 @@
+{
+  "provenance": {
+    "generator": "lab/tiers/generate.py",
+    "label_assigned_at_line": 173,
+    "text_built_at_line": 179,
+    "label_precedes_text": true,
+    "api_imports": [],
+    "model_output_reads": [],
+    "verdict": "labels are not model-derived"
+  },
+  "b2_sensitivity": {
+    "t1_trivial": {
+      "n_above_threshold": 63,
+      "coverage": 0.315,
+      "hit_rate": 1.0,
+      "flips_to_fall_below_target": 4,
+      "as_fraction_of_tier": 0.02,
+      "target": 0.95
+    },
+    "t2_ordinary": {
+      "n_above_threshold": 65,
+      "coverage": 0.325,
+      "hit_rate": 1.0,
+      "flips_to_fall_below_target": 4,
+      "as_fraction_of_tier": 0.02,
+      "target": 0.95
+    },
+    "t3_hard": {
+      "n_above_threshold": 47,
+      "coverage": 0.235,
+      "hit_rate": 1.0,
+      "flips_to_fall_below_target": 3,
+      "as_fraction_of_tier": 0.015,
+      "target": 0.95
+    },
+    "t4_adversarial": {
+      "n_above_threshold": 43,
+      "coverage": 0.215,
+      "hit_rate": 1.0,
+      "flips_to_fall_below_target": 3,
+      "as_fraction_of_tier": 0.015,
+      "target": 0.95
+    }
+  },
+  "b1_sensitivity": {
+    "intact_margin": 0.0145,
+    "flips_to_break": 8,
+    "fraction_to_break": 0.04,
+    "searched_to_fraction": 0.25,
+    "trace": [
+      {
+        "flips": 0,
+        "fraction": 0.0,
+        "compare_gaps_under_baseline_mass": 0.1007,
+        "calibration_worsened": false
+      },
+      {
+        "flips": 2,
+        "fraction": 0.01,
+        "compare_gaps_under_baseline_mass": 0.1028,
+        "calibration_worsened": false
+      },
+      {
+        "flips": 4,
+        "fraction": 0.02,
+        "compare_gaps_under_baseline_mass": 0.1071,
+        "calibration_worsened": false
+      },
+      {
+        "flips": 6,
+        "fraction": 0.03,
+        "compare_gaps_under_baseline_mass": 0.1101,
+        "calibration_worsened": false
+      },
+      {
+        "flips": 8,
+        "fraction": 0.04,
+        "compare_gaps_under_baseline_mass": 0.1185,
+        "calibration_worsened": true
+      }
+    ]
+  },
+  "b1_random_reference": {
+    "fraction": 0.1,
+    "flips": 20,
+    "seeds": 20,
+    "broke": 3
+  },
+  "t69_swing_for_scale": 0.081
+}
