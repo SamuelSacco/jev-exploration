@@ -44,6 +44,11 @@ noise floor for its sample size ([method](analysis/external/)), then ran a contr
    refitting the intercept on ~50 labels cut ECE 74% and helped every case
    ([method](analysis/CALIBRATION-TRANSFER.md)).
 
+7. **The probabilities are quantised to 0.01, and Choice and Score can return exactly
+   0 or 1.** Nothing in a direct response says so. An exact 0 on the correct option
+   cannot be repaired by any rescaling. Noul did not do it once in 2,580 answers, and
+   every calibration result here is Noul.
+
 In short: Jev returns a well-behaved monotone score carrying a stable distortion, not
 a probability. Converting it into one costs a slope fitted once plus roughly fifty
 labels per deployment. Whether that slope survives a change of domain or a retrain is
@@ -104,6 +109,7 @@ analysis/
   external/                published figures recomputed against their noise floors
   sweep/                   review of the external claim sweep, plus its audit tool
   circularity.py           judge-circularity audit of the gradient findings
+  quantisation.py          numeric resolution of the API's returned values
   calibration_transfer.py  whether a fitted correction transfers
 docs/
   claims-audit.md          the ledger
@@ -144,6 +150,7 @@ python3 analysis/calibration_transfer.py
 python3 analysis/external/run.py --base ~    # needs the other repos cloned
 python3 analysis/sweep/audit.py      # audit external calibration figures
 python3 analysis/circularity.py      # judge-circularity audit of B1/B2
+python3 analysis/quantisation.py     # what resolution the API actually returns
 python3 lab/probe_structure.py --dry-run
 python3 lab/run_tiers.py --dry-run   # size the gradient experiment
 ```
@@ -191,6 +198,7 @@ that sample size, the ratio between them, and coverage at any quoted threshold.
 `jevlab.stats.ece_with_floor` and `coverage_at` produce all of it.
 
 Open work: [#9](../../issues/9) (does the correction transfer across domains),
+[#10](../../issues/10) (per-primitive sign of miscalibration, raised externally),
 [#7](../../issues/7) (enable CI, choose a licence).
 
 ## Related work

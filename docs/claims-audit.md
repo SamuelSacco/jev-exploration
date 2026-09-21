@@ -3,7 +3,7 @@
 One row per claim made about Jev, with its current status and the best evidence for or
 against it. This file is meant to be edited as evidence appears; it is not a snapshot.
 
-**Last updated:** 2026-09-18 · **Model version for runs in this repo:** `jev-1.13.0`
+**Last updated:** 2026-09-21 · **Model version for runs in this repo:** `jev-1.13.0`
 
 Status vocabulary:
 
@@ -40,6 +40,8 @@ it. Third-party figures are recorded as published, except where §6 states other
 | 13 | Probabilities are calibrated | Refuted at scale | [§6](#6-the-open-question-calibration), both studies large enough to measure it find real miscalibration |
 | 14 | Confidence is safe to route and escalate on | Depends on the sign of the error | [§6](#6-the-open-question-calibration), p≥0.9 gave 1.000 here, 0.739 on phishing |
 | 15 | Calibration holds when the model is out of its depth | Yes, as a function, but harder inputs land where it is worst | [§6](#6-the-open-question-calibration), the 800-item gradient |
+| 16 | Returned probabilities are full-precision floats | Refuted | [§1](#numeric-resolution), every value on a 0.01 grid across 71 direct responses (measured here) |
+| 17 | A returned probability can be exactly 0 or 1, which no rescaling can repair | Verified for Choice and Score; no instance for Noul | [§1](#numeric-resolution) (measured here), [#10](../../issues/10) |
 
 ---
 
@@ -73,6 +75,40 @@ garbage-in case even though the answer did not. Contradictory evidence returned 
 question unrelated to the supplied state was answered from world knowledge at 0.04. Four
 probes prove nothing about calibration and are not counted as evidence for row 13. They establish that the failure modes are visible in the distribution, which is a
 weaker and different claim.
+
+### Numeric resolution
+
+Every number the API returned in this repo's 71 committed responses sits on a 0.01
+grid: 3,180 values, none off it. Nothing in a direct response declares that. The
+top-level keys are `answers`, `model` and `usage`, and no more. Responses through
+Vercel AI Gateway carry `rounding: {probabilityDecimals: 2, scoreDecimals: 2}`
+([#10](../../issues/10)), so the Gateway reports the rounding rather than causing it.
+Quantised distributions still sum to exactly 1 across all 120 vectors, so the
+rounding is applied per component with one entry absorbing the residual, which is
+what a stray `0.8200000000000001` in the raw bodies is.
+
+The endpoints are not shared across primitives:
+
+| Field | n | Exactly 0 | Exactly 1 | Observed range |
+|---|---|---|---|---|
+| `choice.probabilities` | 240 | 70.4% | 20.4% | 0.0–1.0 |
+| `score.probabilities` | 180 | 47.2% | 16.7% | 0.0–1.0 |
+| `score.score` | 60 | 41.7% | — | 0.0–2.0 |
+| `choice.confidence` | 60 | 0% | 76.7% | 0.44–1.0 |
+| `score.confidence` | 60 | 0% | 50.0% | 0.63–1.0 |
+| `noul.noul` | 2,580 | 0% | 0% | 0.01–0.98 |
+
+Zero endpoints in 2,580 Noul answers bounds the rate at 0.15% (Wilson, 95%), which is
+an absence worth acting on rather than a gap in the data. Two consequences. A Choice
+or Score can assign exactly 0 to the correct option, and no temperature or Platt map
+can move it, because both act on the logit; row 6's "honest uncertainty" is a claim
+about the distribution being *visible*, not about it being bounded away from 0.
+And every calibration figure in this repo is Noul, measured on the one primitive that
+appears to be clamped, so the correction in §6 is well defined on Noul and would need
+a floor before it could be applied to the other two.
+
+`python3 analysis/quantisation.py` re-derives all of it from `lab/runs/`, and
+`tests/test_quantisation.py` fails if a future run breaks any of it.
 
 ## 2. Speed and cost
 
