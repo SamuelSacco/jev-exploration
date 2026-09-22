@@ -267,10 +267,9 @@ def measure_network_floor(
 ) -> dict:
     """Time the transport setup that every request pays before the model sees it.
 
-    This is the floor any end-to-end latency figure sits on top of. Reporting
-    request latency without it makes the model look slow in proportion to how
-    far you are from the service: jev-phishing-bench measured a 163 ms floor
-    under a 239 ms p50, so most of what looked like model time was distance.
+    Every end-to-end latency figure sits on top of this floor. Reporting request
+    latency without it makes the model look slow in proportion to distance from
+    the service: jev-phishing-bench measured a 163 ms floor under a 239 ms p50.
 
     Behind an HTTP proxy a direct socket fails the TLS handshake (the proxy
     answers with an HTTP response, which reads as WRONG_VERSION_NUMBER), so the
@@ -333,12 +332,11 @@ def escalations(
 ) -> list:
     """Questions whose answers are not decisive enough to act on unreviewed.
 
-    Covers all three primitives, which a Noul-only rule does not: a Choice can
-    return a winner at 0.52 with confidence 0.04, and nothing about the winner
-    alone tells you that happened.
+    Covers all three primitives. A Choice can return a winner at 0.52 with
+    confidence 0.04, which the winner alone does not reveal.
 
-    The defaults here are starting guesses, not recommendations. Fit them on
-    your own labelled data; that is the whole argument of this repo.
+    The defaults are starting points rather than recommendations; fit them on
+    labelled data from the target domain.
     """
     low, high = noul_band
     flagged = []

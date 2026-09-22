@@ -1,0 +1,80 @@
+[
+  {
+    "id": "O13-reproducer",
+    "n": 100,
+    "reported_ece": null,
+    "sweep_verdict": "PROVEN where testable, with caveat",
+    "floor_by_distribution": {
+      "spread": 0.1004,
+      "concentrated": 0.0434,
+      "bimodal": 0.0257
+    },
+    "audit_verdict": "no ECE reported",
+    "ratio_range": "cannot be audited; bin monotonicity is not an ECE"
+  },
+  {
+    "id": "O13-skeptic",
+    "n": 80,
+    "reported_ece": 0.054,
+    "sweep_verdict": "PROVEN where testable, with caveat",
+    "floor_by_distribution": {
+      "spread": 0.1111,
+      "concentrated": 0.0419,
+      "bimodal": 0.0269
+    },
+    "audit_verdict": "UNRESOLVABLE without raw probabilities",
+    "ratio_range": "0.49x (spread) to 2.01x (bimodal)"
+  },
+  {
+    "id": "T6-extraction-bound",
+    "n": 40,
+    "reported_ece": 0.054,
+    "sweep_verdict": "mechanism partially PROVEN for verification",
+    "floor_by_distribution": {
+      "spread": 0.1497,
+      "concentrated": 0.0667,
+      "bimodal": 0.0387
+    },
+    "audit_verdict": "at the floor",
+    "ratio_range": "0.36x (spread) to 1.39x (bimodal)"
+  },
+  {
+    "id": "T22-verdict-open-jev",
+    "n": 2000,
+    "reported_ece": 0.144,
+    "sweep_verdict": "UNVERIFIED (third-party; not replicated)",
+    "floor_by_distribution": {
+      "spread": 0.0219,
+      "concentrated": 0.0121,
+      "bimodal": 0.0054
+    },
+    "audit_verdict": "above the floor",
+    "ratio_range": "6.57x (spread) to 26.71x (bimodal)"
+  },
+  {
+    "id": "T15-phishing-bench",
+    "n": 2000,
+    "reported_ece": 0.154,
+    "sweep_verdict": "VERIFIED BY THIRD PARTY",
+    "floor_by_distribution": {
+      "spread": 0.0219,
+      "concentrated": 0.0121,
+      "bimodal": 0.0054
+    },
+    "audit_verdict": "above the floor",
+    "ratio_range": "7.03x (spread) to 28.56x (bimodal)"
+  },
+  {
+    "id": "B3-negation",
+    "n": 80,
+    "reported_ece": 0.065,
+    "sweep_verdict": "PROVEN",
+    "floor_by_distribution": {
+      "spread": 0.1111,
+      "concentrated": 0.0419,
+      "bimodal": 0.0269
+    },
+    "audit_verdict": "UNRESOLVABLE without raw probabilities",
+    "ratio_range": "0.58x (spread) to 2.42x (bimodal)"
+  }
+]

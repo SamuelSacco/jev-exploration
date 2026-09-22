@@ -115,7 +115,7 @@ def main(argv=None) -> int:
         r for r in results if r["reproduced"] is False
     ]
     if unreproduced:
-        print("REPRODUCTION FAILED — not reinterpreting these:", file=sys.stderr)
+        print("REPRODUCTION FAILED, not reinterpreting these:", file=sys.stderr)
         for r in unreproduced:
             print(
                 f"  {r['repo']}/{r['variant']}: got {r['ece']}, "

@@ -34,9 +34,8 @@ DEFAULT_BINS = 10
 def wilson(hits: int, n: int, z: float = 1.96) -> tuple:
     """Wilson score interval for a binomial proportion.
 
-    Preferred over the normal approximation because the samples in this repo are
-    small and often land at 100%, where the normal interval collapses to zero
-    width and implies a certainty that is not there.
+    Preferred over the normal approximation because samples here are small and
+    often land at 100%, where the normal interval collapses to zero width.
     """
     if n == 0:
         return (0.0, 1.0)
@@ -74,12 +73,11 @@ def reliability(
     are clamped into the end bins rather than dropped, so every prediction is
     still weighted in the ECE.
 
-    `edge` selects the half-open convention: "left" makes bins [lo, hi) with the
-    top bin closed, "right" makes them (lo, hi] with the bottom bin closed. This
-    is not pedantry. Jev concentrates probability on round numbers, so values sit
-    exactly on bin edges constantly, and jev-benchmark uses the right-closed form.
-    At n=60 one item changing bins moved their ECE by 0.02, a third of the
-    reported figure.
+    `edge` selects the half-open convention: "left" gives bins [lo, hi) with the
+    top bin closed, "right" gives (lo, hi] with the bottom bin closed. It matters
+    because Jev concentrates probability on round numbers, so values sit on bin
+    edges frequently. jev-benchmark uses the right-closed form; at n=60, one item
+    changing bins moves its reported ECE by 0.02.
     """
     lo_r, hi_r = bin_range
     width = (hi_r - lo_r) / bins
@@ -136,9 +134,9 @@ def mce(
 ) -> float:
     """Maximum Calibration Error: the worst single bin.
 
-    Worth reporting next to ECE. A model can carry a respectable ECE while being
-    badly wrong in one band, which is exactly the failure that matters if your
-    routing threshold sits in that band.
+    Reported next to ECE because a model can carry a respectable ECE while being
+    badly wrong in one band, which is the failure that matters when a routing
+    threshold sits in that band.
     """
     gaps = [abs(b.gap) for b in reliability(pairs, bins, bin_range, edge)]
     return max(gaps) if gaps else float("nan")
@@ -160,9 +158,9 @@ def accuracy(pairs: list, threshold: float = 0.5) -> float:
 def coverage_at(pairs: list, threshold: float) -> dict:
     """Accuracy among predictions above a confidence threshold, plus coverage.
 
-    Accuracy at high confidence is meaningless without the fraction of cases that
-    clear the bar. The community Enron result ("93.7% at >=95% confidence") is
-    unreadable for exactly this reason.
+    Accuracy at high confidence is uninterpretable without the fraction of cases
+    clearing the bar. The community Enron result ("93.7% at >=95% confidence")
+    omits it and cannot be read.
     """
     kept = [(p, hit) for p, hit in pairs if p >= threshold]
     if not kept:
@@ -265,11 +263,10 @@ def ece_noise_floor(
     from those same probabilities -- i.e. from a model that is calibrated by
     construction -- and the resulting ECE distribution is the null.
 
-    Reference points, 10 bins, for Jev-like probabilities concentrated near 0 and 1:
-    the floor is about 0.06 at n=60, 0.025 at n=500 and 0.012 at n=2000. Published
-    Jev ECE figures should be read against those: 0.0505-0.0712 at n=60 sits at the
-    floor and is uninformative, while 0.154 at n=2000 is an order of magnitude
-    above it and is real.
+    Reference points at 10 bins, for probabilities concentrated near 0 and 1: the
+    floor is about 0.06 at n=60, 0.025 at n=500 and 0.012 at n=2000. Published Jev
+    figures read against those: 0.0505-0.0712 at n=60 sits at the floor and is
+    uninformative, while 0.154 at n=2000 is an order of magnitude above it.
     """
     if not probs:
         return {"n": 0, "mean": float("nan"), "p95": float("nan")}
@@ -392,3 +389,37 @@ def decompose_ece(
             "compare": sum(v for k, v in comp_mass.items() if k in base_gaps),
         },
     }
+
+
+def auc(pairs: list) -> float:
+    """Probability that a random positive outscores a random negative.
+
+    Mann-Whitney, ties counted as half. 0.5 is no discrimination at all. Used to
+    decide whether a Platt fit is even identified: if the stated probabilities
+    carry no information about the outcome, the maximum-likelihood slope is
+    unbounded and the fitted value is noise rather than a measurement.
+    """
+    pos = [p for p, hit in pairs if hit]
+    neg = [p for p, hit in pairs if not hit]
+    if not pos or not neg:
+        return 0.5
+    wins = 0.0
+    for a in pos:
+        for b in neg:
+            wins += 1.0 if a > b else (0.5 if a == b else 0.0)
+    return wins / (len(pos) * len(neg))
+
+
+def auc_null_se(pairs: list) -> float:
+    """Standard error of AUC under the null that the score is uninformative.
+
+    The Mann-Whitney null variance, which depends on both class sizes. Used to
+    decide how far from 0.5 an observed AUC has to be before it means anything:
+    at 60 against 60 the null SE is 0.053, so a coin flip reaching 0.42 is
+    ordinary and a fixed threshold of a few points would pass it.
+    """
+    n_pos = sum(1 for _, hit in pairs if hit)
+    n_neg = len(pairs) - n_pos
+    if not n_pos or not n_neg:
+        return 0.0
+    return math.sqrt((n_pos + n_neg + 1) / (12.0 * n_pos * n_neg))

@@ -3,15 +3,15 @@
 Issue #6. Decisions are made on ticket text and criteria wording alone, before any
 run is scored, and recorded here so the labels are visibly pre-registered.
 
-## v2 — 2026-09-18
+## v2 (2026-09-18)
 
 Two tickets had no single defensible home under the v1 criteria. In both cases the
-fault was in the criteria rather than the tickets, so both criteria were tightened;
-one label changed as a consequence.
+fault lay in the criteria rather than the tickets, so both were tightened; one label
+changed as a consequence.
 
-### t4 — "the new dashboard is great … it would be nice if the export button remembered my last format"
+### t4: "the new dashboard is great … it would be nice if the export button remembered my last format"
 
-**v1 label: `technical`. v2 label: `other`.**
+v1 label: `technical`. v2 label: `other`.
 
 The `technical` criterion reads "Bugs, errors, outages, integrations, crashes,
 broken features". It enumerates failures only. Nothing in t4 is failing: the export
@@ -30,14 +30,14 @@ the committed runs incomparable).
 > **other**: Feature requests, product feedback, praise, or anything that is not a
 > failure, a payment matter, or a pre-sale question.
 
-The test this decision had to pass: *would I still call the v1 label wrong if a
-model had answered `technical`?* Yes. The criterion lists failure modes and t4 has
-no failure; the argument does not reference any model output. Stated plainly
-because this change does move the number in Jev's favour — see below.
+The test applied: would the v1 label still be wrong if a model had answered
+`technical`? Yes. The criterion lists failure modes and t4 contains no failure, so the
+argument does not reference any model output. Worth stating because the change does
+move the score in Jev's favour; see below.
 
-### t12 — "I was quoted $49/user/month on the phone but my contract says $59 … before I sign"
+### t12: "I was quoted $49/user/month on the phone but my contract says $59 … before I sign"
 
-**v1 label: `sales`. v2 label: `sales`, unchanged.**
+v1 label: `sales`. v2 label: `sales`, unchanged.
 
 Two criteria both claimed this one. `billing` read "…subscriptions, pricing
 disputes" and `sales` read "Plan comparisons, quotes, discounts, upgrades,
@@ -45,8 +45,8 @@ pre-purchase questions". A quote-versus-contract discrepancy is literally both a
 pricing dispute and a question about a quote.
 
 Deciding from the text: the customer has not signed. There is no payment, no
-invoice, no charge and no subscription, so billing has nothing to act on — there is
-no account to adjust. The dispute is between a verbal quote and a contract, both of
+invoice, no charge and no subscription, so billing has nothing to act on and no
+account to adjust. The dispute is between a verbal quote and a contract, both of
 which sales owns, and it is explicitly pre-purchase.
 
 Fix: `billing` now scopes its pricing disputes to money that has actually moved.
@@ -61,15 +61,14 @@ The label stands, so this remains a miss for the committed run.
 Re-scoring `lab/runs/20260918T005803Z-triage.jsonl` under v2 labels moves department
 routing from 10/12 to 11/12: t4 now counts as correct, t12 still does not.
 
-That is a change in our favour, made by us, after seeing the result, which is the
-exact pattern this repo criticises elsewhere. The mitigations are that the reasoning
-above cites only ticket text and criteria wording, that it is recorded before the
-re-scored number is used anywhere, and that the other disputed ticket was left
-standing as a miss. Both numbers should be quoted with their label version, and at
-n=12 neither is distinguishable from the majority-class baseline anyway
-(11/12 has a 95% interval of [65.1%, 97.9%]).
+That is a favourable change made after seeing the result, which is the pattern this
+repo criticises elsewhere. Three things bound it: the reasoning above cites only ticket
+text and criteria wording, it is recorded before the re-scored figure is used anywhere,
+and the other disputed ticket was left standing as a miss. Both figures should be
+quoted with their label version, and at n=12 neither is distinguishable from the
+majority-class baseline in any case (11/12 has a 95% interval of [65.1%, 97.9%]).
 
-## v1 — 2026-09-16
+## v1 (2026-09-16)
 
 Original hand labels, 12 tickets. Both tickets above were labelled without noticing
 that the criteria admitted more than one answer.

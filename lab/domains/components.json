@@ -1,0 +1,355 @@
+{
+  "version": "1.0",
+  "created": "2026-09-21",
+  "note": "Three non-email domains for issue #9. Each domain has matched decisive pairs sharing a topic and its vocabulary, so the label cannot be read off the subject matter, plus a single cue pool that is drawn independently of the label. Difficulty is held at one cue per item for every slice: domain is the variable under test, so nothing else may move with it. Same construction as lab/tiers/components.json, different content.",
+  "domains": {
+    "code_security": {
+      "question": "Does change {id} introduce a security flaw?",
+      "positive": "Introduces a security flaw",
+      "negative": "Does not introduce a security flaw",
+      "preamble": "Pull request {n}, file {file}, reviewed by {person} ({role}).",
+      "files": [
+        "auth/session.py",
+        "api/handlers.go",
+        "web/upload.rb",
+        "billing/invoice.py",
+        "search/query.java",
+        "admin/users.ts"
+      ],
+      "people": [
+        "R. Okafor",
+        "M. Lindqvist",
+        "J. Baptiste",
+        "A. Duarte",
+        "S. Nakamura",
+        "T. Whelan"
+      ],
+      "roles": [
+        "backend",
+        "platform",
+        "security",
+        "infra",
+        "payments",
+        "search"
+      ],
+      "decisive_pairs": [
+        {
+          "topic": "sql",
+          "positive": "The query is assembled with string formatting: `\"SELECT * FROM users WHERE email = '\" + email + \"'\"`, and email arrives from the request body unmodified.",
+          "negative": "The query is parameterised: `cursor.execute(\"SELECT * FROM users WHERE email = %s\", (email,))`, with email arriving from the request body."
+        },
+        {
+          "topic": "comparison",
+          "positive": "The supplied token is compared with `==`, so the comparison returns as soon as the first byte differs.",
+          "negative": "The supplied token is compared with `hmac.compare_digest`, which takes the same time whichever byte differs."
+        },
+        {
+          "topic": "path",
+          "positive": "The upload handler joins the user-supplied filename straight onto the storage root before writing.",
+          "negative": "The upload handler resolves the user-supplied filename and rejects it if the result escapes the storage root."
+        },
+        {
+          "topic": "verify",
+          "positive": "The JWT is decoded with `verify=False` and its claims are then trusted for authorisation.",
+          "negative": "The JWT is decoded with the signing key and its claims are trusted only after the signature verifies."
+        },
+        {
+          "topic": "randomness",
+          "positive": "The reset token is drawn from `random.random()` seeded with the current second.",
+          "negative": "The reset token is drawn from `secrets.token_urlsafe(32)`."
+        },
+        {
+          "topic": "shell",
+          "positive": "The report name reaches `os.system` inside an interpolated shell string.",
+          "negative": "The report name is passed as an argument in an `subprocess.run([...], shell=False)` list."
+        },
+        {
+          "topic": "redirect",
+          "positive": "After login the handler redirects to whatever URL the `next` parameter holds.",
+          "negative": "After login the handler redirects to `next` only when it matches the site's own path allowlist."
+        },
+        {
+          "topic": "authz",
+          "positive": "The endpoint checks that the caller is signed in, then loads the invoice by the id in the path without checking who owns it.",
+          "negative": "The endpoint checks that the caller is signed in and that the invoice's owner id matches the caller before loading it."
+        },
+        {
+          "topic": "deserialise",
+          "positive": "The cached blob is restored with `pickle.loads` and the cache is writable by any authenticated user.",
+          "negative": "The cached blob is restored with `json.loads` into a schema-checked dataclass."
+        },
+        {
+          "topic": "logging",
+          "positive": "The failed-login handler writes the submitted password into the audit log alongside the username.",
+          "negative": "The failed-login handler writes the username and a fixed marker into the audit log, never the submitted password."
+        }
+      ],
+      "cues": [
+        {
+          "kind": "diff_size",
+          "text": "The change touches 34 lines across 3 files."
+        },
+        {
+          "kind": "review_note",
+          "text": "Reviewer note: flagging for a second pair of eyes."
+        },
+        {
+          "kind": "timing",
+          "text": "Opened Tuesday, merged Thursday, ahead of the release."
+        },
+        {
+          "kind": "tests",
+          "text": "The change adds four unit tests and they pass."
+        },
+        {
+          "kind": "author",
+          "text": "Authored by the module's long-standing maintainer."
+        },
+        {
+          "kind": "label",
+          "text": "The PR carries the `security-review` label."
+        },
+        {
+          "kind": "ci",
+          "text": "CI is green on the second run after a flaky retry."
+        },
+        {
+          "kind": "backport",
+          "text": "The change is a backport from the release branch."
+        }
+      ]
+    },
+    "lab_safety": {
+      "question": "Does step {id} violate the written safety protocol?",
+      "positive": "Violates the protocol",
+      "negative": "Complies with the protocol",
+      "preamble": "Bench log {n}, procedure {proc}, recorded by {person} ({role}).",
+      "files": [
+        "SOP-114 solvent transfer",
+        "SOP-208 centrifuge run",
+        "SOP-331 acid dilution",
+        "SOP-402 cryostorage",
+        "SOP-517 culture disposal",
+        "SOP-660 gas cylinder change"
+      ],
+      "people": [
+        "D. Aregbesola",
+        "P. Novotna",
+        "H. Castellano",
+        "Y. Mbeki",
+        "K. Fjeld",
+        "L. Ferreira"
+      ],
+      "roles": [
+        "technician",
+        "postdoc",
+        "lab manager",
+        "graduate student",
+        "visiting researcher",
+        "safety officer"
+      ],
+      "decisive_pairs": [
+        {
+          "topic": "fume_hood",
+          "positive": "The solvent was decanted on the open bench with the hood sash closed and the hood switched off.",
+          "negative": "The solvent was decanted inside the fume hood with the sash at the marked working height."
+        },
+        {
+          "topic": "order",
+          "positive": "Water was poured into the concentrated acid.",
+          "negative": "The concentrated acid was added to the water, slowly and with stirring."
+        },
+        {
+          "topic": "balance",
+          "positive": "The centrifuge was run with a single tube in the rotor and no counterweight.",
+          "negative": "The centrifuge was run with the tube opposite a counterweight matched to within 0.1 g."
+        },
+        {
+          "topic": "ppe",
+          "positive": "Cryogenic vials were lifted out of the dewar bare-handed after the gloves were set aside.",
+          "negative": "Cryogenic vials were lifted out of the dewar with the insulated cryo gloves and a face shield on."
+        },
+        {
+          "topic": "waste",
+          "positive": "The spent culture was poured down the sink and the sink flushed with water.",
+          "negative": "The spent culture was autoclaved at 121 C for 30 minutes before disposal."
+        },
+        {
+          "topic": "cylinder",
+          "positive": "The gas cylinder was moved across the corridor with its regulator still fitted and no strap.",
+          "negative": "The gas cylinder was capped, strapped to the trolley, and the regulator removed before it was moved."
+        },
+        {
+          "topic": "labelling",
+          "positive": "The decanted stock went into an unlabelled bottle to be labelled later.",
+          "negative": "The decanted stock went into a bottle labelled with the contents, concentration, date and initials."
+        },
+        {
+          "topic": "lone_work",
+          "positive": "The overnight reaction was left running with nobody else in the building and no check-in arranged.",
+          "negative": "The overnight reaction was left running with a buddy check-in logged at two-hour intervals."
+        },
+        {
+          "topic": "sharps",
+          "positive": "The used needle was recapped by hand before being dropped in the bin.",
+          "negative": "The used needle went straight into the sharps bin without being recapped."
+        },
+        {
+          "topic": "spill",
+          "positive": "The mercury spill was swept up with a dry brush and tipped into the general waste bin.",
+          "negative": "The mercury spill was contained with the mercury spill kit and logged for licensed collection."
+        }
+      ],
+      "cues": [
+        {
+          "kind": "timing",
+          "text": "Timestamped 23:40 on a Saturday."
+        },
+        {
+          "kind": "experience",
+          "text": "The operator was on their first unsupervised week."
+        },
+        {
+          "kind": "signoff",
+          "text": "The entry is countersigned by the safety officer."
+        },
+        {
+          "kind": "history",
+          "text": "The same procedure has run weekly for three years."
+        },
+        {
+          "kind": "checklist",
+          "text": "The pre-start checklist is attached and complete."
+        },
+        {
+          "kind": "inspection",
+          "text": "The log notes the bench was being cleared ahead of an inspection."
+        },
+        {
+          "kind": "near_miss",
+          "text": "The same procedure generated a near-miss report last quarter."
+        },
+        {
+          "kind": "handover",
+          "text": "The entry was written up at shift handover."
+        }
+      ]
+    },
+    "contract_liability": {
+      "question": "Does clause {id} expose the signing party to uncapped liability?",
+      "positive": "Exposes the signer to uncapped liability",
+      "negative": "Does not expose the signer to uncapped liability",
+      "preamble": "Agreement {n}, clause {proc}, marked up by {person} ({role}).",
+      "files": [
+        "7.2 Indemnity",
+        "11.4 Limitation",
+        "3.1 Service levels",
+        "14.6 Data",
+        "9.8 Termination",
+        "5.3 Warranties"
+      ],
+      "people": [
+        "C. Bergmann",
+        "N. Adeyemi",
+        "F. Kowalczyk",
+        "E. Santos",
+        "V. Ramanathan",
+        "B. O'Rourke"
+      ],
+      "roles": [
+        "commercial counsel",
+        "contracts manager",
+        "general counsel",
+        "procurement lead",
+        "deal desk",
+        "outside counsel"
+      ],
+      "decisive_pairs": [
+        {
+          "topic": "indemnity",
+          "positive": "The Supplier shall indemnify the Customer against all losses arising from the Services, and this indemnity is expressly excluded from the limitation of liability in clause 11.4.",
+          "negative": "The Supplier shall indemnify the Customer against losses arising from the Services, and this indemnity is subject to the limitation of liability in clause 11.4."
+        },
+        {
+          "topic": "cap",
+          "positive": "The aggregate cap applies to claims in contract only, and claims in tort or for breach of statutory duty are not capped.",
+          "negative": "The aggregate cap applies to all claims however arising, whether in contract, tort or for breach of statutory duty."
+        },
+        {
+          "topic": "consequential",
+          "positive": "Neither party excludes liability for loss of profit, revenue or anticipated savings, whether direct or indirect.",
+          "negative": "Each party excludes liability for loss of profit, revenue or anticipated savings, whether direct or indirect."
+        },
+        {
+          "topic": "third_party",
+          "positive": "The Supplier accepts liability for any claim brought by a third party in connection with the Services, without limit.",
+          "negative": "The Supplier accepts liability for third-party claims up to the aggregate cap set out in clause 11.4."
+        },
+        {
+          "topic": "ip",
+          "positive": "The Supplier's IP indemnity is unlimited in amount and survives termination indefinitely.",
+          "negative": "The Supplier's IP indemnity is limited to the fees paid in the preceding twelve months and survives termination for two years."
+        },
+        {
+          "topic": "data",
+          "positive": "The Supplier bears all regulatory fines levied on either party in respect of Personal Data, with no financial limit stated.",
+          "negative": "The Supplier bears regulatory fines levied in respect of Personal Data up to the aggregate cap, and no further."
+        },
+        {
+          "topic": "sla",
+          "positive": "Service credits are stated to be in addition to, and not in substitution for, any other remedy, and no cap is applied to those remedies.",
+          "negative": "Service credits are stated to be the Customer's sole and exclusive remedy for failure to meet the service levels."
+        },
+        {
+          "topic": "sub",
+          "positive": "The Supplier is responsible for its subcontractors' acts and omissions without limit, notwithstanding any other provision of this Agreement.",
+          "negative": "The Supplier is responsible for its subcontractors' acts and omissions as if they were its own, subject to clause 11.4."
+        },
+        {
+          "topic": "escalator",
+          "positive": "The cap is expressed as the greater of the fees paid and such sum as the Customer may reasonably certify as its loss.",
+          "negative": "The cap is expressed as the greater of the fees paid in the preceding twelve months and one hundred thousand pounds."
+        },
+        {
+          "topic": "survival",
+          "positive": "Clause 11.4 ceases to apply following termination for material breach.",
+          "negative": "Clause 11.4 continues to apply following termination for any reason, including material breach."
+        }
+      ],
+      "cues": [
+        {
+          "kind": "markup",
+          "text": "Marked up in red with the comment 'discuss'."
+        },
+        {
+          "kind": "template",
+          "text": "The clause is close to the party's standard wording."
+        },
+        {
+          "kind": "round",
+          "text": "Added at the fourth round of mark-up, the evening before signature."
+        },
+        {
+          "kind": "insurance",
+          "text": "The insurance schedule names cover above the stated cap."
+        },
+        {
+          "kind": "accepted",
+          "text": "The mark-up is accepted without further comment."
+        },
+        {
+          "kind": "renewal",
+          "text": "The agreement is a renewal on last year's terms."
+        },
+        {
+          "kind": "counsel",
+          "text": "Outside counsel reviewed this section only."
+        },
+        {
+          "kind": "blank_schedule",
+          "text": "The insurance schedule is left blank."
+        }
+      ]
+    }
+  }
+}

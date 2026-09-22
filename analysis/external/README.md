@@ -26,29 +26,29 @@ python3 analysis/external/run.py --base . --json analysis/external/summary.json
 | jev-spam-eval `spam_plain` | 19,528 | 10 @ [0,1] | 96.0% | 0.0792 | 0.0045 | 17.8 | real |
 | jev-phishing-bench P(phishing) | 2,000 | 10 @ [0,1] | 62.6% | 0.1701 | 0.0206 | 8.3 | real |
 | jev-phishing-bench verdict confidence | 2,000 | 10 @ [0.5,1] | 62.6% | 0.1536 | 0.0209 | 7.3 | real |
-| jev-benchmark `jev-latest` | 60 | 10 @ [0,1] | 91.7% | 0.0712 | 0.0456 | 1.6 | **at the noise floor** |
-| jev-benchmark `jev-preview` | 60 | 10 @ [0,1] | 91.7% | 0.0505 | 0.0452 | 1.1 | **at the noise floor** |
+| jev-benchmark `jev-latest` | 60 | 10 @ [0,1] | 91.7% | 0.0712 | 0.0456 | 1.6 | at the noise floor |
+| jev-benchmark `jev-preview` | 60 | 10 @ [0,1] | 91.7% | 0.0505 | 0.0452 | 1.1 | at the noise floor |
 
 All three published ECE figures reproduce exactly (0.0712, 0.0505, 0.1536), as do
-the published accuracies. jev-spam-eval publishes no ECE, so its rows are ours.
+the published accuracies. jev-spam-eval publishes no ECE, so its rows are computed here.
 
-**Ratio measures detectability, not severity.** A large n pushes the floor down, so
-a mild miscalibration can carry a high ratio. Use the ratio to decide whether a
-study can speak at all; use ECE, Brier and the reliability curve for how bad it is.
+Ratio measures detectability rather than severity: a large n pushes the floor down, so
+a mild miscalibration can carry a high ratio. The ratio says whether a study can speak
+at all; ECE, Brier and the reliability curve say how bad the miscalibration is.
 
 ## What changed, and what it corrects
 
-**jev-benchmark cannot measure calibration, in either direction.** At n=60 with 10
-bins, a perfectly calibrated model scores ECE ≈ 0.045. Both reported figures sit
-on top of that. This is not a criticism of the study — its own `analyze.py` prints
-a warning about bin occupancy, and 50 of its 60 predictions land in a single bin —
-but the figure should not be cited as evidence of good calibration. Its
-binning-independent finding, that none of the five misses came at confidence 1.000,
-is unaffected and remains its strongest result.
+jev-benchmark cannot measure calibration in either direction. At n=60 with 10 bins a
+perfectly calibrated model scores ECE ≈ 0.045, and both reported figures sit on top of
+that. This is a limit of the sample size rather than a fault in the study: its own
+`analyze.py` prints a bin-occupancy warning, and 50 of its 60 predictions land in a
+single bin. The figure should not be cited as evidence of good calibration. Its
+binning-independent finding, that none of the five misses came at confidence 1.000, is
+unaffected and remains its strongest result.
 
-**jev-spam-eval is widely read as showing Jev is well calibrated. At n=19,528 it
-shows the opposite, in a specific place.** The study reports its extremes, which
-are excellent: 0.1% spam below 0.1, 99.9% above 0.9. The middle is not.
+jev-spam-eval is widely read as showing Jev is well calibrated. At n=19,528 it shows
+the opposite in a specific place. The study reports its extremes, which are excellent:
+0.1% spam below 0.1, 99.9% above 0.9. The middle is not.
 
 ```
   bin        n     mean_p  hit rate    gap
@@ -69,11 +69,11 @@ above it understates by up to 0.15. These are not probabilities you can threshol
 on. They are a monotone score whose calibrated decision boundary happens to sit
 near 0.6, not 0.5.
 
-It matters less than it looks, because the middle is thin: bins 0.2–0.8 hold 7.9%
-of the corpus. That is exactly why reporting only the extremes looked fine, and
-exactly why ECE over the whole distribution is the honest summary.
+The middle is thin, holding 7.9% of the corpus, so this matters less than it looks.
+It is also why reporting only the extremes looked fine, and why ECE over the whole
+distribution is the more complete summary.
 
-**jev-phishing-bench is overconfident in every single bin.**
+jev-phishing-bench is overconfident in every bin.
 
 ```
   bin (confidence)   n    mean_p  hit rate    gap
@@ -90,32 +90,31 @@ rule would be wrong roughly one time in four.
 
 ## Consequences for the hypothesis in #1
 
-The earlier framing — that Jev's calibration tracks its accuracy — survives only
-weakly, and the mechanism argues against it being one scalar relationship:
+The earlier framing, that Jev's calibration tracks its accuracy, survives only weakly,
+and the mechanism argues against a single scalar relationship:
 
 - Spam, 98.3% accurate: ECE 0.051, sigmoid-shaped, miscalibrated in a thin middle
   band, well calibrated where most of the mass is.
 - Phishing, 62.6% accurate: ECE 0.154, uniformly overconfident across the range.
 
-Absolute ECE does move with accuracy across these two points, but the *shape* of
-the error is different — a shifted decision boundary versus systematic
-overconfidence. Two points with two different failure modes do not establish a
-trend. #1 is still the experiment that settles it, and it should record the
-reliability curve per tier, not only a scalar, because the scalar hides which of
-these two things is happening.
+Absolute ECE does move with accuracy across these two points, but the shape of the
+error differs: a shifted decision boundary against systematic overconfidence. Two
+points with two failure modes do not establish a trend. Issue #1 settles it, and
+records the reliability curve per tier rather than only a scalar, since the scalar
+hides which of the two is occurring.
 
-## Method notes that cost time
+## Method notes
 
-- **Bin edge convention changes the answer.** jev-benchmark uses right-closed bins,
+- Bin edge convention changes the answer. jev-benchmark uses right-closed bins,
   `conf > lo and conf <= hi`. Left-closed bins give 0.0488 instead of 0.0712 on
-  identical data — a plausible-looking number that is simply not theirs. Jev
-  returns round values constantly, so edges are densely populated.
-- **Bin range changes the answer.** Confidence for a binary decision lives in
-  [0.5, 1], and jev-phishing-bench bins accordingly; jev-benchmark bins over
-  [0, 1]. On the same four predictions those two schemes give ECE 0.05 and 0.29.
-  The two studies' headline ECEs were never directly comparable.
-- **Accuracy is not thresholded for a confidence study.** The outcome is already
-  correctness; thresholding it at 0.5 turns 55/60 into 56/60.
+  identical data: a plausible figure that is not theirs. Jev returns round values
+  constantly, so edges are densely populated.
+- Bin range changes the answer. Confidence for a binary decision lives in [0.5, 1] and
+  jev-phishing-bench bins accordingly, while jev-benchmark bins over [0, 1]. On the
+  same four predictions those schemes give ECE 0.05 and 0.29, so the two studies'
+  headline figures were never directly comparable.
+- Accuracy is not thresholded for a confidence study. The outcome is already
+  correctness; thresholding at 0.5 turns 55/60 into 56/60.
 - jev-phishing-bench does not commit per-email rows, so its pairs are rebuilt from
   the published bin tables. ECE reads only bin means and hit rates, so the
   reproduction is exact; the floor is marginally optimistic because within-bin

@@ -9,15 +9,15 @@ Batches many items into each call, because that is the shape Jev is built for an
 because 800 separate calls would be both slow and pointless. Every raw response
 lands in lab/runs/ before scoring.
 
-What this produces, per tier: accuracy with a Wilson interval, ECE next to the
-noise floor for that tier's n and binning, MCE, Brier, coverage at 0.9 and 0.95,
-and the full reliability table. The reliability table is the point — the scalar
-hides whether a tier fails by a shifted decision boundary or by uniform
-overconfidence, and the public studies differ on exactly that.
+Produces, per tier: accuracy with a Wilson interval, ECE next to the noise floor
+for that tier's n and binning, MCE, Brier, coverage at 0.9 and 0.95, and the full
+reliability table. The reliability table matters more than the scalar, which hides
+whether a tier fails by a shifted decision boundary or by uniform overconfidence.
+The public studies differ on exactly that.
 
-Read lab/tiers/README.md before interpreting anything this prints. In particular
-the decisive-act regex control scores ~70-83% across tiers, so Jev beating chance
-is not by itself interesting; beating that control is.
+See lab/tiers/README.md before interpreting the output. The decisive-act regex
+control scores roughly 70-83% across tiers, so beating chance is not informative;
+beating that control is.
 """
 from __future__ import annotations
 

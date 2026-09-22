@@ -1,4 +1,5 @@
 """Statistics tests, checked against cases with known answers."""
+import math
 import random
 
 import pytest
@@ -157,7 +158,7 @@ def test_a_miscalibrated_model_is_flagged():
 
 
 def test_small_samples_cannot_flag_anything():
-    """At n=8 even a badly wrong model sits inside the floor. That is the point."""
+    """At n=8 even a badly wrong model sits inside the floor."""
     result = ece_with_floor([(0.95, False)] * 4 + [(0.95, True)] * 4, trials=200)
     assert result["n"] == 8
 
@@ -295,3 +296,109 @@ def test_decompose_reports_shared_mass():
     result = decompose_ece(baseline, compare)
     assert result["shared_mass"]["baseline"] == 0.0
     assert result["shared_mass"]["compare"] == 0.0
+
+
+# ------------------------------------------------------------------ calibration
+
+
+def test_platt_recovers_a_known_squeeze():
+    """Compress probabilities toward 0.5 by a known factor; the fitted slope
+    should be its inverse."""
+    import math
+
+    from jevlab.calibration import fit_platt
+
+    rng = random.Random(0)
+
+    def compress(t, k=0.45):
+        z = math.log(max(1e-6, min(1 - 1e-6, t)) / (1 - max(1e-6, min(1 - 1e-6, t))))
+        return 1 / (1 + math.exp(-k * z))
+
+    pairs = [(compress(t), rng.random() < t) for t in (rng.random() for _ in range(1500))]
+    assert fit_platt(pairs).a == pytest.approx(1 / 0.45, rel=0.15)
+
+
+def test_maps_are_monotone_so_accuracy_cannot_change():
+    from jevlab.calibration import apply_map, fit_platt
+
+    rng = random.Random(1)
+    pairs = [(p, rng.random() < p) for p in (rng.random() for _ in range(400))]
+    mapping = fit_platt(pairs)
+    values = [mapping(p) for p in sorted(p for p, _ in pairs)]
+    assert values == sorted(values)
+    assert len(apply_map(pairs, mapping)) == len(pairs)
+
+
+def test_isotonic_is_monotone():
+    from jevlab.calibration import fit_isotonic
+
+    rng = random.Random(2)
+    pairs = [(p, rng.random() < p) for p in (rng.random() for _ in range(300))]
+    mapping = fit_isotonic(pairs)
+    values = [mapping(x / 100) for x in range(101)]
+    assert values == sorted(values)
+
+
+def test_platt_survives_a_perfectly_separable_slice():
+    """A 100%-accurate slice would send an unsmoothed fit to infinity. The
+    negation probe is exactly that case."""
+    from jevlab.calibration import fit_platt
+
+    pairs = [(0.95, True)] * 40 + [(0.02, False)] * 40
+    mapping = fit_platt(pairs)
+    assert math.isfinite(mapping.a) and math.isfinite(mapping.b)
+    assert 0.0 <= mapping(0.5) <= 1.0
+
+
+def test_evaluate_transfer_refuses_to_score_on_its_own_fit():
+    """A monotone fit drives in-sample ECE to zero; reporting that as a result
+    would be meaningless."""
+    from jevlab.calibration import evaluate_transfer
+
+    pairs = [(0.9, True)] * 50 + [(0.2, False)] * 50
+    with pytest.raises(ValueError, match="same object"):
+        evaluate_transfer(pairs, pairs)
+    assert evaluate_transfer(pairs, pairs, allow_same=True)["n_test"] == 100
+
+
+def test_intercept_refit_holds_the_transferred_slope():
+    from jevlab.calibration import fit_platt_intercept
+
+    mapping = fit_platt_intercept([(0.9, True)] * 30 + [(0.1, False)] * 30, a=2.2)
+    assert mapping.a == 2.2
+
+
+def test_intercept_refit_corrects_a_slice_specific_shift():
+    """The failure mode that broke one real transfer: the same squeeze, plus a
+    shift that belongs to the slice rather than to the model.
+
+    A pure squeeze needs no intercept, so transferring the whole map would be
+    fine. What the tier data actually shows is a stable slope (2.11-2.61) beside
+    an unstable intercept (-0.48 to +1.75), which is this.
+    """
+    from jevlab.calibration import apply_map, fit_platt, fit_platt_intercept
+    from jevlab.stats import ece
+
+    rng = random.Random(3)
+
+    def report(t, k=0.45, shift=0.0):
+        """What the model says: the true log-odds, shifted, then squeezed."""
+        t = max(1e-6, min(1 - 1e-6, t))
+        z = math.log(t / (1 - t)) + shift
+        return 1 / (1 + math.exp(-k * z))
+
+    def sample(n, shift):
+        out = []
+        for _ in range(n):
+            t = min(0.99, max(0.01, rng.random()))
+            out.append((report(t, shift=shift), rng.random() < t))
+        return out
+
+    source = sample(800, shift=+2.0)   # one slice's offset
+    target = sample(800, shift=-1.5)   # a different one
+
+    full = ece(apply_map(target, fit_platt(source)))
+    slope_only = ece(
+        apply_map(target, fit_platt_intercept(target[:60], fit_platt(source).a))
+    )
+    assert slope_only < full, f"slope-only {slope_only:.4f} should beat full {full:.4f}"

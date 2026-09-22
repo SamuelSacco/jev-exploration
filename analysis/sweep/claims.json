@@ -1,0 +1,60 @@
+{
+  "source": "Jev claim ledger, 2026-09-18 sweep (external), read 2026-09-20",
+  "note": "Calibration-bearing figures extracted from the sweep, for noise-floor auditing. Only claims carrying both a sample size and an ECE or a bin-level hit rate are listed; the sweep's speed, cost and mechanism verdicts are not calibration claims and are not audited here.",
+  "claims": [
+    {
+      "id": "O13-reproducer",
+      "sweep_verdict": "PROVEN where testable, with caveat",
+      "description": "Fresh general-knowledge domain, bins monotone, 0.7-0.9 region ~100% hit rate",
+      "n": 100,
+      "reported_ece": null,
+      "distribution": "bimodal",
+      "sweep_caveat": "bins 0.1-0.4 were EMPTY, so the literal 0.2 -> 20% mapping is untestable"
+    },
+    {
+      "id": "O13-skeptic",
+      "sweep_verdict": "PROVEN where testable, with caveat",
+      "description": "Extraction verification, 80 judgments, ECE 0.054, p>=0.9 -> 0.947",
+      "n": 80,
+      "reported_ece": 0.054,
+      "distribution": "bimodal",
+      "sweep_caveat": "same empty mid-bins caveat"
+    },
+    {
+      "id": "T6-extraction-bound",
+      "sweep_verdict": "mechanism partially PROVEN for verification",
+      "description": "40 extraction-verification items, ECE 0.054, p>=0.9 -> 0.947; cited as evidence per-extraction error is boundable",
+      "n": 40,
+      "reported_ece": 0.054,
+      "distribution": "bimodal",
+      "sweep_caveat": "bounds verification precision, not extraction recall"
+    },
+    {
+      "id": "T22-verdict-open-jev",
+      "sweep_verdict": "UNVERIFIED (third-party; not replicated)",
+      "description": "LocalLLaMA/typed-decisions, 2000 decisions: Jev ECE 0.1440 vs TF-IDF+LogReg 0.0207 at comparable accuracy",
+      "n": 2000,
+      "reported_ece": 0.144,
+      "distribution": "concentrated",
+      "sweep_caveat": "Jev row may be derived from TypeSafe's published dashboard rather than measured live; ECE provenance unclear"
+    },
+    {
+      "id": "T15-phishing-bench",
+      "sweep_verdict": "VERIFIED BY THIRD PARTY",
+      "description": "anisselbd/jev-phishing-bench, 2000 emails, ECE 0.154 vs Haiku 0.097",
+      "n": 2000,
+      "reported_ece": 0.154,
+      "distribution": "spread",
+      "sweep_caveat": "already independently recomputed in analysis/external/"
+    },
+    {
+      "id": "B3-negation",
+      "sweep_verdict": "PROVEN",
+      "description": "Negation probe, 80/80 correct, ECE 0.065 ~ noise floor",
+      "n": 80,
+      "reported_ece": 0.065,
+      "distribution": "bimodal",
+      "sweep_caveat": "the sweep already labels this as at the noise floor"
+    }
+  ]
+}

@@ -2,15 +2,15 @@
 
 Two rules, both reported per tier, because they answer different questions.
 
-`CUE_RE` keys on surface alarm vocabulary — urgency, threats, generic greetings.
+`CUE_RE` keys on surface alarm vocabulary: urgency, threats, generic greetings.
 It measures whether the difficulty manipulation actually happened: it should be
 near-perfect on t1 and *below chance* on t4, where the cues point the wrong way.
 
 `DECISIVE_RE` keys on the vocabulary of the decisive act. It measures how much of
-the task is solvable without understanding anything, and it is the number any Jev
-result has to be read against. jev-phishing-bench found a plain regex beating
-Jev's best single signal on their data; reporting only the flattering control
-would repeat the mistake this repo exists to point out.
+the task is solvable without understanding anything, and is the figure any model
+result has to be read against. jev-phishing-bench found a plain regex beating Jev's
+best single signal on their data, so both controls are reported rather than only
+the favourable one.
 
     python3 lab/tiers/baselines.py
 """
@@ -100,7 +100,7 @@ def main() -> int:
 
     ok = gradient_is_real(results["cue"])
     print(
-        f"\nDifficulty manipulation: {'CONFIRMED' if ok else 'NOT CONFIRMED'} — "
+        f"\nDifficulty manipulation: {'CONFIRMED' if ok else 'NOT CONFIRMED'}: "
         "the cue rule "
         + ("collapses across tiers as intended." if ok else "does NOT collapse; tiers are not distinct.")
     )

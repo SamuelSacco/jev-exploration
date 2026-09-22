@@ -26,7 +26,7 @@ class Study:
     repo: str
     task: str
     variant: str
-    pairs: list  # (probability, outcome) — see `quantity`
+    pairs: list  # (probability, outcome); see `quantity`
     bins: int
     bin_range: tuple
     quantity: str  # "confidence" (P(correct)) or "probability" (P(event))
@@ -92,7 +92,7 @@ def load_phishing_bench(root: str) -> list:
     reliability tables are, which is enough to reconstruct the ECE exactly.
 
     Two different tables live in metrics.json and they measure different things:
-      ece_bins    confidence (P(correct)) over [0.5, 1.0] — what /jev/ece reports
+      ece_bins    confidence (P(correct)) over [0.5, 1.0], what /jev/ece reports
       reliability P(phishing) over [0.0, 1.0]
 
     The reconstruction places each bin's n items at that bin's mean value, with
