@@ -99,6 +99,20 @@ CLAIMS = [
         "runner": "lab/probe_structure.py",
     },
     {
+        "claim": "BBQ and SMS figures recomputed to this repo's standard",
+        "run": "not yet run; the corpora are not bundled",
+        "pattern": "*-corpora-*.jsonl",
+        "published_in": [],
+        "runner": "lab/corpora/bbq.py",
+    },
+    {
+        "claim": "BBQ and SMS: the SMS half",
+        "run": "not yet run; the corpora are not bundled",
+        "pattern": "*-corpora-sms-*.jsonl",
+        "published_in": [],
+        "runner": "lab/corpora/sms.py",
+    },
+    {
         "claim": "Endpoint origin and option-order effects",
         "run": "not yet run",
         "pattern": "*-shape-*.jsonl",

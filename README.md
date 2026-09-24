@@ -123,6 +123,7 @@ analysis/
   circularity.py           judge-circularity audit of the gradient findings
   headtohead.py            scores the Jev vs local-4B battery, writes the memo
   response_shape.py        scores the endpoint and position probes
+  corpora.py               BBQ and SMS figures, recomputed to this repo's standard
   transfer_domains.py      scores the cross-domain transfer experiment
   quantisation.py          numeric resolution of the API's returned values
   calibration_transfer.py  whether a fitted correction transfers
@@ -143,6 +144,7 @@ lab/
   exp_transfer.py          does the fitted correction survive a change of domain
   exp_response_shape.py    where exact 0/1 come from, and whether order matters
   domains/                 480 items in four non-email slices, labels committed
+  corpora/                 importers for BBQ and SMS; the corpora are not bundled
   PROBES.md                isolation, batching and Choice-vs-Noul results
   probe_structure.py       isolation, batching-scale and Choice-vs-Noul probes
   run_demos.py             triage and negation demos, scored against ground truth
@@ -180,6 +182,9 @@ python3 lab/exp_transfer.py --dry-run
 python3 lab/exp_headtohead.py --dry-run
 python3 lab/response_shape_items.py --check   # graded-evidence gate
 python3 lab/exp_response_shape.py --dry-run
+python3 lab/corpora/bbq.py --self-test        # importers, on bundled fixtures
+python3 lab/corpora/sms.py --self-test
+python3 analysis/corpora.py --demo            # BBQ/SMS scoring arithmetic
 python3 lab/probe_structure.py --dry-run
 python3 lab/run_tiers.py --dry-run   # size the gradient experiment
 ```
