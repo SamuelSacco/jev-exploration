@@ -64,6 +64,13 @@ CLAIMS = [
         "runner": "analysis/quantisation.py",
     },
     {
+        "claim": "Calibration label budget: 50 is a safety floor, 75 a plateau",
+        "run": "(derived from the committed gradient run)",
+        "pattern": "20260918T013027Z-tiers-*.jsonl",
+        "published_in": ["analysis/CALIBRATION-TRANSFER.md"],
+        "runner": "analysis/calibration_set_size.py",
+    },
+    {
         "claim": "Circularity premium +0.005 across four tiers",
         "run": "2026-09-20, run by the operator",
         "pattern": "*-circularity-*.jsonl",

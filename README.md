@@ -38,10 +38,11 @@ noise floor for its sample size ([method](analysis/external/)), then ran a contr
    A perfectly calibrated model scores ECE ≈0.045 at that sample size and binning,
    which is the range that benchmark reports.
 
-6. **One parameter corrects most of it.** Fitted per tier, Platt's slope stays at
-   2.11–2.61 while the intercept swings −0.48 to +1.75 with the slice's base rate.
-   Transferring a whole map can make calibration worse; transferring the slope and
-   refitting the intercept on ~50 labels cut ECE 74% and helped every case
+6. **One parameter corrects most of it, and fifty labels is a floor rather than a
+   recommendation.** Platt's slope stays at 2.11–2.61 across tiers while the intercept
+   swings −0.48 to +1.75 with the base rate. Transferring the slope and refitting the
+   intercept on 50 labels cuts ECE 62% measured on held-out items. Below 30 labels the
+   correction can leave calibration four times worse than doing nothing
    ([method](analysis/CALIBRATION-TRANSFER.md)).
 
 7. **The probabilities are quantised to 0.01, and Choice and Score can return exactly
@@ -124,6 +125,8 @@ analysis/
   transfer_domains.py      scores the cross-domain transfer experiment
   quantisation.py          numeric resolution of the API's returned values
   calibration_transfer.py  whether a fitted correction transfers
+  calibration_set_size.py  how many labels the intercept refit needs
+  provenance.py            which published figures have raw data behind them
 docs/
   claims-audit.md          the ledger
   thread.md                the original launch-week narrative (frozen)
@@ -164,6 +167,8 @@ python3 lab/baselines.py             # non-AI baselines on the bundled datasets
 python3 lab/tiers/baselines.py       # difficulty-gradient controls
 python3 lab/tiers/analyse.py         # re-derive the gradient result from raw responses
 python3 analysis/calibration_transfer.py
+python3 analysis/calibration_set_size.py   # label budget for the intercept refit
+python3 analysis/provenance.py             # which figures are reproducible here
 python3 analysis/external/run.py --base ~    # needs the other repos cloned
 python3 analysis/sweep/audit.py      # audit external calibration figures
 python3 analysis/circularity.py      # judge-circularity audit of B1/B2

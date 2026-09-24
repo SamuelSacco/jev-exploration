@@ -52,6 +52,7 @@ missing; `--strict` exits non-zero while any remain.
 | 20 | Choice and independent Nouls measure the same thing | Contested | [lab/PROBES.md](../lab/PROBES.md), Nouls left 0.29 on distractors where Choice left none, n=1 item; raw responses not committed |
 | 21 | Jev's judgements are far more repeatable than an LLM judge's | Verified for repeatability, not for correctness | LangChain agent-eval, variance 1.49e-5 across 100 reps; but 5 frozen runs and one oracle, so agreement is 5/5 (95% CI 48–100%) and the LLM baselines' settings were unpinned |
 | 22 | A benchmark whose labels the model supplied is inflated by ~0.08 | Refuted as a constant | [analysis/CIRCULARITY.md](../analysis/CIRCULARITY.md) §4, premium +0.005 here against T69's +0.081; it scales with how decidable the task is. Raw responses not committed |
+| 23 | Fifty labels is enough to refit the intercept | Verified, and it is a floor not a plateau | [analysis/CALIBRATION-TRANSFER.md](../analysis/CALIBRATION-TRANSFER.md), 62% held-out reduction at 50; below 30 labels the worst draw is 4x the uncorrected ECE (measured here) |
 
 ---
 

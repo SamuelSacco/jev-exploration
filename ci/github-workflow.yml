@@ -42,6 +42,7 @@ jobs:
           python3 analysis/circularity.py > /dev/null
           python3 analysis/quantisation.py > /dev/null
           python3 analysis/calibration_transfer.py > /dev/null
+          python3 analysis/calibration_set_size.py --draws 5 > /dev/null
       - name: Raw-data provenance
         # Not --strict yet: four runs on main predate the rule being enforced.
         # analysis/provenance.py names them; switch to --strict once they land.
