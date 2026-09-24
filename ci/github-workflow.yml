@@ -43,7 +43,7 @@ jobs:
           python3 lab/exp_response_shape.py --dry-run > /dev/null
       - name: Offline analyses still reproduce
         run: |
-          python3 analysis/circularity.py > /dev/null
+          python3 analysis/circularity.py --tie-break-samples 5 > /dev/null
           python3 analysis/quantisation.py > /dev/null
           python3 analysis/calibration_transfer.py > /dev/null
           python3 analysis/calibration_set_size.py --draws 5 > /dev/null

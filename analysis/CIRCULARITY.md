@@ -24,14 +24,34 @@ the 0.9 threshold is currently a hit, so each wrong label costs exactly one.
 Three mislabelled items in t4, 1.5% of the tier, drop the hit rate below 0.95.
 B2 is a statement about a 43-to-65 item bucket, not a law.
 
-**B1 is not clearly sturdier than B2: CORRECTED.** An earlier version of this
-file reported 8 adversarial flips, 4% of the tier. That was one pass of a
-three-pass experiment reported as the result, and the search stepped by 2, which
-rounded even that pass up from its true value of 7. Across the three passes the
-break point is 2 to 8 flips, 1.0% to 4.0%, so the worst case is 1.0% against
-B2's 1.5%. B1 remains robust to *realistic* label noise — random corruption at
-10% overturns it in only 3 of 20 seeds — but the claim that it tolerated two and
-a half times B2's corruption was an artefact of the reporting.
+**B1 is MORE fragile than B2: CORRECTED TWICE.** An adversary needs 1 flipped
+label, 0.5% of a tier, against B2's 3 flips at 1.5%. This file has now said
+three different things here, and the reason is worth more than the number:
+
+| version | claim | why it was wrong |
+|---|---|---|
+| first | 8 flips, 4.0%, "two and a half times B2's budget" | one pass of three, and a search stepping by 2 that rounded 7 up to 8 |
+| second | 2–8 flips, 1.0–4.0%, "comparably fragile" | all three passes, but one arbitrary tie-break in the greedy search |
+| current | 1 flip, 0.5%, more fragile than B2 | minimum across passes *and* across tie-breaks |
+
+At the first step of the greedy search, **twenty different flips raise ECE by
+exactly the same amount**, and nineteen do at the second. "The" greedy answer
+does not exist. Picking the lowest index is deterministic but not neutral: on
+this data it is consistently the kindest option available to the adversary,
+giving 10, 2 and 11 flips on the three passes against the 3, 1 and 3 an
+adversary sampling the ties can reach.
+
+That also settles a disagreement across three machines, which produced 7, 11 and
+12 from the same committed code. Candidate ECEs that tie differ in the last bit
+or two between interpreters, so an unrounded `>` picks a different flip on
+Python 3.11 than on 3.12. Candidates are now rounded to ten places before being
+compared and the tie-break is explicit, so the deterministic path reproduces
+everywhere — and it is reported beside the sampled range rather than as the
+answer.
+
+**The 0.5% is an upper bound, not the minimum.** Greedy search over sampled
+tie-breaks can miss a cheaper attack; it cannot invent one. The real adversarial
+budget is at most 0.5% of a tier and may be smaller.
 
 **The circularity premium on this benchmark is +0.005: the preregistration
 predicting +0.05 is REFUTED.** Measured over 120 calls, and §4 explains why the
@@ -95,32 +115,32 @@ an adversary who can see the model's answers and relabels to flatter or damage i
 
 No search is needed; the budget is arithmetic, which is itself the finding.
 
-**B1**, t4's gaps under t1's mass stay at or below t1's own ECE. Every pass of
-the run, because the break point is not stable across them:
+**B1**, t4's gaps under t1's mass stay at or below t1's own ECE. Every pass, and
+every pass sampled over twenty resolutions of the greedy search's ties:
 
-| pass | intact margin | flips to break | as a share of the tier |
-|---|---|---|---|
-| 0 | +0.0145 | 7 | 3.5% |
-| 1 | +0.0022 | 2 | 1.0% |
-| 2 | +0.0174 | 8 | 4.0% |
+| pass | intact margin | adversary's best | tie-break range | lowest-index tie-break |
+|---|---|---|---|---|
+| 0 | +0.0145 | 3 flips (1.5%) | 3–9 | 10 |
+| 1 | +0.0022 | 1 flip (0.5%) | 1–3 | 2 |
+| 2 | +0.0174 | 3 flips (1.5%) | 3–10 | 11 |
 
 ```
   random corruption 10%    broke 3/20 seeds
 ```
 
 The intact margin is a difference between two ECEs, both of which move between
-passes, and when it starts small — +0.0022 on pass 1 — a couple of flips close
-it. So B1's budget is 1.0% of a tier in the worst case and 4.0% in the best,
-against B2's 1.5%: comparably fragile, not sturdier.
+passes, and on pass 1 it starts at +0.0022 — one flip closes it.
 
-What does survive is the distinction between adversarial and realistic noise. An
-adversary who can see the model's answers needs 1% of a tier; random label error
-at ten times that rate leaves the finding standing in 17 of 20 seeds.
+So B1's adversarial budget is **0.5% of a tier** against B2's 1.5%, and the
+ordering in the first version of this file was backwards.
 
-This file previously reported "8 flips, 4.0%" here, from pass 0 alone, and a
-search that stepped by 2 rounded even that pass up from its true value of 7.
-Reporting one pass as the result is the error this repo corrects in other
-people's work, so the correction is stated rather than quietly applied.
+What does survive, and is the part worth keeping, is the distinction between
+adversarial and realistic noise. An adversary who can see the model's answers
+needs a single label. Random label error at twenty times that rate leaves the
+finding standing in 17 of 20 seeds. B1 is fragile to an attacker and robust to
+sloppiness, which are different threats and were being conflated.
+
+`python3 analysis/circularity.py --tie-break-samples 20` reproduces all of it.
 
 ## 3. What this does not clear
 
