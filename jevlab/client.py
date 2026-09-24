@@ -25,6 +25,13 @@ import urllib.request
 from dataclasses import dataclass, field
 from typing import Any
 
+# Sent on every request. urllib's default ("Python-urllib/3.x") is generic
+# enough that edge protection treats it as a bot: the skill CLI was served a
+# Cloudflare 1010 without one on 2026-09-22. A stable, identifiable agent with
+# a contact URL is what a well-behaved client sends, and it makes this repo's
+# traffic separable from anyone else's in a server-side log.
+USER_AGENT = "jevlab/0.2.0 (+https://github.com/SamuelSacco/jev-exploration)"
+
 API_URL = "https://api.typesafe.ai/v1/systemone"
 DEFAULT_MODEL = "jev-latest"
 
@@ -92,6 +99,7 @@ class JevClient:
     url: str = API_URL
     model: str = DEFAULT_MODEL
     timeout: float = 60.0
+    user_agent: str = USER_AGENT
     max_attempts: int = 5
     base_backoff: float = 1.0
     max_backoff: float = 32.0
@@ -169,6 +177,8 @@ class JevClient:
             headers={
                 "Content-Type": "application/json",
                 "Authorization": f"Bearer {self._require_key()}",
+                "User-Agent": self.user_agent,
+                "Accept": "application/json",
             },
             method="POST",
         )

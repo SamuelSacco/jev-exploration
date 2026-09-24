@@ -161,11 +161,16 @@ def sensitivity_b2(pairs: list, threshold: float = 0.9, target: float = 0.95) ->
 
 
 def sensitivity_b1(
-    baseline: list, compare: list, max_fraction: float = 0.25, step: int = 2
+    baseline: list, compare: list, max_fraction: float = 0.25, step: int = 1
 ) -> dict:
     """B1: compare's gaps under baseline's mass stay at or below baseline's ECE.
 
     Corrupt the compare sample adversarially until that stops holding.
+
+    `step` is 1 so the reported break point is the real one. An earlier version
+    stepped by 2 and so could only ever report an even number, rounding the
+    break up to the next sample: pass 0 breaks at 7 flips and was published as
+    8. Stepping is a search-cost optimisation and it bought nothing here.
     """
     intact = decompose_ece(baseline, compare)
     limit = int(len(compare) * max_fraction)
@@ -198,6 +203,37 @@ def sensitivity_b1(
     }
 
 
+def sensitivity_b1_all_passes(run: str, gold: dict, passes: int = 3) -> dict:
+    """B1's break point on every pass, because one pass is not the result.
+
+    The break point moves a lot between passes of the same experiment: the
+    intact margin is a difference between two ECEs, both of which wobble, and
+    when it starts small a couple of flips close it. Publishing one pass's
+    number as "B1 breaks at N flips" states a stable property that is not
+    there. The range across passes is the finding.
+    """
+    per_pass = {}
+    for index in range(passes):
+        tiers = {t: read_pass(run, t, index, gold) for t in TIER_ORDER}
+        block = sensitivity_b1(tiers["t1_trivial"], tiers["t4_adversarial"])
+        block.pop("trace", None)
+        block["n"] = len(tiers["t4_adversarial"])
+        block["fraction_to_break"] = (
+            round(block["flips_to_break"] / block["n"], 4)
+            if block["flips_to_break"] is not None
+            else None
+        )
+        per_pass[index] = block
+    breaks = [b["flips_to_break"] for b in per_pass.values() if b["flips_to_break"]]
+    fractions = [b["fraction_to_break"] for b in per_pass.values() if b["fraction_to_break"]]
+    return {
+        "per_pass": per_pass,
+        "flips_range": [min(breaks), max(breaks)] if breaks else None,
+        "fraction_range": [min(fractions), max(fractions)] if fractions else None,
+        "worst_case_fraction": min(fractions) if fractions else None,
+    }
+
+
 def random_corruption_reference(
     baseline: list, compare: list, fraction: float, seeds: int = 20
 ) -> dict:
@@ -216,6 +252,7 @@ def random_corruption_reference(
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--pass-index", type=int, default=0)
+    ap.add_argument("--passes", type=int, default=3, help="passes in the run")
     ap.add_argument("--json", help="write the audit result here")
     args = ap.parse_args(argv)
 
@@ -245,17 +282,19 @@ def main(argv=None) -> int:
 
     print("\n3. B1 sensitivity (t4's gaps under t1's mass stay at or below t1's ECE)\n")
     b1 = sensitivity_b1(tiers["t1_trivial"], tiers["t4_adversarial"])
-    print(f"  intact margin            {b1['intact_margin']:+.4f}")
-    if b1["flips_to_break"] is None:
+    across = sensitivity_b1_all_passes(TIER_RUN, gold, passes=args.passes)
+    print(f"  pass {args.pass_index} intact margin     {b1['intact_margin']:+.4f}")
+    for index, block in across["per_pass"].items():
         print(
-            f"  adversarial corruption   survives every level searched "
-            f"(up to {b1['searched_to_fraction']:.0%})"
+            f"  pass {index}                  margin {block['intact_margin']:+.4f}, "
+            f"breaks at {block['flips_to_break']} flips "
+            f"({block['fraction_to_break']:.1%} of the tier)"
         )
-    else:
-        print(
-            f"  adversarial corruption   breaks at {b1['flips_to_break']} flips "
-            f"({b1['fraction_to_break']:.1%} of the tier)"
-        )
+    print(
+        f"  across passes            {across['flips_range'][0]}-"
+        f"{across['flips_range'][1]} flips "
+        f"({across['fraction_range'][0]:.1%}-{across['fraction_range'][1]:.1%})"
+    )
     ref = random_corruption_reference(
         tiers["t1_trivial"], tiers["t4_adversarial"], fraction=0.10
     )
@@ -277,11 +316,19 @@ def main(argv=None) -> int:
         "  mislabelled in the model's favour is enough to move it off 1.000. It is\n"
         "  a statement about a 43-to-65 item bucket, not a law."
     )
-    if b1["flips_to_break"]:
-        print(
-            f"\n  B1 is sturdier: it takes {b1['fraction_to_break']:.0%} adversarial\n"
-            "  corruption to overturn, and random corruption at 10% does not."
-        )
+    worst = across["worst_case_fraction"]
+    print(
+        f"\n  B1 is NOT clearly sturdier than B2. Its break point moves from\n"
+        f"  {across['flips_range'][0]} to {across['flips_range'][1]} flips across "
+        f"three passes of the same experiment\n"
+        f"  ({across['fraction_range'][0]:.1%}-{across['fraction_range'][1]:.1%}), "
+        f"so the worst case is {worst:.1%} against B2's {b2_worst:.1%}. An\n"
+        "  earlier version of this audit reported one pass as though it were the\n"
+        "  result, and a step of 2 in the search rounded that pass up from 7 to 8.\n"
+        "  Random corruption at 10% still overturns it in only 3 of 20 seeds, so\n"
+        "  it remains robust to realistic label noise; it is adversarial noise it\n"
+        "  tolerates less well than published."
+    )
     print(
         f"\n  For scale, T69's measured circularity swing was {T69_SWING:.3f} NDCG@10,\n"
         "  large enough to change a sign. Nothing of that size can enter here\n"
@@ -296,6 +343,7 @@ def main(argv=None) -> int:
         "provenance": prov,
         "b2_sensitivity": b2,
         "b1_sensitivity": b1,
+        "b1_across_passes": across,
         "b1_random_reference": ref,
         "t69_swing_for_scale": T69_SWING,
     }

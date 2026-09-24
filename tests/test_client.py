@@ -1,6 +1,7 @@
 """Client tests. No network, no sleeping, no API key."""
 import io
 import json
+import os
 import urllib.error
 
 import pytest
@@ -300,3 +301,58 @@ def test_connect_tunnel_raises_when_the_proxy_hangs_up(monkeypatch):
     monkeypatch.setattr(mod.socket, "create_connection", lambda *a, **k: Dropping())
     with pytest.raises(OSError, match="closed the connection"):
         mod._connect_via_proxy(("p", 1), "api.typesafe.ai", 443, 5)
+
+
+# ----------------------------------------------------------------- user agent
+
+
+def test_every_request_carries_a_stable_user_agent():
+    """urllib's default reads as a bot: the skill CLI was Cloudflare-1010'd
+    without one on 2026-09-22."""
+    from jevlab.client import USER_AGENT
+
+    seen = {}
+
+    def opener(req, timeout=None):
+        seen.update(req.headers)
+        return FakeHTTPResponse(json.dumps({"model": "m", "answers": {}, "usage": {}}).encode())
+
+    client = JevClient(api_key="k", _opener=opener, _sleep=lambda s: None)
+    client.ask("state", {"q": {"type": "noul", "instructions": "i", "criteria": {}}})
+    # urllib title-cases header names.
+    assert seen.get("User-agent") == USER_AGENT
+    assert "jevlab/" in USER_AGENT
+    assert "github.com" in USER_AGENT
+
+
+def test_the_user_agent_is_overridable_per_client():
+    seen = {}
+
+    def opener(req, timeout=None):
+        seen.update(req.headers)
+        return FakeHTTPResponse(json.dumps({"model": "m", "answers": {}, "usage": {}}).encode())
+
+    client = JevClient(
+        api_key="k", user_agent="ops/1.0", _opener=opener, _sleep=lambda s: None
+    )
+    client.ask("state", {"q": {"type": "noul", "instructions": "i", "criteria": {}}})
+    assert seen.get("User-agent") == "ops/1.0"
+
+
+def test_the_user_agent_version_matches_the_package():
+    """Two places hold the version; this fails when they drift."""
+    import re
+
+    from jevlab.client import USER_AGENT
+
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    with open(os.path.join(root, "pyproject.toml"), encoding="utf-8") as fh:
+        declared = re.search(r'^version = "([^"]+)"', fh.read(), re.M).group(1)
+    assert f"jevlab/{declared}" in USER_AGENT
+
+
+def test_the_user_agent_names_no_credential():
+    from jevlab.client import USER_AGENT
+
+    for token in ("Bearer", "key", "token", "secret"):
+        assert token.lower() not in USER_AGENT.lower()

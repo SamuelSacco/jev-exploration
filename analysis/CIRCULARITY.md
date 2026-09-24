@@ -24,9 +24,14 @@ the 0.9 threshold is currently a hit, so each wrong label costs exactly one.
 Three mislabelled items in t4, 1.5% of the tier, drop the hit rate below 0.95.
 B2 is a statement about a 43-to-65 item bucket, not a law.
 
-**B1 is sturdier: NOTED.** It takes 8 adversarially chosen flips, 4% of the tier,
-to overturn the decomposition, and random corruption at 10% overturns it in only
-3 of 20 seeds.
+**B1 is not clearly sturdier than B2: CORRECTED.** An earlier version of this
+file reported 8 adversarial flips, 4% of the tier. That was one pass of a
+three-pass experiment reported as the result, and the search stepped by 2, which
+rounded even that pass up from its true value of 7. Across the three passes the
+break point is 2 to 8 flips, 1.0% to 4.0%, so the worst case is 1.0% against
+B2's 1.5%. B1 remains robust to *realistic* label noise — random corruption at
+10% overturns it in only 3 of 20 seeds — but the claim that it tolerated two and
+a half times B2's corruption was an artefact of the reporting.
 
 **The circularity premium on this benchmark is +0.005: the preregistration
 predicting +0.05 is REFUTED.** Measured over 120 calls, and §4 explains why the
@@ -90,17 +95,32 @@ an adversary who can see the model's answers and relabels to flatter or damage i
 
 No search is needed; the budget is arithmetic, which is itself the finding.
 
-**B1**, t4's gaps under t1's mass stay at or below t1's own ECE:
+**B1**, t4's gaps under t1's mass stay at or below t1's own ECE. Every pass of
+the run, because the break point is not stable across them:
+
+| pass | intact margin | flips to break | as a share of the tier |
+|---|---|---|---|
+| 0 | +0.0145 | 7 | 3.5% |
+| 1 | +0.0022 | 2 | 1.0% |
+| 2 | +0.0174 | 8 | 4.0% |
 
 ```
-  intact margin            +0.0145
-  adversarial corruption   breaks at 8 flips (4.0% of the tier)
   random corruption 10%    broke 3/20 seeds
 ```
 
-So B1 tolerates roughly two and a half times the corruption B2 does, and is
-robust to realistic (random) label noise at a rate no careful labelling process
-would reach.
+The intact margin is a difference between two ECEs, both of which move between
+passes, and when it starts small — +0.0022 on pass 1 — a couple of flips close
+it. So B1's budget is 1.0% of a tier in the worst case and 4.0% in the best,
+against B2's 1.5%: comparably fragile, not sturdier.
+
+What does survive is the distinction between adversarial and realistic noise. An
+adversary who can see the model's answers needs 1% of a tier; random label error
+at ten times that rate leaves the finding standing in 17 of 20 seeds.
+
+This file previously reported "8 flips, 4.0%" here, from pass 0 alone, and a
+search that stepped by 2 rounded even that pass up from its true value of 7.
+Reporting one pass as the result is the error this repo corrects in other
+people's work, so the correction is stated rather than quietly applied.
 
 ## 3. What this does not clear
 
@@ -134,7 +154,11 @@ premium is accuracy under self-labels minus accuracy under generator labels.
 Written before the run: the premium is positive in every tier, largest on
 t4_adversarial, and a premium above +0.05 overall is comparable to T69's 0.081.
 
-Run 2026-09-20, 120 calls:
+Run 2026-09-20, 120 calls. **Reported, not reproducible from this
+repository**: the raw responses were not returned here, so `lab/runs/` holds
+nothing behind the table below and `python3 analysis/provenance.py` marks it
+UNVERIFIABLE. Committing `lab/runs/*-circularity-*.jsonl` from that run fixes
+it.
 
 | tier | premium |
 |---|---|

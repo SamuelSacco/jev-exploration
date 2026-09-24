@@ -11,6 +11,15 @@ Run 2026-09-20 on `jev-1.13.0`, 24 calls. Three probes, each with its
 expectation written into `PREDICTIONS` before the run. **All three predictions
 held.**
 
+> **Provenance: reported, not reproducible from this repository.** The run was
+> executed by the operator who holds the credential, and its raw responses were
+> not returned here, so `lab/runs/` carries nothing behind these numbers and
+> they cannot be re-binned or re-checked. That breaks the rule in
+> `lab/runs/README.md`. `python3 analysis/provenance.py` lists this and the
+> other affected claims. The figures stand as reported; what is missing is the
+> ability to audit them, and the fix is to commit
+> `lab/runs/*-probe-*.jsonl` from that run.
+
 ## 1. Questions are isolated from each other's instructions
 
 A code word was planted in one question's `instructions` and a second question
