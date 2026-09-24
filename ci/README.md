@@ -1,15 +1,16 @@
 # CI
 
-`github-workflow.yml` is the CI definition. It is parked here rather than in
-`.github/workflows/` because the token that wrote it has no `workflow` scope and
-GitHub refuses such a push. To enable it:
+The workflow now lives at `.github/workflows/ci.yml` and runs on every push and
+pull request.
 
-```bash
-mkdir -p .github/workflows
-git mv ci/github-workflow.yml .github/workflows/ci.yml
-git commit -m "Enable CI"
-```
+It runs `pytest`, the dataset controls, every experiment's `--dry-run`, the
+offline analyses and the provenance audit, on Python 3.10 through 3.13. No
+secret is configured and none is needed: nothing in the suite touches the
+network, and every experiment sizes itself without a credential.
 
-It runs `pytest`, `lab/baselines.py` and `lab/run_demos.py --dry-run` on Python
-3.10 through 3.13. No secret is configured and none is needed: nothing in the
-suite touches the network.
+`analysis/provenance.py` runs without `--strict` because four runs on main
+predate the rule being enforced and have no committed raw responses. Once those
+land, switch that step to `--strict` so an unbacked published figure fails CI.
+
+This directory previously held the workflow unparked, because the token that
+wrote it had no `workflow` scope and GitHub refuses such a push.
