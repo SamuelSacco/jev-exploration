@@ -122,6 +122,7 @@ analysis/
   sweep/                   review of the external claim sweep, plus its audit tool
   circularity.py           judge-circularity audit of the gradient findings
   headtohead.py            scores the Jev vs local-4B battery, writes the memo
+  response_shape.py        scores the endpoint and position probes
   transfer_domains.py      scores the cross-domain transfer experiment
   quantisation.py          numeric resolution of the API's returned values
   calibration_transfer.py  whether a fitted correction transfers
@@ -140,6 +141,7 @@ lab/
   exp_circularity.py       what self-labelling would have inflated the score by
   exp_headtohead.py        Jev against a local 4B, four arms
   exp_transfer.py          does the fitted correction survive a change of domain
+  exp_response_shape.py    where exact 0/1 come from, and whether order matters
   domains/                 480 items in four non-email slices, labels committed
   PROBES.md                isolation, batching and Choice-vs-Noul results
   probe_structure.py       isolation, batching-scale and Choice-vs-Noul probes
@@ -176,6 +178,8 @@ python3 analysis/quantisation.py     # what resolution the API actually returns
 python3 lab/domains/baselines.py     # cross-domain slices: the gate
 python3 lab/exp_transfer.py --dry-run
 python3 lab/exp_headtohead.py --dry-run
+python3 lab/response_shape_items.py --check   # graded-evidence gate
+python3 lab/exp_response_shape.py --dry-run
 python3 lab/probe_structure.py --dry-run
 python3 lab/run_tiers.py --dry-run   # size the gradient experiment
 ```
@@ -191,6 +195,7 @@ python3 lab/probe_structure.py --repeat 3             # structural probes, 24 ca
 python3 lab/exp_circularity.py --repeat 1             # circularity premium, 40 calls
 python3 lab/exp_transfer.py --repeat 3                # cross-domain transfer, 36 calls
 python3 lab/exp_headtohead.py --repeat 3              # Jev vs a local 4B, 33 calls
+python3 lab/exp_response_shape.py --repeat 3          # endpoints + position, 30 calls
 python3 skills/jev/bin/jev.py --floor                 # network floor, no key needed
 ```
 

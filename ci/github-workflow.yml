@@ -30,6 +30,7 @@ jobs:
         run: |
           python3 lab/tiers/baselines.py
           python3 lab/domains/baselines.py
+          python3 lab/response_shape_items.py --check
       - name: Experiments still size themselves without a credential
         run: |
           python3 lab/run_tiers.py --dry-run > /dev/null
@@ -37,6 +38,7 @@ jobs:
           python3 lab/exp_circularity.py --dry-run > /dev/null
           python3 lab/exp_transfer.py --dry-run > /dev/null
           python3 lab/exp_headtohead.py --dry-run > /dev/null
+          python3 lab/exp_response_shape.py --dry-run > /dev/null
       - name: Offline analyses still reproduce
         run: |
           python3 analysis/circularity.py > /dev/null

@@ -99,6 +99,13 @@ CLAIMS = [
         "runner": "lab/probe_structure.py",
     },
     {
+        "claim": "Endpoint origin and option-order effects",
+        "run": "not yet run",
+        "pattern": "*-shape-*.jsonl",
+        "published_in": [],
+        "runner": "lab/exp_response_shape.py",
+    },
+    {
         "claim": "Cross-domain transfer (issue #9)",
         "run": "not yet run",
         "pattern": "*-transfer-*.jsonl",
