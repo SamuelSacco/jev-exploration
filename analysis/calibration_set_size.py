@@ -6,8 +6,8 @@ No API key and no network. Reads the committed tier responses.
 
 `analysis/CALIBRATION-TRANSFER.md` publishes a recipe: take the Platt slope
 fitted anywhere, refit the intercept on about 50 labels from the deployment, and
-mean ECE falls 74%. The 50 was picked as a plausible label budget, not measured.
-This sweeps it.
+mean ECE falls 61.7% on held-out items. The 50 was picked as a plausible label
+budget, not measured. This sweeps it.
 
 Two things the original measurement did not do, both of which matter:
 

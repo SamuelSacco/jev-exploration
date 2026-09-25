@@ -17,7 +17,7 @@ labels on the intercept helped in every case measured, and helped more.
 |---|---|---|
 | no correction | 0.1306 | 0.147 |
 | full map fitted elsewhere | 0.0597 (−54%) | 0.184 (worse than no correction) |
-| slope transferred, intercept refit on 50 labels | 0.0346 (−74%) | 0.045 |
+| slope transferred, intercept refit on 50 labels | 0.0512 (−61.7%) | 0.124 |
 
 Accuracy is unchanged throughout, since the maps are monotone and cannot reorder
 anything. Brier improves alongside ECE (t1→t4: 0.1030 → 0.0805).

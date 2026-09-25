@@ -19,8 +19,8 @@ side.
   - The intercept spans -0.48 to +1.75, tracking the slice's base rate, and is
     read as belonging to the deployment rather than the model.
   - So: transfer the slope, spend ~50 labels refitting the intercept. That cut
-    mean ECE 74% and helped every case, where transferring the whole map cut it
-    54% and hurt one.
+    mean ECE 61.7% on held-out items, with no draw worse than doing nothing,
+    where transferring the whole map cut it 54% and hurt one.
 
 Its stated limitation is that everything behind it is e-mail legitimacy on
 `jev-1.13.0`. If the slope is really a property of the model, it should hold
