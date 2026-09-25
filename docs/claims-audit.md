@@ -3,7 +3,7 @@
 One row per claim made about Jev, with its current status and the best evidence for or
 against it. This file is meant to be edited as evidence appears; it is not a snapshot.
 
-**Last updated:** 2026-09-21 · **Model version for runs in this repo:** `jev-1.13.0`
+**Last updated:** 2026-09-25 · **Model version for runs in this repo:** `jev-1.13.0`
 
 Status vocabulary:
 
@@ -67,6 +67,10 @@ see the note in §1.
 | 22 | A benchmark whose labels the model supplied is inflated by ~0.08 | Refuted as a constant | [analysis/CIRCULARITY.md](../analysis/CIRCULARITY.md) §4: premium +0.005 here (per-tier +0.015/−0.005/+0.015/−0.005, recomputed from `lab/runs/20260921T150525Z-circularity-*.jsonl` plus the committed tier labels, mean across passes) against T69's +0.081; it scales with how decidable the task is |
 | 23 | Fifty labels is enough to refit the intercept | Verified, and it is a floor not a plateau | [analysis/CALIBRATION-TRANSFER.md](../analysis/CALIBRATION-TRANSFER.md), 62% held-out reduction at 50; below 30 labels the worst draw is 4x the uncorrected ECE (measured here) |
 | 24 | The calibration-invariance finding (B1) is more fragile to label error than the p≥0.9 hit-rate finding (B2) | Verified | [analysis/CIRCULARITY.md](../analysis/CIRCULARITY.md): an adversary needs at most 1 flipped label (0.5% of a tier) to overturn B1, against 3 flips (1.5%) for B2's hit rate to fall below 0.95. The 0.5% is an upper bound from a greedy search over sampled tie-breaks; numbers from `analysis/circularity.json` (`b1_across_passes.worst_case_fraction` = 0.005, `b2_sensitivity.t4_adversarial.flips_to_fall_below_target` = 3 at 0.015) |
+| 25 | Jev beats the lexical bar where expected (home_turf and negation, not adversarial) | Refuted | [lab/exp_headtohead.py](../lab/exp_headtohead.py) H1, run 20260925T015208Z (33 Jev calls, 1,320 local qwen3:4b calls, 0 unparsed): Jev cleared the bar on all three Noul arms including adversarial — 100.0%/88.3%/100.0% against bars of 81.7%/69.5%/50.0% |
+| 26 | The local 4B beats Jev on home_turf accuracy and loses on negation | Partial | H2: Jev 100.0% vs local 53.3% on home_turf — the local model did not win (95% CI on the difference [-55.8, -37.5] points); Jev 100.0% vs local 95.0% on negation — the local model lost (CI [-10.0, -1.25] points). First half falsified, second held |
+| 27 | Jev calibrates better than the local 4B on every arm | Partial | H3: Jev's ECE-to-noise-floor ratio lower on 3 of 4 arms (2.13×/1.56×/1.38× vs 3.25×/4.00×/3.53× on home_turf/adversarial/typed); the local model was better calibrated on negation (0.88× vs 1.31×) |
+| 28 | Typed Choice beats adversarial Noul on the same items | Refuted | H4: +2.5 points (90.8% vs 88.3%), but the 95% bootstrap interval on the difference, [-1.7, +6.7] points, covers zero — T75's finding does not generalise past its single classification item |
 
 ---
 
@@ -279,6 +283,12 @@ negation probe was run live on 2026-09-18 (run `20260918T014148Z`, all 80 items
 in one call; raw committed in `lab/runs/`), so the "not yet run" note that stood
 here is stale — the run's results are reported in §6 under "The negation probe".
 
+The head-to-head battery ran live on 2026-09-25 (run `20260925T015208Z`):
+33 Jev calls and 1,320 local qwen3:4b calls across four arms (home_turf,
+adversarial, negation, typed), raw responses committed in `lab/runs/` as
+`*-h2h-*.jsonl`. Results are rows 25–28 of the ledger: H1 and H4 refuted,
+H2 and H3 partial.
+
 ### Re-run on the new harness, 2026-09-17
 
 Ten more calls (5 passes × 2 demos), model still `jev-1.13.0`, it has not moved
@@ -474,13 +484,25 @@ throughout, since the maps are monotone.
 | full map from elsewhere | 0.0597 (−54%) | 0.184 (worse than nothing) |
 | slope transferred, intercept refit on 50 labels | 0.0512 (−61.7%) | 0.124 |
 
+On the % column: the denominators are mixed. The −61.7% is the 40-draw
+sweep's own figure, (0.1336−0.0512)/0.1336 on fixed 100-item held-out blocks;
+against this table's 0.1306 baseline the same 0.0512 is −60.8%. The 0.0512
+sits at the noise floor for n=100 (ratio ≈1.1, inside the floor's p95 on all
+twelve transfers), so the corrected probabilities are indistinguishable from
+perfectly calibrated on a block that size: suggestive rather than decisive.
+See [analysis/CALIBRATION-TRANSFER.md](../analysis/CALIBRATION-TRANSFER.md).
+
 It reaches the negation probe too, a different wording and construction, improving
-from all four tiers, though that sample's headroom was small.
+from all four tiers (0.070 → 0.020/0.019/0.019/0.021 on the 30 held-out labels,
+slope-only, intercept refit on 50), though that sample's headroom was small:
+the starting 0.070 was already at the noise floor for n=30.
 
 The practical summary: **Jev returns a well-behaved monotone score with a stable
 distortion, not a probability.** Turning it into one costs a slope fitted once and
-about fifty labels per deployment. Whether the slope survives a change of domain, or
-a retrain, is untested.
+about fifty labels per deployment. The slope's survival across domains was tested
+in the issue-#9 transfer experiment: 0 of 3 new-domain slopes landed in the
+(2.11, 2.61) email band, so cross-domain transfer is PARTIAL, not established —
+and a retrain is untested.
 
 ### The earlier hypothesis, and how it fared
 
