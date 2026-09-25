@@ -32,9 +32,7 @@ On Python 3.10 through 3.13:
   `analysis/calibration_transfer.py` — the offline analyses still reproduce
 - `analysis/provenance.py` — the raw-data audit
 
-The provenance step runs without `--strict` because four runs on main predate
-the rule being enforced and have no committed raw responses; the script names
-them. Switch that step to `--strict` once they land, and an unbacked published
-figure becomes a build failure.
+The provenance step runs with `--strict` since 2026-09-24, when the missing raw
+runs landed: an unbacked published figure is now a build failure.
 
 Every step above was run locally and exits zero as of 2026-09-24.

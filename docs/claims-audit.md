@@ -89,14 +89,15 @@ weaker and different claim.
 
 ### Numeric resolution
 
-Every number the API returned in this repo's 71 committed responses sits on a 0.01
-grid: 3,180 values, none off it. Nothing in a direct response declares that. The
-top-level keys are `answers`, `model` and `usage`, and no more. Responses through
-Vercel AI Gateway carry `rounding: {probabilityDecimals: 2, scoreDecimals: 2}`
+Every number the API returned in this repo's 281 committed responses sits on a 0.01
+grid: 15,363 values, none off it. Nothing in a direct response declares that. The
+API's top-level keys are `answers`, `model` and `usage`; the operator's transport
+adds underscore-prefixed metadata (`_elapsed_s`, `_transport`) beside them.
+Responses through Vercel AI Gateway carry `rounding: {probabilityDecimals: 2, scoreDecimals: 2}`
 ([#10](../../issues/10)), so the Gateway reports the rounding rather than causing it.
-Quantised distributions still sum to exactly 1 across all 120 vectors, so the
-rounding is applied per component with one entry absorbing the residual, which is
-what a stray `0.8200000000000001` in the raw bodies is.
+842 of 843 quantised distributions sum to exactly 1; one jev-1.13.0 choice vector
+sums to 0.99, so the rounding residual is not always absorbed by a single entry.
+A stray `0.8200000000000001` in the raw bodies is representation slack, on the grid.
 
 The endpoints are not shared across primitives:
 

@@ -49,6 +49,4 @@ jobs:
           python3 analysis/calibration_set_size.py --draws 5 > /dev/null
           python3 analysis/corpora.py --demo > /dev/null
       - name: Raw-data provenance
-        # Not --strict yet: four runs on main predate the rule being enforced.
-        # analysis/provenance.py names them; switch to --strict once they land.
-        run: python3 analysis/provenance.py
+        run: python3 analysis/provenance.py --strict

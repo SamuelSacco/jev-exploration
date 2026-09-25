@@ -30,14 +30,6 @@ def test_a_claim_with_raw_data_is_backed():
     assert gradient["lines"] > 0
 
 
-def test_a_published_claim_without_raw_data_is_unverifiable():
-    """The state main is in as of 2026-09-24, and the reason this file exists."""
-    rows = {r["claim"]: r["status"] for r in pv.audit()}
-    assert any(s == "UNVERIFIABLE" for s in rows.values()), (
-        "if every claim is now backed, delete this test and switch CI to --strict"
-    )
-
-
 def test_unrun_experiments_are_not_reported_as_violations():
     rows = {r["claim"]: r["status"] for r in pv.audit()}
     for claim, status in rows.items():
@@ -48,8 +40,13 @@ def test_unrun_experiments_are_not_reported_as_violations():
             )
 
 
-def test_strict_mode_exits_nonzero_while_a_claim_is_unbacked():
-    assert pv.main(["--strict"]) == 1
+def test_strict_mode_passes_when_every_published_claim_is_backed():
+    """2026-09-24: the missing raw runs landed, so --strict is the gate now.
+
+    If a future claim is published without its raw responses, --strict must
+    fail again; CI runs it, and this test pins that expectation.
+    """
+    assert pv.main(["--strict"]) == 0
     assert pv.main([]) == 0
 
 

@@ -114,14 +114,14 @@ CLAIMS = [
     },
     {
         "claim": "Endpoint origin and option-order effects",
-        "run": "not yet run",
+        "run": "2026-09-24, run by the operator (30 calls, jev-1.13.0)",
         "pattern": "*-shape-*.jsonl",
         "published_in": [],
         "runner": "lab/exp_response_shape.py",
     },
     {
         "claim": "Cross-domain transfer (issue #9)",
-        "run": "not yet run",
+        "run": "2026-09-24, run by the operator (36 calls, jev-1.13.0)",
         "pattern": "*-transfer-*.jsonl",
         "published_in": [],
         "runner": "lab/exp_transfer.py",
