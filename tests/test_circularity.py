@@ -58,6 +58,37 @@ def test_provenance_check_would_notice_an_api_import(tmp_path, monkeypatch):
 # ------------------------------------------------------------------- corruption
 
 
+def test_circularity_doc_line_numbers_track_the_source():
+    """Every `line N` claim in analysis/CIRCULARITY.md must equal what
+    label_provenance() computes from the current source.
+
+    The doc once said 12/18; the source had moved the code to 173/179 when
+    generate.py grew its module docstring, and nobody noticed.
+    """
+    import re
+
+    prov = circ.label_provenance()
+    with open(os.path.join(HERE, "analysis", "CIRCULARITY.md"), encoding="utf-8") as fh:
+        doc = fh.read()
+    claimed = set(int(n) for n in re.findall(r"\bline (\d+)", doc))
+    assert claimed == {
+        prov["label_assigned_at_line"],
+        prov["text_built_at_line"],
+    }, f"doc claims {sorted(claimed)}, source says "
+    f"{sorted([prov['label_assigned_at_line'], prov['text_built_at_line']])}"
+
+
+def test_committed_circularity_json_provenance_is_current():
+    """The committed analysis/circularity.json provenance block must match the
+    live computation from the current source."""
+    path = os.path.join(HERE, "analysis", "circularity.json")
+    if not os.path.exists(path):
+        pytest.skip("circularity.json not committed")
+    with open(path, encoding="utf-8") as fh:
+        committed = json.load(fh)["provenance"]
+    assert committed == circ.label_provenance()
+
+
 def test_adversarial_corruption_raises_ece_monotonically():
     from jevlab.stats import ece
 
