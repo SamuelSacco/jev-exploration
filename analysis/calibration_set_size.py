@@ -133,6 +133,58 @@ def safe_budget(results: dict, sizes: list) -> int:
     return 0
 
 
+def _budget_row(block: dict, budget: int) -> dict:
+    """One budget's row from a transfer block. Tolerates the int->str key
+    change a JSON round-trip makes, so this works on live results and on a
+    loaded artifact alike."""
+    sizes = block["sizes"]
+    if budget in sizes:
+        return sizes[budget]
+    return sizes.get(str(budget), {})
+
+
+def headline_figures(results: dict, budget: int = PUBLISHED_BUDGET) -> dict:
+    """The aggregate figures analysis/CALIBRATION-TRANSFER.md publishes for one
+    label budget: the mean held-out ECE across the twelve transfers, the worst
+    single draw, and the reduction against the mean uncorrected ECE.
+
+    This is the single place the prose figures are derived from. The prose
+    tables quote these values, and tests/test_result_consistency.py recomputes
+    them from the committed fixtures and checks the prose against them, so a
+    correction that lands in the script but not in the prose fails loudly.
+    """
+    blocks = [b for b in results.values() if _budget_row(b, budget)]
+    mean_after = statistics.mean(_budget_row(b, budget)["held_out_ece"] for b in blocks)
+    mean_before = statistics.mean(b["baseline_ece"] for b in blocks)
+    reduction = (mean_before - mean_after) / mean_before
+    worst = max(_budget_row(b, budget)["held_out_worst"] for b in blocks)
+    return {
+        "budget": budget,
+        "transfers": len(blocks),
+        # Mean uncorrected ECE across the transfers (the "before").
+        "mean_uncorrected_ece": round(mean_before, 4),
+        "mean_held_out_ece": round(mean_after, 4),
+        "worst_draw": round(worst, 4),
+        "reduction": round(reduction, 4),
+        "reduction_pct": round(reduction * 100, 1),
+        # The budget table's remaining columns: the worst draw as a multiple of
+        # doing nothing, and how many transfers have a draw that ends up worse
+        # than no correction at all.
+        "worst_multiple_of_baseline": round(
+            max(
+                _budget_row(b, budget)["held_out_worst"] / b["baseline_ece"]
+                for b in blocks
+            ),
+            1,
+        ),
+        "transfers_worse_than_nothing": sum(
+            1
+            for b in blocks
+            if _budget_row(b, budget)["held_out_worst"] >= b["baseline_ece"]
+        ),
+    }
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--pass-index", type=int, default=0)
@@ -210,6 +262,11 @@ def main(argv=None) -> int:
         if PUBLISHED_BUDGET in block["sizes"]
     )
     print(f"  worst single draw at {PUBLISHED_BUDGET} labels        {worst:.4f}")
+    hl = headline_figures(results, PUBLISHED_BUDGET)
+    print(
+        f"  headlines for prose tables: mean {hl['mean_held_out_ece']:.4f}, "
+        f"reduction {hl['reduction_pct']:.1f}%, worst {hl['worst_draw']:.4f}"
+    )
 
     safe = safe_budget(results, SIZES)
     print("\nThe tail, which is what a deployment is exposed to:\n")
@@ -243,6 +300,10 @@ def main(argv=None) -> int:
         "published_budget": PUBLISHED_BUDGET,
         "optimism_at_published_budget": round(statistics.mean(gaps), 4),
         "safe_budget": safe_budget(results, SIZES),
+        # The figures the prose tables quote. analysis/CALIBRATION-TRANSFER.md
+        # and the claims ledger are checked against these in
+        # tests/test_result_consistency.py.
+        "headlines": headline_figures(results, PUBLISHED_BUDGET),
     }
     if args.json:
         with open(args.json, "w", encoding="utf-8") as fh:

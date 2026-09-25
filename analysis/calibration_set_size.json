@@ -1,5 +1,16 @@
 {
   "draws": 40,
+  "headlines": {
+    "budget": 50,
+    "mean_held_out_ece": 0.0512,
+    "mean_uncorrected_ece": 0.1336,
+    "reduction": 0.6171,
+    "reduction_pct": 61.7,
+    "transfers": 12,
+    "transfers_worse_than_nothing": 0,
+    "worst_draw": 0.1236,
+    "worst_multiple_of_baseline": 0.8
+  },
   "knees": {
     "t1_trivial->t2_ordinary": 50,
     "t1_trivial->t3_hard": 75,
