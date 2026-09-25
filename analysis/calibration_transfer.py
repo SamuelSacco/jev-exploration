@@ -31,6 +31,7 @@ from jevlab.calibration import (  # noqa: E402
     fit_platt,
     fit_platt_intercept,
 )
+from analysis.calibration_set_size import EVAL_SIZE, SIZES, sweep_pair  # noqa: E402
 from jevlab.stats import ece, reliability  # noqa: E402
 from lab.run_demos import negation_items  # noqa: E402
 from lab.tiers.analyse import read_pass  # noqa: E402
@@ -97,41 +98,43 @@ def main(argv=None) -> int:
     worst = min(reductions)
     print(f"Worst single transfer: {worst:.1%}")
 
-    print("\nSlope-only transfer: slope from the fit tier, intercept refit on the")
-    print(f"first {CALIBRATION_LABELS} labels of the test tier (one parameter).\n")
+    print("\nSlope-only transfer: slope from the fit tier, intercept refit on 50")
+    print("labels per transfer (40 random refit sets), scored on a fixed 100-item")
+    print("held-out block the refit never saw. Same machinery as")
+    print("analysis/calibration_set_size.py, so this row and the sweep agree by")
+    print("construction. The old version of this section scored the refit items")
+    print("too and reported 74%; see 'Two corrections' in")
+    print("analysis/CALIBRATION-TRANSFER.md.\n")
     print(header)
     print("-" * len(header))
-    full_scores, slope_scores, before_scores = [], [], []
+    before_scores, slope_scores, worst_cases = [], [], []
     for fit_tier in TIER_ORDER:
         cells = []
-        slope = fit_platt(tiers[fit_tier]).a
         for test_tier in TIER_ORDER:
             if fit_tier == test_tier:
                 cells.append(f"{'—':>14}")
                 continue
-            test = tiers[test_tier]
-            mapping = fit_platt_intercept(test[:CALIBRATION_LABELS], slope)
-            after = ece(apply_map(test, mapping))
-            before_scores.append(ece(test))
-            full_scores.append(
-                ece(apply_map(test, FITTERS["platt"](tiers[fit_tier])))
+            block = sweep_pair(
+                tiers[fit_tier],
+                tiers[test_tier],
+                SIZES,
+                40,
+                EVAL_SIZE,
             )
-            slope_scores.append(after)
-            cells.append(f"{ece(test):.3f}->{after:.3f}")
+            s = block["sizes"][CALIBRATION_LABELS]
+            before_scores.append(block["baseline_ece"])
+            slope_scores.append(s["held_out_ece"])
+            worst_cases.append(s["held_out_worst"])
+            cells.append(f"{block['baseline_ece']:.3f}->{s['held_out_ece']:.3f}")
         print(f"{fit_tier:<16} " + " ".join(f"{c:>14}" for c in cells))
 
     mean_before = sum(before_scores) / len(before_scores)
-    mean_full = sum(full_scores) / len(full_scores)
     mean_slope = sum(slope_scores) / len(slope_scores)
     print(
         f"\n  mean ECE  before {mean_before:.4f}   "
-        f"full map {mean_full:.4f} ({(mean_before - mean_full) / mean_before:+.1%})   "
         f"slope-only {mean_slope:.4f} ({(mean_before - mean_slope) / mean_before:+.1%})"
     )
-    print(
-        f"  worst case  full map {max(full_scores):.4f}   "
-        f"slope-only {max(slope_scores):.4f}"
-    )
+    print(f"  worst single draw  slope-only {max(worst_cases):.4f}")
     print("\nFitted slope and intercept per tier (the slope is what transfers):")
     for tier in TIER_ORDER:
         m = fit_platt(tiers[tier])

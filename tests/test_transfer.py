@@ -8,7 +8,8 @@ import os
 import pytest
 
 from analysis.calibration_transfer import TIER_RUN, negation_pairs
-from jevlab.calibration import apply_map, fit_platt, fit_platt_intercept
+from analysis.calibration_set_size import EVAL_SIZE, SIZES, sweep_pair
+from jevlab.calibration import apply_map, fit_platt
 from jevlab.stats import ece
 from lab.tiers.analyse import read_pass
 from lab.tiers.baselines import TIER_ORDER, load
@@ -47,29 +48,52 @@ def test_full_map_transfer_can_make_calibration_worse(tiers):
 
 
 def test_slope_only_transfer_never_makes_it_worse(tiers):
-    """The recommendation. Every one of the twelve transfers must improve."""
+    """The recommendation, scored the honest way: the intercept refit never
+    sees the evaluation items. Regression test for the train-on-test bug that
+    once inflated the published figure from 61.7% to 74%: refitting on
+    test[:50] and scoring on all of test is exactly what these tests used to
+    do."""
     for fit_tier in TIER_ORDER:
-        slope = fit_platt(tiers[fit_tier]).a
         for test_tier in TIER_ORDER:
             if fit_tier == test_tier:
                 continue
-            test = tiers[test_tier]
-            mapping = fit_platt_intercept(test[:50], slope)
-            after = ece(apply_map(test, mapping))
-            assert after < ece(test), f"{fit_tier} -> {test_tier} got worse"
+            block = sweep_pair(tiers[fit_tier], tiers[test_tier], SIZES, 40, EVAL_SIZE)
+            worst = block["sizes"][50]["held_out_worst"]
+            assert worst < block["baseline_ece"], f"{fit_tier} -> {test_tier} got worse"
 
 
 def test_slope_only_beats_the_full_map_on_average(tiers):
     full, slope_only = [], []
     for fit_tier in TIER_ORDER:
-        slope = fit_platt(tiers[fit_tier]).a
         for test_tier in TIER_ORDER:
             if fit_tier == test_tier:
                 continue
             test = tiers[test_tier]
             full.append(ece(apply_map(test, fit_platt(tiers[fit_tier]))))
-            slope_only.append(ece(apply_map(test, fit_platt_intercept(test[:50], slope))))
+            block = sweep_pair(tiers[fit_tier], tiers[test_tier], SIZES, 40, EVAL_SIZE)
+            slope_only.append(block["sizes"][50]["held_out_ece"])
     assert sum(slope_only) / len(slope_only) < sum(full) / len(full)
+
+
+def test_published_slope_only_figure_is_the_held_out_number(tiers):
+    """Pins the 61.7% in CALIBRATION-TRANSFER.md to the sweep's held-out
+    methodology: it is the reduction of the mean ECE, not the mean of the
+    per-transfer reductions. If a refactor reintroduces scoring on the refit
+    items, the figure drifts back toward the contaminated ~69-74% and this
+    fails.
+    """
+    baselines, held = [], []
+    for fit_tier in TIER_ORDER:
+        for test_tier in TIER_ORDER:
+            if fit_tier == test_tier:
+                continue
+            block = sweep_pair(tiers[fit_tier], tiers[test_tier], SIZES, 40, EVAL_SIZE)
+            baselines.append(block["baseline_ece"])
+            held.append(block["sizes"][50]["held_out_ece"])
+    mean_before = sum(baselines) / len(baselines)
+    mean_held = sum(held) / len(held)
+    assert round((mean_before - mean_held) / mean_before, 3) == 0.617
+    assert round(mean_held, 4) == 0.0512, mean_held
 
 
 def test_transfer_does_not_change_accuracy(tiers):

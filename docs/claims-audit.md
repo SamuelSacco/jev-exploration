@@ -441,14 +441,15 @@ spans −0.48 to +1.75, absorbs the slice's base rate, and belongs to the slice.
 So transferring a whole map is unreliable. Across the twelve tier-to-tier transfers
 it cut mean ECE 54%, but t3 → t4 made calibration *worse* (0.147 → 0.184, consistent
 on all three passes). Transferring only the slope and refitting the intercept on 50
-labels cut mean ECE 74% and improved every single transfer, worst case 0.045.
-Accuracy is untouched throughout, since the maps are monotone.
+labels cut mean ECE 61.7% on held-out items the refit never saw; the worst single
+draw reached 0.124, still below the worst uncorrected case. Accuracy is untouched
+throughout, since the maps are monotone.
 
 | approach | mean ECE, 12 transfers | worst case |
 |---|---|---|
 | none | 0.1306 | 0.147 |
 | full map from elsewhere | 0.0597 (−54%) | 0.184 (worse than nothing) |
-| slope transferred, intercept refit on 50 labels | 0.0346 (−74%) | 0.045 |
+| slope transferred, intercept refit on 50 labels | 0.0512 (−61.7%) | 0.124 |
 
 It reaches the negation probe too, a different wording and construction, improving
 from all four tiers, though that sample's headroom was small.

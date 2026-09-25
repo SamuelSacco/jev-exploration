@@ -208,8 +208,8 @@ def fit_platt_intercept(pairs: list, a: float, iterations: int = 200, tol: float
     So transferring the whole map can hurt. Transferring the slope and spending
     a handful of labels on the intercept does not: across the twelve
     tier-to-tier transfers, the full map cut mean ECE 54% but made one pair
-    worse, while slope-only with the intercept refit on 50 labels cut it 74% and
-    improved every pair.
+    worse, while slope-only with the intercept refit on 50 labels cut it 61.7%
+    on held-out items, with no draw worse than doing nothing.
 
     One parameter, and it needs only enough labels to pin a base rate.
     """
