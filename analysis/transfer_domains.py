@@ -206,14 +206,18 @@ def recipe(pairs: list, slope: float = EMAIL_SLOPE, labels: int = REFIT_LABELS) 
     """E-mail slope, intercept refit on the first `labels` items of the slice.
 
     The refit set is a prefix rather than a random sample: a deployment spends
-    its label budget on what arrives first, not on a stratified draw.
+    its label budget on what arrives first, not on a stratified draw. Both ECE
+    figures are computed on the held-out remainder (pairs[labels:]) the refit
+    never saw, so the before/after comparison is a fair one: scoring the refit
+    items too would contaminate the evaluation with training data.
     """
-    before = ece_with_floor(pairs, trials=300)
-    mapping = fit_platt_intercept(pairs[:labels], slope)
-    after = ece_with_floor(apply_map(pairs, mapping), trials=300)
+    refit, scored = pairs[:labels], pairs[labels:]
+    before = ece_with_floor(scored, trials=300)
+    mapping = fit_platt_intercept(refit, slope)
+    after = ece_with_floor(apply_map(scored, mapping), trials=300)
     return {
         "refit_labels": min(labels, len(pairs)),
-        "refit_positives": sum(1 for _, gold in pairs[:labels] if gold),
+        "refit_positives": sum(1 for _, gold in refit if gold),
         "intercept_refit": round(mapping.b, 4),
         "ece_before": round(before["ece"], 4),
         "ece_after": round(after["ece"], 4),
@@ -223,6 +227,7 @@ def recipe(pairs: list, slope: float = EMAIL_SLOPE, labels: int = REFIT_LABELS) 
         "reduction": round(
             (before["ece"] - after["ece"]) / before["ece"], 4
         ) if before["ece"] else 0.0,
+        "n_scored": len(scored),
     }
 
 
@@ -305,7 +310,9 @@ def verdicts(fits: dict, recipes: dict, h2: dict | None = None) -> dict:
                     f"slope moved {d_slope:.2f} < {H2_SLOPE_STABLE}) but the 95% "
                     "bootstrap CIs do not fully clear them: "
                     f"intercept CI [{i_lo:.2f}, {i_hi:.2f}], "
-                    f"slope CI [{s_lo:.2f}, {s_hi:.2f}]"
+                    f"slope CI [{s_lo:.2f}, {s_hi:.2f}]; "
+                    "the bootstrap resamples items at a fixed Platt target "
+                    "smoothing, so the CIs are blind to that choice"
                 )
             elif d_slope > d_int:
                 verdict, why = "REFUTED", None
@@ -353,8 +360,8 @@ def analyse(doc: dict, rows: list) -> dict:
     by_slice = {s: [r for r in rows if r["slice"] == s] for s in SLICE_ORDER}
     for name, block in doc.get("slices", {}).items():
         pairs = pairs_for(name, block["probabilities"], rows)
-        if len(pairs) < 20:
-            continue
+        if len(pairs) < 20 or len(pairs) <= REFIT_LABELS:
+            continue  # too small to fit, or nothing left to score the refit on
         fits[name] = fit_slice(pairs)
         recipes[name] = recipe(pairs)
         accs[name] = accuracy(pairs)

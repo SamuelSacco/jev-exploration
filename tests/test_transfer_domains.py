@@ -236,6 +236,27 @@ def test_recipe_reports_how_many_positives_its_label_budget_bought():
     assert 5 <= got["refit_positives"] <= 20
 
 
+def test_recipe_scores_only_the_held_out_remainder(monkeypatch):
+    """A3 regression: recipe() used to refit on the first 50 items and then
+    score all of them again -- live train-on-test. The probabilities handed to
+    ece_with_floor must never intersect the refit set's probabilities."""
+    seen = []
+
+    def spy(pairs, trials=300):
+        seen.append({p for p, _ in pairs})
+        return {"ece": 0.1, "floor_mean": 0.05, "ratio": 0.5}
+
+    monkeypatch.setattr(td, "ece_with_floor", spy)
+    pairs = synthetic(slope=2.34, intercept=0.0, n=100, seed=7)
+    labels = 50
+    out = td.recipe(pairs, labels=labels)
+    refit_probs = {p for p, _ in pairs[:labels]}
+    assert len(seen) == 2  # before and after, both on held-out pairs
+    for probs in seen:
+        assert not (probs & refit_probs)
+    assert out["n_scored"] == len(pairs) - labels
+
+
 def test_analyse_end_to_end_on_planted_answers():
     rows = bl.load()
     doc = {"started_at": "test", "transport": "test", "slices": {}}
