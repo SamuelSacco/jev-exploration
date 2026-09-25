@@ -34,22 +34,74 @@ DEFAULT_ANSWERS = os.path.join(ROOT, "lab", "headtohead_answers.json")
 
 
 def pairs(block: dict, gold: dict) -> list:
+    """(qid, p, gold) triples, sorted by qid.
+
+    The qid is what joins the two arms in the paired statistics: throwing it
+    away and zipping by index silently misaligns every pair after a dropped
+    item (a local reply that failed to parse drops its qid from the local arm
+    but not from the Jev arm).
+    """
     return [
-        (p, bool(gold[qid]))
+        (qid, p, bool(gold[qid]))
         for qid, p in sorted(block.get("probabilities", {}).items())
         if qid in gold
     ]
 
 
+def _pg(item):
+    """(p, gold) out of a pair-row, with or without its qid."""
+    return (item[1], item[2]) if len(item) == 3 else (item[0], item[1])
+
+
+def _hit(p, gold):
+    return 1.0 if (p >= 0.5) == gold else 0.0
+
+
+def _align(a, b):
+    """Inner-join two pair lists on qid; return per-pair (hit_a - hit_b) deltas.
+
+    Rows that carry qids (3-tuples from pairs()) are inner-joined on qid, in
+    deterministic sorted-qid order: a qid present in only one arm drops its
+    pair instead of shifting every later pair. Disjoint qids give no pairs.
+
+    Rows without qids (legacy bare 2-tuples) keep the old truncation/index
+    pairing as an explicit fallback -- and it is NOT silent: a stderr warning
+    names the misalignment risk every time it actually pairs anything.
+
+    Returns (deltas, used_index_fallback).
+    """
+    have_qids = (
+        bool(a)
+        and bool(b)
+        and all(len(item) == 3 for item in a)
+        and all(len(item) == 3 for item in b)
+    )
+    if have_qids:
+        ja = {qid: (p, gold) for qid, p, gold in a}
+        jb = {qid: (p, gold) for qid, p, gold in b}
+        deltas = [_hit(*ja[q]) - _hit(*jb[q]) for q in sorted(set(ja) & set(jb))]
+        return deltas, False
+    n = min(len(a), len(b))
+    if n:
+        print(
+            f"headtohead: pairing {n} items by INDEX (no qids present) -- "
+            "a dropped item misaligns every pair after it",
+            file=sys.stderr,
+        )
+    deltas = [_hit(*_pg(a[i])) - _hit(*_pg(b[i])) for i in range(n)]
+    return deltas, True
+
+
 def side_scores(pr: list) -> dict:
     if not pr:
         return {}
-    hits = sum(1 for p, gold in pr if (p >= 0.5) == gold)
-    lo, hi = wilson(hits, len(pr))
-    floors = ece_with_floor(pr, trials=300)
+    bare = [_pg(row) for row in pr]
+    hits = sum(1 for p, gold in bare if _hit(p, gold))
+    lo, hi = wilson(hits, len(bare))
+    floors = ece_with_floor(bare, trials=300)
     return {
-        "n": len(pr),
-        "accuracy": round(hits / len(pr), 4),
+        "n": len(bare),
+        "accuracy": round(hits / len(bare), 4),
         "ci95": [round(lo, 4), round(hi, 4)],
         "ece": round(floors["ece"], 4),
         "floor": round(floors["floor_mean"], 4),
@@ -75,23 +127,30 @@ def lexical_bar(arm: str) -> float:
     return 0.5
 
 
+def paired_difference(a, b):
+    """Paired bootstrap CI on the accuracy difference, the arms joined on qid.
+
+    Returns (ci95, n_pairs, used_index_fallback). Empty or disjoint arms give
+    ([0.0, 0.0], 0, <fallback>).
+    """
+    deltas, fallback = _align(a, b)
+    if not deltas:
+        return [0.0, 0.0], 0, fallback
+    lo, hi = bootstrap_ci(deltas, statistic=lambda xs: sum(xs) / len(xs))
+    return [round(lo, 4), round(hi, 4)], len(deltas), fallback
+
+
 def difference_ci(a: list, b: list) -> list:
     """Bootstrap interval on the accuracy DIFFERENCE.
 
     On the difference rather than on each side separately: two overlapping
     independent intervals do not mean the difference covers zero, and reading
     them that way is the mistake this repo's ledger already corrects elsewhere.
+
+    The arms are inner-joined on qid before the paired bootstrap; see _align.
     """
-    n = min(len(a), len(b))
-    if not n:
-        return [0.0, 0.0]
-    deltas = [
-        (1.0 if (a[i][0] >= 0.5) == a[i][1] else 0.0)
-        - (1.0 if (b[i][0] >= 0.5) == b[i][1] else 0.0)
-        for i in range(n)
-    ]
-    lo, hi = bootstrap_ci(deltas, statistic=lambda xs: sum(xs) / len(xs))
-    return [round(lo, 4), round(hi, 4)]
+    ci, _, _ = paired_difference(a, b)
+    return ci
 
 
 def verdicts(arms: dict) -> dict:
@@ -188,7 +247,10 @@ def analyse(doc: dict) -> dict:
             "local_latency_p50_s": block.get("local", {}).get("latency_p50_s"),
         }
         if jev_pairs and local_pairs:
-            entry["difference_ci"] = difference_ci(local_pairs, jev_pairs)
+            ci, n_pairs, fallback = paired_difference(local_pairs, jev_pairs)
+            entry["difference_ci"] = ci
+            entry["difference_pairs_n"] = n_pairs
+            entry["paired_by"] = "index" if fallback else "qid"
         arms[name] = entry
 
     if "typed" in arms and "adversarial" in arms:
@@ -197,7 +259,10 @@ def analyse(doc: dict) -> dict:
             doc["arms"]["adversarial"].get("jev", {}), doc["arms"]["adversarial"]["gold"]
         )
         if typed and noul:
-            arms["typed"]["vs_adversarial_ci"] = difference_ci(typed, noul)
+            ci, n_pairs, fallback = paired_difference(typed, noul)
+            arms["typed"]["vs_adversarial_ci"] = ci
+            arms["typed"]["vs_adversarial_pairs_n"] = n_pairs
+            arms["typed"]["vs_adversarial_paired_by"] = "index" if fallback else "qid"
 
     return {
         "started_at": doc.get("started_at"),
@@ -246,6 +311,15 @@ def memo(result: dict) -> str:
             "arm's n wherever this is non-zero."
         )
         lines.append("")
+    lines.append(
+        "Paired statistics (difference CIs) inner-join the two arms on qid: a "
+        "qid present in only one arm drops its pair instead of misaligning every "
+        "pair after it. Each entry records how many pairs were used "
+        "(`difference_pairs_n` / `vs_adversarial_pairs_n`) and the pairing key "
+        "(`paired_by` / `vs_adversarial_paired_by`: `qid`, or `index` for legacy "
+        "rows that never carried qids)."
+    )
+    lines.append("")
     return "\n".join(lines)
 
 
