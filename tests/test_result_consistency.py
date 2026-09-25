@@ -145,3 +145,50 @@ def test_committed_results_artifact_is_fresh(fresh_sweep):
         "regenerate it: python3 analysis/calibration_set_size.py --draws 40 "
         "--json analysis/calibration_set_size.json"
     )
+
+
+def test_negation_table_is_held_out_slope_only():
+    """N3: the negation table is the held-out slope-only procedure, not the old
+    full-map numbers. Pins wiring, not just floats: (a) the slope came from
+    the tier fit, not refit on negation, (b) the refit and score index sets
+    are disjoint and cover the 80 items, (c) the four doc figures match a fresh
+    recompute of negation_slope_only. Fails on the old code, which had no such
+    function and printed full-map figures scored on all 80 items."""
+    from analysis.calibration_transfer import (
+        TIER_ORDER,
+        TIER_RUN,
+        negation_pairs,
+        negation_slope_only,
+    )
+    from jevlab.calibration import fit_platt
+    from lab.tiers.analyse import read_pass
+    from lab.tiers.baselines import load
+
+    run = os.path.join(HERE, "lab", "runs", "20260918T014148Z-negation.jsonl")
+    if not os.path.exists(run):
+        pytest.skip("negation run not committed")
+    gold = {r["id"]: r["is_phishing"] for r in load()}
+    tiers = {t: read_pass(TIER_RUN, t, 0, gold) for t in TIER_ORDER}
+    negation = negation_pairs()
+    assert len(negation) == 80
+
+    text = read_md("analysis", "CALIBRATION-TRANSFER.md")
+    section = text.split("## Does it reach a different task?", 1)[1]
+    section = section.split("\n## ", 1)[0]
+    doc_rows = {r[0]: r for r in md_table_rows(section) if r and r[0] in TIER_ORDER}
+    assert len(doc_rows) == 4, (
+        f"expected four tier rows in the negation table, got {list(doc_rows)}"
+    )
+    for fit_tier in TIER_ORDER:
+        r = negation_slope_only(tiers[fit_tier], negation)
+        assert r["slope"] == fit_platt(tiers[fit_tier]).a, (
+            f"{fit_tier}: slope not from the tier fit"
+        )
+        assert not set(r["refit_idx"]) & set(r["score_idx"]), (
+            f"{fit_tier}: refit and score sets overlap"
+        )
+        assert set(r["refit_idx"]) | set(r["score_idx"]) == set(range(80))
+        row = doc_rows[fit_tier]
+        assert row[1] == f"{r['ece_before']:.3f}", f"{fit_tier} before"
+        assert row[2] == f"{r['ece_after']:.3f}", f"{fit_tier} after"
+        assert row[3] == f"{r['ece_reduction']:.0%}", f"{fit_tier} reduction"

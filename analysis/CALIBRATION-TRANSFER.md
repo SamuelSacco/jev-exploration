@@ -22,6 +22,16 @@ labels on the intercept helped in every case measured, and helped more.
 Accuracy is unchanged throughout, since the maps are monotone and cannot reorder
 anything. Brier improves alongside ECE (t1→t4: 0.1030 → 0.0805).
 
+On the % column: the denominators are mixed. "No correction" 0.1306 and "full
+map" 0.0597 are means over the twelve full-tier transfers; the slope row is the
+40-draw sweep mean scored on fixed 100-item held-out blocks, and
+−61.7% = (0.1336−0.0512)/0.1336 is against the sweep's own baseline (against the
+table's 0.1306 baseline the same 0.0512 is −60.8%). And 0.0512 sits at the
+noise floor for n=100 (observed-to-floor ratio ≈1.1, inside the floor's p95 on
+all twelve transfers), so the corrected probabilities are indistinguishable
+from perfectly calibrated on a block that size: suggestive rather than
+decisive.
+
 ## Why the split
 
 Fitting Platt independently on each tier shows the two parameters behaving
@@ -35,7 +45,10 @@ completely differently:
 | t4_adversarial | 2.15 | −0.30 |
 
 The slope sits in a band of 2.11–2.61 across all four tiers and all three passes.
-That is the squeeze: a property of the model, and the reusable part. A slope near 2.2
+That is the squeeze: a property of the model, and the reusable part — within
+email, at least. The issue-#9 transfer experiment put 0 of 3 new-domain slopes
+inside the (2.11, 2.61) band (verdicts() → PARTIAL), so "model property" is a
+qualified claim. A slope near 2.2
 means Jev's log-odds are roughly half as extreme as they should be.
 
 The intercept spans −0.48 to +1.75. It absorbs the slice's base rate and belongs to
@@ -50,10 +63,13 @@ does more damage than the slope correction repairs.
 ## The recipe
 
 ```python
-from jevlab.calibration import fit_platt, fit_platt_intercept, apply_map
+from jevlab.calibration import fit_platt, fit_platt_intercept
 
-slope = fit_platt(reference_pairs).a        # once, from any decent-sized slice
-mapping = fit_platt_intercept(my_pairs[:50], slope)   # per deployment
+slope = fit_platt(reference_pairs).a          # once, from any decent-sized slice
+refit, held_out = my_pairs[:50], my_pairs[50:]  # per deployment: intercept from
+                                                # 50 labels, scored only on the
+                                                # labels the refit never saw
+mapping = fit_platt_intercept(refit, slope)
 calibrated = [mapping(p) for p in raw_probabilities]
 ```
 
@@ -63,18 +79,21 @@ base rate. `jevlab.calibration.transfer_slope` wraps both steps.
 ## Does it reach a different task?
 
 The negation probe is a different question wording, a different construction, and
-100% accurate, so it is a genuine out-of-domain test within email:
+100% accurate, so it is a genuine out-of-domain test within email. Slope
+transferred from the tier, intercept refit on 50 negation labels, scored on the
+30 labels the refit never saw:
 
 | slope fitted on | negation ECE before | after | reduction |
 |---|---|---|---|
-| t1_trivial | 0.065 | 0.021 | −67% |
-| t2_ordinary | 0.065 | 0.011 | −83% |
-| t3_hard | 0.065 | 0.007 | −89% |
-| t4_adversarial | 0.065 | 0.022 | −66% |
+| t1_trivial | 0.070 | 0.020 | 71% |
+| t2_ordinary | 0.070 | 0.019 | 72% |
+| t3_hard | 0.070 | 0.019 | 73% |
+| t4_adversarial | 0.070 | 0.021 | 70% |
 
-Every one improves, including from t3, whose full map hurt t4. The starting ECE of
-0.065 is already at that sample's noise floor (ratio 1.25 at n=80), so this is
-suggestive rather than decisive: there was little to fix.
+Every one improves, including from t3, whose full map hurt t4. The starting
+ECE of 0.070 is already at the noise floor of the 30 scored items (ratio 0.95
+at n=30), so this is suggestive rather than decisive: there was little to
+fix.
 
 The negation run is 80/80 correct and still compressed, which shows the distortion is
 not a symptom of being wrong. Jev returned 0.57 and 0.63 on items it classified
@@ -103,9 +122,10 @@ Two corrections to the figures above come out of it.
 method used `test[:50]` for the refit and then scored the map over all 200 items
 of the tier, so a quarter of what was scored was what it had been fitted on.
 Scored properly, on held-out items only, the same budget gives **61.7%**, not
-the 69.1% the old method reports on this pass. The shortcut is worth about
-0.010 of ECE, and it is the kind of thing this repo corrects in other people's
-benchmarks.
+the 69.1% the old method reports on this pass. The shortcut was worth about
+0.016 of ECE: the published 74% against the sweep's own 0.1336 baseline
+implies 0.0347, while the honest held-out figure is 0.0512 — and it is the
+kind of thing this repo corrects in other people's benchmarks.
 
 **The mean flattens at about 75 labels; the tail is the reason to stop at 50.**
 
