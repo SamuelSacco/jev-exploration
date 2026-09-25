@@ -174,11 +174,13 @@ premium is accuracy under self-labels minus accuracy under generator labels.
 Written before the run: the premium is positive in every tier, largest on
 t4_adversarial, and a premium above +0.05 overall is comparable to T69's 0.081.
 
-Run 2026-09-20, 120 calls. **Reported, not reproducible from this
-repository**: the raw responses were not returned here, so `lab/runs/` holds
-nothing behind the table below and `python3 analysis/provenance.py` marks it
-UNVERIFIABLE. Committing `lab/runs/*-circularity-*.jsonl` from that run fixes
-it.
+Run 2026-09-20, 120 calls. The raw responses were committed by PR #12 as
+`lab/runs/20260921T150525Z-circularity-*.jsonl` (120 lines: 4 tiers × 2 regimes ×
+3 passes × 5 batches), and the table below re-derives exactly from them
+against the committed tier labels with mean-across-passes aggregation —
+per-tier premiums +0.015/−0.005/+0.015/−0.005, mean +0.005. The "reported, not
+reproducible" note that stood here predates the commit; `python3
+analysis/provenance.py` marks this claim BACKED.
 
 | tier | premium |
 |---|---|
