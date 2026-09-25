@@ -27,8 +27,15 @@ from jevlab.calibration import (  # noqa: E402
     fit_platt_checked,
     fit_platt_intercept,
 )
+from jevlab.run_meta import emit, print_header  # noqa: E402
 from jevlab.stats import ece_with_floor, wilson  # noqa: E402
-from lab.domains.baselines import SLICE_ORDER, lexical, load  # noqa: E402
+from lab.domains.baselines import (  # noqa: E402
+    DATASET_NAME,
+    SLICE_ORDER,
+    dataset_version,
+    lexical,
+    load,
+)
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DEFAULT_ANSWERS = os.path.join(ROOT, "lab", "domains", "transfer_answers.json")
@@ -260,7 +267,18 @@ def main(argv=None) -> int:
 
     with open(args.answers, encoding="utf-8") as fh:
         doc = json.load(fh)
+    meta = emit(
+        task="analysis.transfer_domains",
+        args=vars(args),
+        datasets={DATASET_NAME: dataset_version()},
+        # The transfer answers file records transport, not the model that
+        # served the responses: model_id stays "unknown" rather than guessed.
+        model_id=doc.get("model") or "unknown",
+        transport=doc.get("transport") or "unknown",
+    )
+    print_header(meta)
     result = analyse(doc, load())
+    result["run_meta"] = meta
     report(result)
 
     if args.json:
