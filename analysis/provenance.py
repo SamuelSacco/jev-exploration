@@ -134,9 +134,9 @@ CLAIMS = [
     },
     {
         "claim": "Jev vs local 4B head-to-head",
-        "run": "not yet run",
+        "run": "2026-09-25, run by the operator (33 Jev calls + 1,320 local qwen3:4b calls, jev-1.13.0)",
         "pattern": "*-h2h-*.jsonl",
-        "published_in": [],
+        "published_in": ["docs/claims-audit.md"],
         "runner": "lab/exp_headtohead.py",
     },
 ]
