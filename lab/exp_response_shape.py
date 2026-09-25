@@ -11,8 +11,8 @@ No credential handling. Resolves its sender through `jevlab.transport`.
 `analysis/quantisation.py` established, from 71 committed responses, that the
 direct API rounds every number to a 0.01 grid while declaring no rounding, that
 Choice and Score reach exactly 0 and exactly 1 freely (70.4% and 20.4% of Choice
-option probabilities), and that Noul did neither once in 2,580 answers, bounding
-its endpoint rate at 0.15% (Wilson, 95%).
+option probabilities), and that Noul did neither once in 11,148 answers, bounding
+its endpoint rate at 0.0344% (Wilson, 95%).
 
 That leaves the question those numbers raise. A probability of exactly 0 on the
 *correct* option cannot be repaired by temperature, Platt or isotonic scaling,

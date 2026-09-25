@@ -191,10 +191,12 @@ analysis/provenance.py` marks this claim BACKED.
 | t4_adversarial | −0.005 |
 | **mean** | **+0.005** |
 
-**The preregistration is REFUTED, on every clause.** The premium is not
-positive in every tier; it is negative in two. It is not largest on
-t4_adversarial; it is smallest there, tied. And at +0.005 overall it is an order
-of magnitude below the +0.05 threshold and sixteen times below T69's 0.081.
+**The preregistration is refuted on the overall clause**: at +0.005 it is an order
+of magnitude below the +0.05 threshold and sixteen times below T69's 0.081. The
+per-tier clauses fail only at noise level — t1 and t3 read +0.015, t2 and t4
+−0.005, and t3's per-pass premiums (+0.015/+0.015/+0.020) never span zero but
+never leave the noise band — so "positive in every tier" and "largest on
+t4_adversarial" are unsettled, not refuted; the table supports ~zero everywhere.
 
 The reasoning behind the prediction was that a model agrees with itself more
 than with the world, and most so where it is least accurate, because there is

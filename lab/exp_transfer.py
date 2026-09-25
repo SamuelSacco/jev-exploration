@@ -15,11 +15,12 @@ side.
 `analysis/CALIBRATION-TRANSFER.md` reports, on the 800-item e-mail gradient:
 
   - Platt's slope sits in 2.11-2.61 across all four tiers and all three passes.
-    That is the squeeze, read as a property of the model and the reusable part.
+    That is the squeeze, read as a property of the model on e-mail and the reusable part.
   - The intercept spans -0.48 to +1.75, tracking the slice's base rate, and is
     read as belonging to the deployment rather than the model.
   - So: transfer the slope, spend ~50 labels refitting the intercept. That cut
-    mean ECE 61.7% on held-out items, with no draw worse than doing nothing,
+    mean ECE 61.7% on held-out items, though 3 of 480 draws (all in draw 23)
+    ended worse than doing nothing against their own draw's baseline,
     where transferring the whole map cut it 54% and hurt one.
 
 Its stated limitation is that everything behind it is e-mail legitimacy on

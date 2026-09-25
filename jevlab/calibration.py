@@ -200,7 +200,7 @@ def fit_platt_intercept(pairs: list, a: float, iterations: int = 200, tol: float
     """Refit only the intercept, holding a transferred slope fixed.
 
     The two Platt parameters behave very differently across slices of Jev. The
-    slope -- the squeeze -- is a property of the model and is stable: fitted
+    slope -- the squeeze -- is a property of the model on e-mail and is stable: fitted
     independently on four difficulty tiers it lands between 2.11 and 2.61. The
     intercept absorbs the slice's base rate and is not stable at all: the same
     four tiers give -0.48 to +1.75.
@@ -209,7 +209,8 @@ def fit_platt_intercept(pairs: list, a: float, iterations: int = 200, tol: float
     a handful of labels on the intercept does not: across the twelve
     tier-to-tier transfers, the full map cut mean ECE 54% but made one pair
     worse, while slope-only with the intercept refit on 50 labels cut it 61.7%
-    on held-out items, with no draw worse than doing nothing.
+    on held-out items, with 3 of 480 draws -- all in draw 23 -- ending
+    worse than doing nothing against their own draw's baseline.
 
     One parameter, and it needs only enough labels to pin a base rate.
     """
