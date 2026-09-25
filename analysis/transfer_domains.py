@@ -10,12 +10,35 @@ Scoring is separated from running so the verdict comes from committed data and
 can be recomputed by anyone, and so the hypotheses cannot be adjusted after the
 numbers arrive: they are read back out of the results file, which the runner
 wrote before it made a call.
+
+H2 (the intercept/slope decomposition) is scored with uncertainty, not just
+point estimates. The two code_security slices share their items -- only the
+base rate differs -- so one bootstrap resample draws item indices with
+replacement and refits Platt on both slices from the same draw; the percentile
+intervals on |slope_rare - slope_base| and |intercept_rare - intercept_base|
+are the 95% bootstrap CIs. The verdict rule, stated exactly:
+
+  PROVEN   point estimates clear the preregistered thresholds (intercept moves
+           > 0.8 logits, slope moves < 0.5) AND the CIs clear them too: the
+           intercept CI's *lower* bound exceeds 0.8 and the slope CI's *upper*
+           bound sits below 0.5.
+  PARTIAL  point estimates clear the thresholds but at least one CI does not
+           fully clear them (the honest downgrade when uncertainty is wide).
+  REFUTED  the slope moves more than the intercept does (the preregistered
+           falsifier), judged on point estimates.
+  PARTIAL  otherwise (point estimates do not clear the thresholds and the
+           falsifier does not fire).
+
+The RNG, percentile method, and seed convention match jevlab.stats.bootstrap_ci;
+it is written as one loop rather than two bootstrap_ci calls so both
+differences come from the same resamples.
 """
 from __future__ import annotations
 
 import argparse
 import json
 import os
+import random
 import sys
 
 sys.path.insert(
@@ -39,6 +62,17 @@ FALSIFYING_BAND = (1.60, 3.10)
 EMAIL_SLOPE = 2.34
 REFIT_LABELS = 50
 
+# H2 decomposition thresholds, from the preregistration in lab/exp_transfer.py:
+# between code_security and code_security_rare the intercept must move by more
+# than H2_INTERCEPT_MOVED logits while the slope moves by less than
+# H2_SLOPE_STABLE. H2 is PROVEN only if the 95% bootstrap CIs clear the same
+# thresholds (see the module docstring for the exact rule).
+H2_INTERCEPT_MOVED = 0.8
+H2_SLOPE_STABLE = 0.5
+H2_BOOTSTRAP_RESAMPLES = 2_000
+H2_BOOTSTRAP_SEED = 0
+H2_BOOTSTRAP_ALPHA = 0.05
+
 
 def pairs_for(slice_name: str, probabilities: dict, rows: list) -> list:
     gold = {r["id"]: r["is_positive"] for r in rows if r["slice"] == slice_name}
@@ -58,6 +92,96 @@ def fit_slice(pairs: list) -> dict:
         "slope": round(mapping.a, 4),
         "intercept": round(mapping.b, 4),
         **diagnostics,
+    }
+
+
+def h2_pairs(doc: dict, rows: list) -> tuple | None:
+    """The two code_security slices' (p, gold) pairs, aligned item by item.
+
+    The slices share their items (same qids, same questions); only the base
+    rate differs, so the bootstrap draws one index resample for both slices.
+    Returns None when either slice is missing or too small to fit.
+    """
+    blocks = doc.get("slices", {})
+    if "code_security" not in blocks or "code_security_rare" not in blocks:
+        return None
+    gold = {
+        (r["slice"], r["id"]): r["is_positive"]
+        for r in rows
+        if r["slice"] in ("code_security", "code_security_rare")
+    }
+    probs_base = blocks["code_security"]["probabilities"]
+    probs_rare = blocks["code_security_rare"]["probabilities"]
+    qids = sorted(set(probs_base) & set(probs_rare))
+    base = [
+        (probs_base[q], gold[("code_security", q)])
+        for q in qids
+        if ("code_security", q) in gold
+    ]
+    rare = [
+        (probs_rare[q], gold[("code_security_rare", q)])
+        for q in qids
+        if ("code_security_rare", q) in gold
+    ]
+    if len(base) != len(rare) or len(base) < 20:
+        return None
+    return base, rare
+
+
+def h2_bootstrap(
+    base_pairs: list,
+    rare_pairs: list,
+    resamples: int = H2_BOOTSTRAP_RESAMPLES,
+    seed: int = H2_BOOTSTRAP_SEED,
+    alpha: float = H2_BOOTSTRAP_ALPHA,
+) -> dict:
+    """Paired percentile bootstrap for the H2 slope/intercept differences.
+
+    One resample draws item indices with replacement and refits Platt on both
+    slices from the same draw (the slices share their items). Each resample's
+    |slope_rare - slope_base| and |intercept_rare - intercept_base| form the
+    two bootstrap distributions; the reported intervals are their percentiles,
+    computed exactly the way jevlab.stats.bootstrap_ci does it, with the same
+    seeded RNG. Resamples whose fit is not identified are skipped rather than
+    reported -- a runaway Newton slope is a numerical artefact, not a draw
+    from the sampling distribution -- and the skip count is reported so a
+    reader can see whether the interval rests on shaky fits.
+    """
+    n = len(base_pairs)
+    rng = random.Random(seed)
+    d_slopes, d_ints = [], []
+    skipped = 0
+    for _ in range(resamples):
+        idx = [rng.randrange(n) for _ in range(n)]
+        map_base, diag_base = fit_platt_checked([base_pairs[i] for i in idx])
+        map_rare, diag_rare = fit_platt_checked([rare_pairs[i] for i in idx])
+        if not (diag_base["identified"] and diag_rare["identified"]):
+            skipped += 1
+            continue
+        d_slopes.append(abs(map_rare.a - map_base.a))
+        d_ints.append(abs(map_rare.b - map_base.b))
+
+    def percentile(values: list) -> tuple | None:
+        if not values:
+            return None
+        values.sort()
+        m = len(values)
+        return (
+            values[int((alpha / 2) * m)],
+            values[min(m - 1, int((1 - alpha / 2) * m))],
+        )
+
+    used = len(d_slopes)
+    stable = used >= max(100, resamples // 2)
+    return {
+        "resamples": resamples,
+        "resamples_used": used,
+        "resamples_skipped": skipped,
+        "seed": seed,
+        "alpha": alpha,
+        "stable": stable,
+        "slope_ci": percentile(d_slopes) if stable else None,
+        "intercept_ci": percentile(d_ints) if stable else None,
     }
 
 
@@ -95,8 +219,18 @@ def recipe(pairs: list, slope: float = EMAIL_SLOPE, labels: int = REFIT_LABELS) 
     }
 
 
-def verdicts(fits: dict, recipes: dict) -> dict:
-    """Score the three preregistered hypotheses. PROVEN / REFUTED / UNVERIFIABLE."""
+def verdicts(fits: dict, recipes: dict, h2: dict | None = None) -> dict:
+    """Score the three preregistered hypotheses. PROVEN / REFUTED / UNVERIFIABLE.
+
+    `h2` is the output of `h2_bootstrap` for the two code_security slices, or
+    None when it was not computed. H2 is PROVEN only when the point estimates
+    clear the preregistered thresholds (intercept moves > 0.8 logits, slope
+    moves < 0.5) *and* the 95% bootstrap CIs clear them too -- the intercept
+    CI's lower bound above 0.8, the slope CI's upper bound below 0.5. Point
+    estimates that clear the thresholds without the CIs earn PARTIAL, never
+    PROVEN: a decomposition declared from point estimates alone has no measured
+    uncertainty behind it.
+    """
     out = {}
 
     balanced = {s: f for s, f in fits.items() if not s.endswith("_rare")}
@@ -141,14 +275,50 @@ def verdicts(fits: dict, recipes: dict) -> dict:
         base, rare = fits["code_security"], fits["code_security_rare"]
         d_slope = abs(rare["slope"] - base["slope"])
         d_int = abs(rare["intercept"] - base["intercept"])
-        out["H2_decomposition_is_real"] = {
-            "verdict": (
-                "PROVEN" if (d_int > 0.8 and d_slope < 0.5)
-                else ("REFUTED" if d_slope > d_int else "PARTIAL")
-            ),
+        point_clears = d_int > H2_INTERCEPT_MOVED and d_slope < H2_SLOPE_STABLE
+        block = {
             "slope_moved": round(d_slope, 4),
             "intercept_moved": round(d_int, 4),
         }
+        if h2 and h2.get("stable") and h2.get("slope_ci") and h2.get("intercept_ci"):
+            s_lo, s_hi = h2["slope_ci"]
+            i_lo, i_hi = h2["intercept_ci"]
+            block["slope_moved_ci95"] = [round(s_lo, 4), round(s_hi, 4)]
+            block["intercept_moved_ci95"] = [round(i_lo, 4), round(i_hi, 4)]
+            block["bootstrap_resamples_used"] = h2["resamples_used"]
+            block["bootstrap_resamples_skipped"] = h2["resamples_skipped"]
+            ci_clears = i_lo > H2_INTERCEPT_MOVED and s_hi < H2_SLOPE_STABLE
+            if point_clears and ci_clears:
+                verdict, why = "PROVEN", None
+            elif point_clears:
+                verdict = "PARTIAL"
+                why = (
+                    "point estimates clear the thresholds "
+                    f"(intercept moved {d_int:.2f} > {H2_INTERCEPT_MOVED}, "
+                    f"slope moved {d_slope:.2f} < {H2_SLOPE_STABLE}) but the 95% "
+                    "bootstrap CIs do not fully clear them: "
+                    f"intercept CI [{i_lo:.2f}, {i_hi:.2f}], "
+                    f"slope CI [{s_lo:.2f}, {s_hi:.2f}]"
+                )
+            elif d_slope > d_int:
+                verdict, why = "REFUTED", None
+            else:
+                verdict, why = "PARTIAL", None
+        else:
+            # No usable bootstrap CIs (unit-test seam only; analyse always
+            # computes them). Point estimates alone cannot PROVE the
+            # decomposition, so PROVEN is unreachable on this path.
+            if point_clears:
+                verdict = "PARTIAL"
+                why = "no bootstrap CIs: point estimates alone cannot PROVE H2"
+            elif d_slope > d_int:
+                verdict, why = "REFUTED", None
+            else:
+                verdict, why = "PARTIAL", None
+        block["verdict"] = verdict
+        if why:
+            block["why"] = why
+        out["H2_decomposition_is_real"] = block
     else:
         out["H2_decomposition_is_real"] = {
             "verdict": "UNVERIFIABLE",
@@ -183,6 +353,8 @@ def analyse(doc: dict, rows: list) -> dict:
         accs[name] = accuracy(pairs)
         eces[name] = round(ece_with_floor(pairs, trials=300)["ece"], 4)
         bars[name] = round(lexical(by_slice[name])["accuracy"], 4)
+    paired = h2_pairs(doc, rows)
+    h2 = h2_bootstrap(*paired) if paired else None
     return {
         "started_at": doc.get("started_at"),
         "transport": doc.get("transport"),
@@ -195,7 +367,7 @@ def analyse(doc: dict, rows: list) -> dict:
         "beats_lexical_bar": {
             s: accs[s]["ci95"][0] > bars[s] for s in accs
         },
-        "verdicts": verdicts(fits, recipes),
+        "verdicts": verdicts(fits, recipes, h2=h2),
     }
 
 
