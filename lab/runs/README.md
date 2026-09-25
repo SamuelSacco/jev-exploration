@@ -22,3 +22,12 @@ runner is added without an entry.
 
 A claim that cannot be recomputed from this directory is marked
 *(raw data not in repo)* in the ledger rather than left looking like the others.
+
+## Scope limit
+
+The seven 2026-09-16 API-contract calls (`docs/claims-audit.md` §1, ledger
+rows 1/2/3/6) predate this rule: their raw responses were discarded before the
+rule existed, and `analysis/provenance.py` does not guard them — its CLAIMS
+cover only the fixture-era runs from 2026-09-18 onward. They are marked honestly
+in the ledger (raw responses discarded 2026-09-16; not recomputable) instead of
+being silently grandfathered.

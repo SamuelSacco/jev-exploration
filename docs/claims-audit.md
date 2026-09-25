@@ -24,18 +24,31 @@ and reported here without their raw responses, so they cannot be recomputed from
 repository. `python3 analysis/provenance.py` lists exactly which those are and what is
 missing; `--strict` exits non-zero while any remain.
 
+2026-09-24 update: PR #12 committed the operator's 2026-09-20/21 probe and
+circularity fixtures, so rows 18 and 19 no longer carry this marking — rows 18/19
+now give figures recomputed from `lab/runs/20260921T150952Z-probe-*.jsonl`, and
+the circularity premium behind row 22 re-derives exactly from the committed
+circularity fixtures (see evidence cell). Row 20's probe fixture is committed
+too, but its nouls arm ran a single-Noul variant (0.99) rather than the
+one-Noul-per-label design PROBES.md describes, so the published 0.29 distractor
+figure is not derivable from it and still rests on the operator's report alone.
+Separately, the 2026-09-16 calls behind §1 and rows 1/2/3/6 predate the raw-commit
+rule entirely: their responses were discarded and are not recomputable, and they
+escape `analysis/provenance.py`, whose CLAIMS cover only the fixture-era runs —
+see the note in §1.
+
 ---
 
 ## The ledger
 
 | # | Claim | Status | Evidence |
 |---|---|---|---|
-| 1 | One endpoint, `{state, model, questions}` in, `{model, answers, usage}` out | Verified | [§1](#1-the-api-contract) (measured here) |
-| 2 | Independent questions batch into one call without a latency blowup | Verified | [§1](#1-the-api-contract) (measured here) |
-| 3 | Output tokens are free; input is $0.042/MTok | Verified | [§1](#1-the-api-contract) (measured here) |
+| 1 | One endpoint, `{state, model, questions}` in, `{model, answers, usage}` out | Verified (raw responses discarded 2026-09-16; not recomputable from this repo) | [§1](#1-the-api-contract) (measured here) |
+| 2 | Independent questions batch into one call without a latency blowup | Verified (raw responses discarded 2026-09-16; not recomputable from this repo) | [§1](#1-the-api-contract) (measured here) |
+| 3 | Output tokens are free; input is $0.042/MTok | Verified (raw responses discarded 2026-09-16; not recomputable from this repo) | [§1](#1-the-api-contract) (measured here) |
 | 4 | 255-option Choice cap, ~32k token budget | Verified | TypeSafe docs |
 | 5 | No published rate limits, SLA, or uptime commitment | Verified (absent) | TypeSafe docs |
-| 6 | Returns honest uncertainty on unanswerable questions | Verified, small n | [§1](#1-the-api-contract) (measured here, n=4) |
+| 6 | Returns honest uncertainty on unanswerable questions | Verified, small n (raw responses discarded 2026-09-16; not recomputable from this repo) | [§1](#1-the-api-contract) (measured here, n=4) |
 | 7 | "193.6× faster / 444.6× cheaper" | Overstated | [§2](#2-speed-and-cost) |
 | 8 | "Similar intelligence to frontier LLMs" | Overstated | [§3](#3-intelligence-and-accuracy) |
 | 9 | 70–500 ms end-to-end | Fair as service time; not reachable on every client path | [§2](#2-speed-and-cost) |
@@ -47,18 +60,26 @@ missing; `--strict` exits non-zero while any remain.
 | 15 | Calibration holds when the model is out of its depth | Yes, as a function, but harder inputs land where it is worst | [§6](#6-the-open-question-calibration), the 800-item gradient |
 | 16 | Returned probabilities are full-precision floats | Refuted | [§1](#numeric-resolution), every value on a 0.01 grid across 71 direct responses (measured here) |
 | 17 | A returned probability can be exactly 0 or 1, which no rescaling can repair | Verified for Choice and Score; no instance for Noul | [§1](#numeric-resolution) (measured here), [#10](../../issues/10) |
-| 18 | Questions batched into one request cannot see each other's instructions | Verified (raw data not in repo) | [lab/PROBES.md](../lab/PROBES.md), 0.02 against 0.99; run by the operator, raw responses not committed, see [analysis/provenance.py](../analysis/provenance.py) |
-| 19 | Batching is near-free: ~0.33 ms per extra question on ~1.4 s of overhead | Verified (raw data not in repo) | [lab/PROBES.md](../lab/PROBES.md); run by the operator, raw responses not committed |
-| 20 | Choice and independent Nouls measure the same thing | Contested | [lab/PROBES.md](../lab/PROBES.md), Nouls left 0.29 on distractors where Choice left none, n=1 item; raw responses not committed |
+| 18 | Questions batched into one request cannot see each other's instructions | Verified (recomputed from committed raw) | [lab/PROBES.md](../lab/PROBES.md); `lab/runs/20260921T150952Z-probe-isolation.jsonl` (6 lines, 3 reps × 2 conditions, run by the operator 2026-09-21): probe code word executed at 0.02 in a sibling question's instructions vs 0.99 in shared state — exact match to the reported 0.02 vs 0.99 |
+| 19 | Batching is near-free: ~0.4 ms per extra question on ~1.4 s of overhead | Verified (recomputed from committed raw) | [lab/PROBES.md](../lab/PROBES.md); `lab/runs/20260921T150952Z-probe-batching.jsonl` (12 lines, 3 reps × sizes 1/25/100/400, run by the operator 2026-09-21): OLS slope 0.43 ms/question, intercept 1.41 s. Direction and magnitude agree with the operator's reported 0.33 ms / ~1.425 s; the slope is slightly higher on this sample |
+| 20 | Choice and independent Nouls measure the same thing | Contested | [lab/PROBES.md](../lab/PROBES.md), Nouls left 0.29 on distractors where Choice left none, n=1 item, as reported by the operator; `lab/runs/20260921T150952Z-probe-formulation.jsonl` is committed but its nouls arm ran a single-Noul variant (0.99), so the 0.29 figure is not derivable from it |
 | 21 | Jev's judgements are far more repeatable than an LLM judge's | Verified for repeatability, not for correctness | LangChain agent-eval, variance 1.49e-5 across 100 reps; but 5 frozen runs and one oracle, so agreement is 5/5 (95% CI 48–100%) and the LLM baselines' settings were unpinned |
-| 22 | A benchmark whose labels the model supplied is inflated by ~0.08 | Refuted as a constant | [analysis/CIRCULARITY.md](../analysis/CIRCULARITY.md) §4, premium +0.005 here against T69's +0.081; it scales with how decidable the task is. Raw responses not committed |
+| 22 | A benchmark whose labels the model supplied is inflated by ~0.08 | Refuted as a constant | [analysis/CIRCULARITY.md](../analysis/CIRCULARITY.md) §4: premium +0.005 here (per-tier +0.015/−0.005/+0.015/−0.005, recomputed from `lab/runs/20260921T150525Z-circularity-*.jsonl` plus the committed tier labels, mean across passes) against T69's +0.081; it scales with how decidable the task is |
 | 23 | Fifty labels is enough to refit the intercept | Verified, and it is a floor not a plateau | [analysis/CALIBRATION-TRANSFER.md](../analysis/CALIBRATION-TRANSFER.md), 62% held-out reduction at 50; below 30 labels the worst draw is 4x the uncorrected ECE (measured here) |
+| 24 | The calibration-invariance finding (B1) is more fragile to label error than the p≥0.9 hit-rate finding (B2) | Verified | [analysis/CIRCULARITY.md](../analysis/CIRCULARITY.md): an adversary needs at most 1 flipped label (0.5% of a tier) to overturn B1, against 3 flips (1.5%) for B2's hit rate to fall below 0.95. The 0.5% is an upper bound from a greedy search over sampled tie-breaks; numbers from `analysis/circularity.json` (`b1_across_passes.worst_case_fraction` = 0.005, `b2_sensitivity.t4_adversarial.flips_to_fall_below_target` = 3 at 0.015) |
 
 ---
 
 ## 1. The API contract
 
 Verified across 7 live calls on `jev-1.13.0`, 2026-09-16.
+
+> **Provenance caveat.** These seven calls predate the raw-commit rule: the raw
+> responses were discarded and the figures below rest on the operator's report
+> alone. They cannot be recomputed, re-binned or checked from this repository.
+> `analysis/provenance.py` does not cover them — its CLAIMS entries guard only
+> the fixture-era runs (2026-09-18 onward), and there is no pattern under
+> `lab/runs/` that could match a 2026-09-16 run.
 
 One endpoint, `POST https://api.typesafe.ai/v1/systemone`, taking `{state, model,
 questions}` and returning `{model, answers, usage}`. Three question types and no more.
@@ -254,7 +275,9 @@ jev-rerank-bench found its clearest win there, 71% against Cohere's 67%, so this
 the slice worth owning rather than competing on general reranking at n=8.
 
 Reproduce the baselines with `python3 lab/baselines.py` (no API key required). The
-negation probe has not been run against the live API yet; that needs a key.
+negation probe was run live on 2026-09-18 (run `20260918T014148Z`, all 80 items
+in one call; raw committed in `lab/runs/`), so the "not yet run" note that stood
+here is stale — the run's results are reported in §6 under "The negation probe".
 
 ### Re-run on the new harness, 2026-09-17
 

@@ -131,6 +131,7 @@ analysis/
   provenance.py            which published figures have raw data behind them
 docs/
   claims-audit.md          the ledger
+  footguns.md              the seven traps this repo walked into
   thread.md                the original launch-week narrative (frozen)
 jevlab/
   client.py                HTTP client: retries, network floor, escalation rules

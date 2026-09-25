@@ -27,6 +27,7 @@ is what changed.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import math
 import os
@@ -49,6 +50,26 @@ SLICE_ORDER = [
 ]
 
 TOKEN_RE = re.compile(r"[a-z0-9_]+")
+
+DATASET_NAME = "domains"
+# Same contract as lab/tiers/baselines.py: bump only on an intentional
+# rebuild; the content hash in dataset_version() catches silent edits.
+DATASET_VERSION = "1.0.0"
+
+
+def fingerprint(path: str | None = None) -> str:
+    """SHA-256 hex of the dataset file, read as committed, byte for byte."""
+    path = path or os.path.join(HERE, "dataset.jsonl")
+    h = hashlib.sha256()
+    with open(path, "rb") as fh:
+        for chunk in iter(lambda: fh.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def dataset_version(path: str | None = None) -> str:
+    """Version string pinned to content: "<semver> sha256:<full hex>"."""
+    return f"{DATASET_VERSION} sha256:{fingerprint(path)}"
 
 
 def load(path: str | None = None) -> list:

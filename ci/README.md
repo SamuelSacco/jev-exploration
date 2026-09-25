@@ -1,13 +1,13 @@
 # CI
 
-`github-workflow.yml` is the CI definition. It is parked here rather than at
-`.github/workflows/ci.yml` because neither credential available to this repo's
-automation carries GitHub's `workflow` scope: a `git push` is rejected with
+The CI definition lives at `.github/workflows/ci.yml`. It was parked in this
+directory until 2026-09-24 because neither credential available to this repo's
+automation carried GitHub's `workflow` scope: a `git push` was rejected with
 "refusing to allow an OAuth App to create or update workflow ... without
-`workflow` scope", and the GitHub App route returns `Insufficient scope:
+`workflow` scope", and the GitHub App route returned `Insufficient scope:
 required "repo workflow"`. Both were tried on 2026-09-24.
 
-Enabling it takes one command from an account that has that scope:
+It was enabled from an account with that scope by:
 
 ```bash
 mkdir -p .github/workflows

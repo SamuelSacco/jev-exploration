@@ -148,18 +148,67 @@ def test_h1_is_partial_when_a_slope_is_outside_the_band_but_not_falsifying():
     assert td.verdicts(fits, {})["H1_slope_transfers"]["verdict"] == "PARTIAL"
 
 
-def test_h2_separates_a_moving_intercept_from_a_moving_slope():
-    moved_intercept = {
-        "code_security": {"slope": 2.30, "intercept": 0.10},
-        "code_security_rare": {"slope": 2.35, "intercept": -1.20},
+def _h2_boot(slope_ci, intercept_ci):
+    """A canned h2_bootstrap output for testing the verdict rule."""
+    return {
+        "resamples": 2000,
+        "resamples_used": 2000,
+        "resamples_skipped": 0,
+        "seed": 0,
+        "alpha": 0.05,
+        "stable": True,
+        "slope_ci": slope_ci,
+        "intercept_ci": intercept_ci,
     }
-    assert td.verdicts(moved_intercept, {})["H2_decomposition_is_real"]["verdict"] == "PROVEN"
+
+
+def test_h2_is_proven_only_when_the_cis_clear_the_thresholds():
+    """H2's preregistered thresholds are intercept > 0.8 and slope < 0.5. The
+    verdict is PROVEN only when the point estimates clear them AND the 95%
+    bootstrap CIs clear them too: the intercept CI's lower bound above 0.8,
+    the slope CI's upper bound below 0.5."""
+    moved_intercept = {
+        "code_security": {"slope": 2.30, "intercept": 0.10, "identified": True},
+        "code_security_rare": {"slope": 2.35, "intercept": -1.20, "identified": True},
+    }
+    clearing = _h2_boot(slope_ci=(0.01, 0.40), intercept_ci=(0.95, 1.60))
+    block = td.verdicts(moved_intercept, {}, h2=clearing)["H2_decomposition_is_real"]
+    assert block["verdict"] == "PROVEN"
+    assert block["slope_moved_ci95"] == [0.01, 0.40]
+    assert block["intercept_moved_ci95"] == [0.95, 1.60]
 
     moved_slope = {
-        "code_security": {"slope": 2.30, "intercept": 0.10},
-        "code_security_rare": {"slope": 4.00, "intercept": 0.15},
+        "code_security": {"slope": 2.30, "intercept": 0.10, "identified": True},
+        "code_security_rare": {"slope": 4.00, "intercept": 0.15, "identified": True},
     }
-    assert td.verdicts(moved_slope, {})["H2_decomposition_is_real"]["verdict"] == "REFUTED"
+    block = td.verdicts(moved_slope, {})["H2_decomposition_is_real"]
+    assert block["verdict"] == "REFUTED"
+
+
+def test_h2_is_partial_when_point_estimates_clear_but_cis_straddle():
+    """The downgrade the review asked for: thresholds cleared by the point
+    estimates alone earn PARTIAL, never PROVEN."""
+    fits = {
+        "code_security": {"slope": 2.30, "intercept": 0.10, "identified": True},
+        "code_security_rare": {"slope": 2.35, "intercept": -1.20, "identified": True},
+    }
+    straddling = _h2_boot(slope_ci=(0.02, 0.62), intercept_ci=(0.71, 1.90))
+    block = td.verdicts(fits, {}, h2=straddling)["H2_decomposition_is_real"]
+    assert block["verdict"] == "PARTIAL"
+    assert "bootstrap" in block["why"]
+    assert "0.71" in block["why"] and "0.62" in block["why"]
+
+
+def test_h2_without_cis_cannot_be_proven():
+    """The unit-test seam: without a bootstrap the best H2 can do is PARTIAL,
+    even when the point estimates clear the thresholds."""
+    fits = {
+        "code_security": {"slope": 2.30, "intercept": 0.10, "identified": True},
+        "code_security_rare": {"slope": 2.35, "intercept": -1.20, "identified": True},
+    }
+    block = td.verdicts(fits, {})["H2_decomposition_is_real"]
+    assert block["verdict"] == "PARTIAL"
+    assert "bootstrap" in block["why"]
 
 
 def test_h3_is_refuted_by_any_increase_however_small():
@@ -203,6 +252,71 @@ def test_analyse_end_to_end_on_planted_answers():
     for name, fit in result["fits"].items():
         assert fit["slope"] > 0, name
     assert result["verdicts"]["H2_decomposition_is_real"]["verdict"] == "UNVERIFIABLE"
+
+
+def test_h2_pins_the_bootstrapped_cis_on_planted_answers():
+    """The honest end-to-end on committed fixtures.
+
+    Answers are planted from the committed dataset labels (the runner's real
+    input was never committed): a Platt distortion with slope ~2.34 on every
+    slice and an intercept shift planted on code_security_rare. The bootstrap
+    is seeded, so the verdict and the CI numbers below are exactly what the
+    script produces -- pinned here so any change to the verdict rule or the
+    bootstrap breaks loudly instead of drifting silently.
+    """
+    rows = bl.load()
+    doc = {"started_at": "test", "transport": "test", "slices": {}}
+    for name in ("code_security", "lab_safety", "contract_liability"):
+        gold = {r["id"]: r["is_positive"] for r in rows if r["slice"] == name}
+        mapping = PlattMap(a=1 / 2.34, b=0.0)
+        doc["slices"][name] = {
+            "probabilities": {
+                qid: mapping(0.88 if g else 0.12) for qid, g in gold.items()
+            }
+        }
+    gold = {r["id"]: r["is_positive"] for r in rows if r["slice"] == "code_security_rare"}
+    mapping = PlattMap(a=1 / 2.34, b=1.3)
+    doc["slices"]["code_security_rare"] = {
+        "probabilities": {
+            qid: mapping(0.88 if g else 0.12) for qid, g in gold.items()
+        }
+    }
+    result = td.analyse(doc, rows)
+    block = result["verdicts"]["H2_decomposition_is_real"]
+    assert block["verdict"] == "PROVEN"
+    assert block["slope_moved"] == pytest.approx(0.1626, abs=1e-4)
+    assert block["intercept_moved"] == pytest.approx(6.6034, abs=1e-4)
+    assert block["slope_moved_ci95"] == pytest.approx([0.059, 0.3046], abs=1e-4)
+    assert block["intercept_moved_ci95"] == pytest.approx([6.4473, 6.7553], abs=1e-4)
+    assert block["bootstrap_resamples_used"] == 2000
+    assert block["bootstrap_resamples_skipped"] == 0
+
+
+def test_h2_downgrade_triggers_on_a_real_bootstrap_with_wide_cis():
+    """Noisy synthetic data at n=120 where the point estimates clear the 0.8/0.5
+    thresholds but the paired bootstrap CIs straddle them: the verdict must be
+    PARTIAL, the honest downgrade, not PROVEN."""
+    base = synthetic(2.34, 0.0, n=120, seed=21)
+    rare = synthetic(2.34, -1.3, n=120, seed=22)
+    fits = {
+        "code_security": td.fit_slice(base),
+        "code_security_rare": td.fit_slice(rare),
+    }
+    assert fits["code_security"]["identified"]
+    assert fits["code_security_rare"]["identified"]
+    d_slope = abs(fits["code_security_rare"]["slope"] - fits["code_security"]["slope"])
+    d_int = abs(fits["code_security_rare"]["intercept"] - fits["code_security"]["intercept"])
+    assert d_int > td.H2_INTERCEPT_MOVED and d_slope < td.H2_SLOPE_STABLE
+
+    h2 = td.h2_bootstrap(base, rare)
+    assert h2["stable"] is True
+    s_lo, s_hi = h2["slope_ci"]
+    i_lo, i_hi = h2["intercept_ci"]
+    assert s_hi > td.H2_SLOPE_STABLE or i_lo < td.H2_INTERCEPT_MOVED
+
+    block = td.verdicts(fits, {}, h2=h2)["H2_decomposition_is_real"]
+    assert block["verdict"] == "PARTIAL"
+    assert "bootstrap" in block["why"]
 
 
 # ----------------------------------------------------------------------- runner

@@ -32,10 +32,17 @@ from jevlab.calibration import (  # noqa: E402
     fit_platt_intercept,
 )
 from analysis.calibration_set_size import EVAL_SIZE, SIZES, sweep_pair  # noqa: E402
+from jevlab.run_meta import emit, print_header  # noqa: E402
 from jevlab.stats import ece, reliability  # noqa: E402
 from lab.run_demos import negation_items  # noqa: E402
 from lab.tiers.analyse import read_pass  # noqa: E402
-from lab.tiers.baselines import TIER_ORDER, load  # noqa: E402
+from lab.tiers.baselines import (  # noqa: E402
+    DATASET_NAME,
+    TIER_ORDER,
+    dataset_version,
+    fingerprint,
+    load,
+)
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RUNS = os.path.join(ROOT, "lab", "runs")
@@ -60,11 +67,40 @@ def negation_pairs() -> list:
     ]
 
 
+def tier_run_model_id() -> str:
+    """Model that served the committed tier run, from its first record.
+
+    Read from the data, not assumed: the run files record "model" per line.
+    """
+    path = os.path.join(RUNS, f"{TIER_RUN}-tiers-{TIER_ORDER[0]}.jsonl")
+    try:
+        with open(path, encoding="utf-8") as fh:
+            return json.loads(fh.readline()).get("model") or "unknown"
+    except (OSError, ValueError):
+        return "unknown"
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--method", choices=sorted(FITTERS), default="platt")
     ap.add_argument("--pass-index", type=int, default=0)
     args = ap.parse_args(argv)
+
+    negation_path = os.path.join(ROOT, "lab", "negation.json")
+    meta = emit(
+        task="analysis.calibration_transfer",
+        args=vars(args),
+        datasets={
+            DATASET_NAME: dataset_version(),
+            # The negation probe is read alongside the tiers; it has no
+            # version constant of its own, so it is pinned by content hash.
+            "negation": f"sha256:{fingerprint(negation_path)}",
+        },
+        model_id=tier_run_model_id(),
+        # The committed run files record attempts, latency and model but not
+        # the transport that carried the calls, so this stays "unknown".
+    )
+    print_header(meta)
 
     gold = {r["id"]: r["is_phishing"] for r in load()}
     tiers = {t: read_pass(TIER_RUN, t, args.pass_index, gold) for t in TIER_ORDER}

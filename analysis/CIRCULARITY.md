@@ -14,8 +14,8 @@ python3 lab/exp_circularity.py --dry-run
 ## Verdict
 
 **B1 and B2 cannot carry this bias: PROVEN.** The model under test never touched
-the labels. `lab/tiers/generate.py` assigns the label at line 12 from a counter
-and builds the message text from it at line 18. The generator imports no HTTP
+the labels. `lab/tiers/generate.py` assigns the label at line 173 from a counter
+and builds the message text from it at line 179. The generator imports no HTTP
 client and reads no model output. There is no path from Jev to the ground truth,
 so the mechanism T69 measured is absent by construction rather than by argument.
 
@@ -87,8 +87,8 @@ the findings were stress-tested against label error from any cause.
 
 ```
   generator            lab/tiers/generate.py
-  label assigned       line 12
-  text built from it   line 18
+  label assigned       line 173
+  text built from it   line 179
   label precedes text  True
   API imports          none
   reads model output   none
@@ -96,7 +96,8 @@ the findings were stress-tested against label error from any cause.
 
 `test_labels_are_not_model_derived` pins this, and a companion test asserts the
 checker is not vacuous by confirming it searches for the tokens that would appear
-if someone later wired model output into the generator.
+if someone later wired model output into the generator. The line numbers above are
+machine-computed from the current source by `label_provenance()` and test-pinned, so they track the source if it moves instead of drifting like hand-copied numbers.
 
 ## 2. Sensitivity
 
@@ -174,11 +175,13 @@ premium is accuracy under self-labels minus accuracy under generator labels.
 Written before the run: the premium is positive in every tier, largest on
 t4_adversarial, and a premium above +0.05 overall is comparable to T69's 0.081.
 
-Run 2026-09-20, 120 calls. **Reported, not reproducible from this
-repository**: the raw responses were not returned here, so `lab/runs/` holds
-nothing behind the table below and `python3 analysis/provenance.py` marks it
-UNVERIFIABLE. Committing `lab/runs/*-circularity-*.jsonl` from that run fixes
-it.
+Run 2026-09-20, 120 calls. The raw responses were committed by PR #12 as
+`lab/runs/20260921T150525Z-circularity-*.jsonl` (120 lines: 4 tiers × 2 regimes ×
+3 passes × 5 batches), and the table below re-derives exactly from them
+against the committed tier labels with mean-across-passes aggregation —
+per-tier premiums +0.015/−0.005/+0.015/−0.005, mean +0.005. The "reported, not
+reproducible" note that stood here predates the commit; `python3
+analysis/provenance.py` marks this claim BACKED.
 
 | tier | premium |
 |---|---|
