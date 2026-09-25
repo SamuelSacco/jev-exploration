@@ -19,6 +19,12 @@ however carefully they reported it.
 The point is not to delete those claims. It is that a reader should be able to
 tell, without knowing the project's history, which numbers they can recompute
 and which they are taking on trust.
+
+Scope limit, stated explicitly: this audit covers only the fixture-era runs
+(2026-09-18 onward). The seven 2026-09-16 API-contract calls that back
+docs/claims-audit.md §1 (ledger rows 1/2/3/6) predate the raw-commit rule and
+have no entry here; their raw responses were discarded, and the ledger marks
+them honestly instead of this checker pretending they do not exist.
 """
 from __future__ import annotations
 
