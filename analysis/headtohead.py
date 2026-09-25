@@ -19,8 +19,15 @@ import sys
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+from jevlab.run_meta import emit, print_header  # noqa: E402
 from jevlab.stats import bootstrap_ci, ece_with_floor, wilson  # noqa: E402
+from lab.domains.baselines import (  # noqa: E402
+    dataset_version as domains_dataset_version,
+)
 from lab.exp_headtohead import ARMS  # noqa: E402
+from lab.tiers.baselines import (  # noqa: E402
+    dataset_version as tiers_dataset_version,
+)
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DEFAULT_ANSWERS = os.path.join(ROOT, "lab", "headtohead_answers.json")
@@ -262,7 +269,24 @@ def main(argv=None) -> int:
 
     with open(args.answers, encoding="utf-8") as fh:
         doc = json.load(fh)
+    meta = emit(
+        task="analysis.headtohead",
+        args=vars(args),
+        datasets={
+            "tiers": tiers_dataset_version(),
+            "domains": domains_dataset_version(),
+        },
+        # The battery answers file records transports, not the model(s) that
+        # served the responses: model_id stays "unknown" rather than guessed.
+        model_id=doc.get("model") or "unknown",
+        transport={
+            "jev": doc.get("transport_jev") or "unknown",
+            "local": doc.get("transport_local") or "unknown",
+        },
+    )
+    print_header(meta)
     result = analyse(doc)
+    result["run_meta"] = meta
     text = memo(result)
     print(text)
 

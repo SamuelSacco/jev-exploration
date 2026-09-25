@@ -16,6 +16,7 @@ the favourable one.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
@@ -44,6 +45,31 @@ DECISIVE_RE = re.compile(
 )
 
 TIER_ORDER = ["t1_trivial", "t2_ordinary", "t3_hard", "t4_adversarial"]
+
+DATASET_NAME = "tiers"
+# Labels are committed and frozen (see README.md): bump only if the dataset is
+# ever intentionally rebuilt. The content hash in dataset_version() catches a
+# silent edit made without a bump, so the version string alone never lies.
+DATASET_VERSION = "1.0.0"
+
+
+def fingerprint(path: str | None = None) -> str:
+    """SHA-256 hex of the dataset file, read as committed.
+
+    The dataset is never reformatted or moved to compute this: the file is
+    hashed byte for byte as it sits in the tree.
+    """
+    path = path or os.path.join(HERE, "dataset.jsonl")
+    h = hashlib.sha256()
+    with open(path, "rb") as fh:
+        for chunk in iter(lambda: fh.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def dataset_version(path: str | None = None) -> str:
+    """Version string pinned to content: "<semver> sha256:<full hex>"."""
+    return f"{DATASET_VERSION} sha256:{fingerprint(path)}"
 
 
 def load(path: str | None = None) -> list:
