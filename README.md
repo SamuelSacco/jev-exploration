@@ -22,7 +22,8 @@ noise floor for its sample size ([method](analysis/external/)), then ran a contr
 
 2. **Calibration does not degrade with difficulty.** ECE rises across the tiers, but
    decomposition attributes the whole rise to predictions relocating into the
-   badly-calibrated middle, not to the calibration curve worsening.
+   badly-calibrated middle, not to the calibration curve worsening — tested only
+   on the extreme t1→t4 pair, over a gradient that was never significant.
 
 3. **The distortion is compression toward the middle**: low probabilities overstated,
    high ones understated, crossing over near 0.5. The same shape appears in
@@ -47,7 +48,7 @@ noise floor for its sample size ([method](analysis/external/)), then ran a contr
 
 7. **The probabilities are quantised to 0.01, and Choice and Score can return exactly
    0 or 1.** Nothing in a direct response says so. An exact 0 on the correct option
-   cannot be repaired by any rescaling. Noul did not do it once in 2,580 answers, and
+   cannot be repaired by any rescaling. Noul did not do it once in 11,148 answers, and
    every calibration result here is Noul.
 
 8. **Batching is near-free and questions cannot see each other.** ~0.33 ms per extra

@@ -52,7 +52,7 @@ actually emits, a quiet discrepancy between what was measured and what was fit.
 
 **Where it bit.** The quantisation study (`analysis/quantisation.py`) and its
 test gate. Noul is the exception that makes the trap matter: Noul never
-returned an endpoint in 2,580+ committed answers, and
+returned an endpoint in 11,148+ committed answers, and
 `test_noul_never_reached_an_endpoint` fails if a future run ever returns one —
 the whole per-primitive calibration caveat rests on that observation
 (`docs/claims-audit.md`, the endpoint table). Related correction, same study:
@@ -150,7 +150,7 @@ independent of the fit budget, or the curve is a mirage.
 - [ ] Floats are compared at a named precision; tests use `pytest.approx`.
 - [ ] Endpoint audit: Choice/Score hit exact 0/1; confirm your correction sees
       them too. Distribution sums are {0.99, 1.0}, not guaranteed 1.0.
-- [ ] Noul endpoint caveat: still zero in 2,580+? Run the quantisation test.
+- [ ] Noul endpoint caveat: still zero in 11,148+? Run the quantisation test.
 - [ ] The eval set is disjoint from everything fitted, at a fixed size.
 - [ ] Synthetic results cite the template pool; shape claims carry the
       transfer evidence, constant claims stay local.

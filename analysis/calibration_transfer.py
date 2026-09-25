@@ -67,6 +67,36 @@ def negation_pairs() -> list:
     ]
 
 
+REFIT_N = 50
+
+
+def negation_slope_only(tier_pairs: list, negation: list, refit_n: int = REFIT_N) -> dict:
+    """Slope transferred from the tier, intercept refit on the first `refit_n`
+    negation items, scored on the rest -- the 30 items the refit never saw.
+
+    The doc table it feeds is labelled "slope transferred, intercept refit on
+    50 labels": the slope must come from the tier fit (fit_platt), not be
+    refit on the negation set, and the score set must be disjoint from the
+    refit set. Scoring the full 80 items, or scoring a full two-parameter map
+    fitted on the tier, are different procedures with different numbers.
+    """
+    slope = fit_platt(tier_pairs).a
+    refit_idx = list(range(min(refit_n, len(negation))))
+    score_idx = list(range(len(refit_idx), len(negation)))
+    mapping = fit_platt_intercept([negation[i] for i in refit_idx], slope)
+    scored = [negation[i] for i in score_idx]
+    before = ece(scored)
+    after = ece(apply_map(scored, mapping))
+    return {
+        "slope": slope,
+        "refit_idx": refit_idx,
+        "score_idx": score_idx,
+        "ece_before": before,
+        "ece_after": after,
+        "ece_reduction": (before - after) / before if before else float("nan"),
+    }
+
+
 def tier_run_model_id() -> str:
     """Model that served the committed tier run, from its first record.
 
@@ -184,13 +214,17 @@ def main(argv=None) -> int:
     )
 
     if negation:
-        print("\nCross-task, still within email: fitted on a tier, scored on the")
-        print("negation probe (a different question wording and a different construction).")
+        print("\nCross-task, still within email: slope from the tier, intercept")
+        print("refit on 50 negation labels, scored on the 30 the refit never")
+        print("saw (held-out procedure, matching the recipe).\n")
+        nheader = f"{'slope fitted on':<16} {'before':>7} {'after':>7} {'reduction':>9}"
+        print(nheader)
+        print("-" * len(nheader))
         for fit_tier in TIER_ORDER:
-            r = evaluate_transfer(tiers[fit_tier], negation, method=args.method)
+            r = negation_slope_only(tiers[fit_tier], negation)
             print(
-                f"  fit {fit_tier:<16} negation ECE {r['ece_before']:.3f} -> "
-                f"{r['ece_after']:.3f}  ({r['ece_reduction']:+.1%})"
+                f"  {fit_tier:<16} {r['ece_before']:>7.3f} {r['ece_after']:>7.3f} "
+                f"{r['ece_reduction']:>+8.0%}"
             )
 
     print("\nThe map fitted on t1, applied to t4:")

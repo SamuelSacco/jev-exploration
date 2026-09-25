@@ -129,9 +129,9 @@ The endpoints are not shared across primitives:
 | `score.score` | 60 | 41.7% | — | 0.0–2.0 |
 | `choice.confidence` | 60 | 0% | 76.7% | 0.44–1.0 |
 | `score.confidence` | 60 | 0% | 50.0% | 0.63–1.0 |
-| `noul.noul` | 2,580 | 0% | 0% | 0.01–0.98 |
+| `noul.noul` | 11,148 | 0% | 0% | 0.01–0.99 |
 
-Zero endpoints in 2,580 Noul answers bounds the rate at 0.15% (Wilson, 95%), which is
+Zero endpoints in 11,148 Noul answers bounds the rate at 0.0344% (Wilson, 95%), which is
 an absence worth acting on rather than a gap in the data. Two consequences. A Choice
 or Score can assign exactly 0 to the correct option, and no temperature or Platt map
 can move it, because both act on the logit; row 6's "honest uncertainty" is a claim
@@ -458,7 +458,7 @@ correctable, and it is, with a caveat that matters.
 
 Fitting Platt independently per tier splits the two parameters cleanly. The slope
 is stable at 2.11–2.61 across every tier and pass: Jev's log-odds are roughly half as
-extreme as they should be, and that is a property of the model. The intercept
+extreme as they should be, and that is a property of the model on e-mail. The intercept
 spans −0.48 to +1.75, absorbs the slice's base rate, and belongs to the slice.
 
 So transferring a whole map is unreliable. Across the twelve tier-to-tier transfers
