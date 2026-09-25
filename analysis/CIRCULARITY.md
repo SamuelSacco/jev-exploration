@@ -24,9 +24,34 @@ the 0.9 threshold is currently a hit, so each wrong label costs exactly one.
 Three mislabelled items in t4, 1.5% of the tier, drop the hit rate below 0.95.
 B2 is a statement about a 43-to-65 item bucket, not a law.
 
-**B1 is sturdier: NOTED.** It takes 8 adversarially chosen flips, 4% of the tier,
-to overturn the decomposition, and random corruption at 10% overturns it in only
-3 of 20 seeds.
+**B1 is MORE fragile than B2: CORRECTED TWICE.** An adversary needs 1 flipped
+label, 0.5% of a tier, against B2's 3 flips at 1.5%. This file has now said
+three different things here, and the reason is worth more than the number:
+
+| version | claim | why it was wrong |
+|---|---|---|
+| first | 8 flips, 4.0%, "two and a half times B2's budget" | one pass of three, and a search stepping by 2 that rounded 7 up to 8 |
+| second | 2–8 flips, 1.0–4.0%, "comparably fragile" | all three passes, but one arbitrary tie-break in the greedy search |
+| current | 1 flip, 0.5%, more fragile than B2 | minimum across passes *and* across tie-breaks |
+
+At the first step of the greedy search, **twenty different flips raise ECE by
+exactly the same amount**, and nineteen do at the second. "The" greedy answer
+does not exist. Picking the lowest index is deterministic but not neutral: on
+this data it is consistently the kindest option available to the adversary,
+giving 10, 2 and 11 flips on the three passes against the 3, 1 and 3 an
+adversary sampling the ties can reach.
+
+That also settles a disagreement across three machines, which produced 7, 11 and
+12 from the same committed code. Candidate ECEs that tie differ in the last bit
+or two between interpreters, so an unrounded `>` picks a different flip on
+Python 3.11 than on 3.12. Candidates are now rounded to ten places before being
+compared and the tie-break is explicit, so the deterministic path reproduces
+everywhere — and it is reported beside the sampled range rather than as the
+answer.
+
+**The 0.5% is an upper bound, not the minimum.** Greedy search over sampled
+tie-breaks can miss a cheaper attack; it cannot invent one. The real adversarial
+budget is at most 0.5% of a tier and may be smaller.
 
 **The circularity premium on this benchmark is +0.005: the preregistration
 predicting +0.05 is REFUTED.** Measured over 120 calls, and §4 explains why the
@@ -90,17 +115,32 @@ an adversary who can see the model's answers and relabels to flatter or damage i
 
 No search is needed; the budget is arithmetic, which is itself the finding.
 
-**B1**, t4's gaps under t1's mass stay at or below t1's own ECE:
+**B1**, t4's gaps under t1's mass stay at or below t1's own ECE. Every pass, and
+every pass sampled over twenty resolutions of the greedy search's ties:
+
+| pass | intact margin | adversary's best | tie-break range | lowest-index tie-break |
+|---|---|---|---|---|
+| 0 | +0.0145 | 3 flips (1.5%) | 3–9 | 10 |
+| 1 | +0.0022 | 1 flip (0.5%) | 1–3 | 2 |
+| 2 | +0.0174 | 3 flips (1.5%) | 3–10 | 11 |
 
 ```
-  intact margin            +0.0145
-  adversarial corruption   breaks at 8 flips (4.0% of the tier)
   random corruption 10%    broke 3/20 seeds
 ```
 
-So B1 tolerates roughly two and a half times the corruption B2 does, and is
-robust to realistic (random) label noise at a rate no careful labelling process
-would reach.
+The intact margin is a difference between two ECEs, both of which move between
+passes, and on pass 1 it starts at +0.0022 — one flip closes it.
+
+So B1's adversarial budget is **0.5% of a tier** against B2's 1.5%, and the
+ordering in the first version of this file was backwards.
+
+What does survive, and is the part worth keeping, is the distinction between
+adversarial and realistic noise. An adversary who can see the model's answers
+needs a single label. Random label error at twenty times that rate leaves the
+finding standing in 17 of 20 seeds. B1 is fragile to an attacker and robust to
+sloppiness, which are different threats and were being conflated.
+
+`python3 analysis/circularity.py --tie-break-samples 20` reproduces all of it.
 
 ## 3. What this does not clear
 
@@ -134,7 +174,11 @@ premium is accuracy under self-labels minus accuracy under generator labels.
 Written before the run: the premium is positive in every tier, largest on
 t4_adversarial, and a premium above +0.05 overall is comparable to T69's 0.081.
 
-Run 2026-09-20, 120 calls:
+Run 2026-09-20, 120 calls. **Reported, not reproducible from this
+repository**: the raw responses were not returned here, so `lab/runs/` holds
+nothing behind the table below and `python3 analysis/provenance.py` marks it
+UNVERIFIABLE. Committing `lab/runs/*-circularity-*.jsonl` from that run fixes
+it.
 
 | tier | premium |
 |---|---|

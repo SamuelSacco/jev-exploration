@@ -3,6 +3,8 @@ name = "jev-exploration"
 version = "0.2.0"
 description = "An evidence ledger for TypeSafe's Jev, with a reproducible lab"
 requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE"]
 dependencies = []          # standard library only, on purpose
 
 [project.optional-dependencies]

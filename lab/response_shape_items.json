@@ -1,0 +1,790 @@
+{
+  "items": [
+    {
+      "gold": "billing",
+      "id": "rs000",
+      "options": {
+        "account": "Logins, seats, permissions, ownership and profile changes",
+        "billing": "Payments, invoices, refunds, charges and disputes about amounts",
+        "sales": "Plan comparisons, quotes, discounts, upgrades and pre-purchase questions",
+        "technical": "Bugs, errors, outages, integrations and broken features"
+      },
+      "question": "Which team should handle ticket rs000?",
+      "strength": "decisive",
+      "text": "Hello,\n\nWe were charged twice for the March invoice and need one of the charges refunded.\n\nAppreciate the help."
+    },
+    {
+      "gold": "technical",
+      "id": "rs001",
+      "options": {
+        "account": "Logins, seats, permissions, ownership and profile changes",
+        "billing": "Payments, invoices, refunds, charges and disputes about amounts",
+        "sales": "Plan comparisons, quotes, discounts, upgrades and pre-purchase questions",
+        "technical": "Bugs, errors, outages, integrations and broken features"
+      },
+      "question": "Which team should handle ticket rs001?",
+      "strength": "decisive",
+      "text": "Hello,\n\nThe export endpoint returns a 500 on every request since this morning.\n\nThank you."
+    },
+    {
+      "gold": "sales",
+      "id": "rs002",
+      "options": {
+        "account": "Logins, seats, permissions, ownership and profile changes",
+        "billing": "Payments, invoices, refunds, charges and disputes about amounts",
+        "sales": "Plan comparisons, quotes, discounts, upgrades and pre-purchase questions",
+        "technical": "Bugs, errors, outages, integrations and broken features"
+      },
+      "question": "Which team should handle ticket rs002?",
+      "strength": "decisive",
+      "text": "Good morning,\n\nWe want a quote for moving from the team plan to enterprise before renewal.\n\nLet us know."
+    },
+    {
+      "gold": "account",
+      "id": "rs003",
+      "options": {
+        "account": "Logins, seats, permissions, ownership and profile changes",
+        "billing": "Payments, invoices, refunds, charges and disputes about amounts",
+        "sales": "Plan comparisons, quotes, discounts, upgrades and pre-purchase questions",
+        "technical": "Bugs, errors, outages, integrations and broken features"
+      },
+      "question": "Which team should handle ticket rs003?",
+      "strength": "decisive",
+      "text": "Hi there,\n\nPlease transfer workspace ownership from the departing admin to me.\n\nLet us know."
+    },
+    {
+      "gold": "billing",
+      "id": "rs004",
+      "options": {
+        "account": "Logins, seats, permissions, ownership and profile changes",
+        "billing": "Payments, invoices, refunds, charges and disputes about amounts",
+        "sales": "Plan comparisons, quotes, discounts, upgrades and pre-purchase questions",
+        "technical": "Bugs, errors, outages, integrations and broken features"
+      },
+      "question": "Which team should handle ticket rs004?",
+      "strength": "decisive",
+      "text": "Good morning,\n\nWe were charged twice for the March invoice and need one of the charges refunded.\n\nThank you."
+    },
+    {
+      "gold": "technical",
+      "id": "rs005",
+      "options": {
+        "account": "Logins, seats, permissions, ownership and profile changes",
+        "billing": "Payments, invoices, refunds, charges and disputes about amounts",
+        "sales": "Plan comparisons, quotes, discounts, upgrades and pre-purchase questions",
+        "technical": "Bugs, errors, outages, integrations and broken features"
+      },
+      "question": "Which team should handle ticket rs005?",
+      "strength": "decisive",
+      "text": "Hi team,\n\nThe export endpoint returns a 500 on every request since this morning.\n\nThanks in advance."
+    },
+    {
+      "gold": "sales",
+      "id": "rs006",
+      "options": {
+        "account": "Logins, seats, permissions, ownership and profile changes",
+        "billing": "Payments, invoices, refunds, charges and disputes about amounts",
+        "sales": "Plan comparisons, quotes, discounts, upgrades and pre-purchase questions",
+        "technical": "Bugs, errors, outages, integrations and broken features"
+      },
+      "question": "Which team should handle ticket rs006?",
+      "strength": "decisive",
+      "text": "Good morning,\n\nWe want a quote for moving from the team plan to enterprise before renewal.\n\nAppreciate the help."
+    },
+    {
+      "gold": "account",
+      "id": "rs007",
+      "options": {
+        "account": "Logins, seats, permissions, ownership and profile changes",
+        "billing": "Payments, invoices, refunds, charges and disputes about amounts",
+        "sales": "Plan comparisons, quotes, discounts, upgrades and pre-purchase questions",
+        "technical": "Bugs, errors, outages, integrations and broken features"
+      },
+      "question": "Which team should handle ticket rs007?",
+      "strength": "decisive",
+      "text": "Good morning,\n\nPlease transfer workspace ownership from the departing admin to me.\n\nThanks in advance."
+    },
+    {
+      "gold": "billing",
+      "id": "rs008",
+      "options": {
+        "account": "Logins, seats, permissions, ownership and profile changes",
+        "billing": "Payments, invoices, refunds, charges and disputes about amounts",
+        "sales": "Plan comparisons, quotes, discounts, upgrades and pre-purchase questions",
+        "technical": "Bugs, errors, outages, integrations and broken features"
+      },
+      "question": "Which team should handle ticket rs008?",
+      "strength": "decisive",
+      "text": "Hello,\n\nWe were charged twice for the March invoice and need one of the charges refunded.\n\nLet us know."
+    },
+    {
+      "gold": "technical",
+      "id": "rs009",
+      "options": {
+        "account": "Logins, seats, permissions, ownership and profile changes",
+        "billing": "Payments, invoices, refunds, charges and disputes about amounts",
+        "sales": "Plan comparisons, quotes, discounts, upgrades and pre-purchase questions",
+        "technical": "Bugs, errors, outages, integrations and broken features"
+      },
+      "question": "Which team should handle ticket rs009?",
+      "strength": "decisive",
+      "text": "Hi there,\n\nThe export endpoint returns a 500 on every request since this morning.\n\nLet us know."
+    },
+    {
+      "gold": "sales",
+      "id": "rs010",
+      "options": {
+        "account": "Logins, seats, permissions, ownership and profile changes",
+        "billing": "Payments, invoices, refunds, charges and disputes about amounts",
+        "sales": "Plan comparisons, quotes, discounts, upgrades and pre-purchase questions",
+        "technical": "Bugs, errors, outages, integrations and broken features"
+      },
+      "question": "Which team should handle ticket rs010?",
+      "strength": "decisive",
+      "text": "Hello,\n\nWe want a quote for moving from the team plan to enterprise before renewal.\n\nLet us know."
+    },
+    {
+      "gold": "account",
+      "id": "rs011",
+      "options": {
+        "account": "Logins, seats, permissions, ownership and profile changes",
+        "billing": "Payments, invoices, refunds, charges and disputes about amounts",
+        "sales": "Plan comparisons, quotes, discounts, upgrades and pre-purchase questions",
+        "technical": "Bugs, errors, outages, integrations and broken features"
+      },
+      "question": "Which team should handle ticket rs011?",
+      "strength": "decisive",
+      "text": "Hi there,\n\nPlease transfer workspace ownership from the departing admin to me.\n\nAppreciate the help."
+    },
+    {
+      "gold": "billing",
+      "id": "rs012",
+      "options": {
+        "account": "Logins, seats, permissions, ownership and profile changes",
+        "billing": "Payments, invoices, refunds, charges and disputes about amounts",
+        "sales": "Plan comparisons, quotes, discounts, upgrades and pre-purchase questions",
+        "technical": "Bugs, errors, outages, integrations and broken features"
+      },
+      "question": "Which team should handle ticket rs012?",
+      "strength": "decisive",
+      "text": "Hi there,\n\nWe were charged twice for the March invoice and need one of the charges refunded.\n\nThank you."
+    },
+    {
+      "gold": "technical",
+      "id": "rs013",
+      "options": {
+        "account": "Logins, seats, permissions, ownership and profile changes",
+        "billing": "Payments, invoices, refunds, charges and disputes about amounts",
+        "sales": "Plan comparisons, quotes, discounts, upgrades and pre-purchase questions",
+        "technical": "Bugs, errors, outages, integrations and broken features"
+      },
+      "question": "Which team should handle ticket rs013?",
+      "strength": "decisive",
+      "text": "Hi there,\n\nThe export endpoint returns a 500 on every request since this morning.\n\nThank you."
+    },
+    {
+      "gold": "sales",
+      "id": "rs014",
+      "options": {
+        "account": "Logins, seats, permissions, ownership and profile changes",
+        "billing": "Payments, invoices, refunds, charges and disputes about amounts",
+        "sales": "Plan comparisons, quotes, discounts, upgrades and pre-purchase questions",
+        "technical": "Bugs, errors, outages, integrations and broken features"
+      },
+      "question": "Which team should handle ticket rs014?",
+      "strength": "decisive",
+      "text": "Hi there,\n\nWe want a quote for moving from the team plan to enterprise before renewal.\n\nLet us know."
+    },
+    {
+      "gold": "account",
+      "id": "rs015",
+      "options": {
+        "account": "Logins, seats, permissions, ownership and profile changes",
+        "billing": "Payments, invoices, refunds, charges and disputes about amounts",
+        "sales": "Plan comparisons, quotes, discounts, upgrades and pre-purchase questions",
+        "technical": "Bugs, errors, outages, integrations and broken features"
+      },
+      "question": "Which team should handle ticket rs015?",
+      "strength": "decisive",
+      "text": "Hello,\n\nPlease transfer workspace ownership from the departing admin to me.\n\nAppreciate the help."
+    },
+    {
+      "gold": "billing",
+      "id": "rs016",
+      "options": {
+        "account": "Logins, seats, permissions, ownership and profile changes",
+        "billing": "Payments, invoices, refunds, charges and disputes about amounts",
+        "sales": "Plan comparisons, quotes, discounts, upgrades and pre-purchase questions",
+        "technical": "Bugs, errors, outages, integrations and broken features"
+      },
+      "question": "Which team should handle ticket rs016?",
+      "strength": "decisive",
+      "text": "Hi there,\n\nWe were charged twice for the March invoice and need one of the charges refunded.\n\nThank you."
+    },
+    {
+      "gold": "technical",
+      "id": "rs017",
+      "options": {
+        "account": "Logins, seats, permissions, ownership and profile changes",
+        "billing": "Payments, invoices, refunds, charges and disputes about amounts",
+        "sales": "Plan comparisons, quotes, discounts, upgrades and pre-purchase questions",
+        "technical": "Bugs, errors, outages, integrations and broken features"
+      },
+      "question": "Which team should handle ticket rs017?",
+      "strength": "decisive",
+      "text": "Hello,\n\nThe export endpoint returns a 500 on every request since this morning.\n\nLet us know."
+    },
+    {
+      "gold": "sales",
+      "id": "rs018",
+      "options": {
+        "account": "Logins, seats, permissions, ownership and profile changes",
+        "billing": "Payments, invoices, refunds, charges and disputes about amounts",
+        "sales": "Plan comparisons, quotes, discounts, upgrades and pre-purchase questions",
+        "technical": "Bugs, errors, outages, integrations and broken features"
+      },
+      "question": "Which team should handle ticket rs018?",
+      "strength": "decisive",
+      "text": "Hi team,\n\nWe want a quote for moving from the team plan to enterprise before renewal.\n\nThank you."
+    },
+    {
+      "gold": "account",
+      "id": "rs019",
+      "options": {
+        "account": "Logins, seats, permissions, ownership and profile changes",
+        "billing": "Payments, invoices, refunds, charges and disputes about amounts",
+        "sales": "Plan comparisons, quotes, discounts, upgrades and pre-purchase questions",
+        "technical": "Bugs, errors, outages, integrations and broken features"
+      },
+      "question": "Which team should handle ticket rs019?",
+      "strength": "decisive",
+      "text": "Hi there,\n\nPlease transfer workspace ownership from the departing admin to me.\n\nAppreciate the help."
+    },
+    {
+      "gold": "billing",
+      "id": "rs020",
+      "options": {
+        "account": "Logins, seats, permissions, ownership and profile changes",
+        "billing": "Payments, invoices, refunds, charges and disputes about amounts",
+        "sales": "Plan comparisons, quotes, discounts, upgrades and pre-purchase questions",
+        "technical": "Bugs, errors, outages, integrations and broken features"
+      },
+      "question": "Which team should handle ticket rs020?",
+      "strength": "moderate",
+      "text": "Hello,\n\nThere may be a duplicate on the March invoice, we are not certain yet.\nThe departing admin still appears on the workspace list, which seems odd.\n\nThanks in advance."
+    },
+    {
+      "gold": "technical",
+      "id": "rs021",
+      "options": {
+        "account": "Logins, seats, permissions, ownership and profile changes",
+        "billing": "Payments, invoices, refunds, charges and disputes about amounts",
+        "sales": "Plan comparisons, quotes, discounts, upgrades and pre-purchase questions",
+        "technical": "Bugs, errors, outages, integrations and broken features"
+      },
+      "question": "Which team should handle ticket rs021?",
+      "strength": "moderate",
+      "text": "Hi there,\n\nThe export endpoint has felt slower than usual this week, no errors seen.\nThere may be a duplicate on the March invoice, we are not certain yet.\n\nLet us know."
+    },
+    {
+      "gold": "sales",
+      "id": "rs022",
+      "options": {
+        "account": "Logins, seats, permissions, ownership and profile changes",
+        "billing": "Payments, invoices, refunds, charges and disputes about amounts",
+        "sales": "Plan comparisons, quotes, discounts, upgrades and pre-purchase questions",
+        "technical": "Bugs, errors, outages, integrations and broken features"
+      },
+      "question": "Which team should handle ticket rs022?",
+      "strength": "moderate",
+      "text": "Hi there,\n\nWe have been reading about the enterprise plan but have not decided anything.\nThere may be a duplicate on the March invoice, we are not certain yet.\n\nAppreciate the help."
+    },
+    {
+      "gold": "account",
+      "id": "rs023",
+      "options": {
+        "account": "Logins, seats, permissions, ownership and profile changes",
+        "billing": "Payments, invoices, refunds, charges and disputes about amounts",
+        "sales": "Plan comparisons, quotes, discounts, upgrades and pre-purchase questions",
+        "technical": "Bugs, errors, outages, integrations and broken features"
+      },
+      "question": "Which team should handle ticket rs023?",
+      "strength": "moderate",
+      "text": "Hi there,\n\nThe departing admin still appears on the workspace list, which seems odd.\nThere may be a duplicate on the March invoice, we are not certain yet.\n\nThanks in advance."
+    },
+    {
+      "gold": "billing",
+      "id": "rs024",
+      "options": {
+        "account": "Logins, seats, permissions, ownership and profile changes",
+        "billing": "Payments, invoices, refunds, charges and disputes about amounts",
+        "sales": "Plan comparisons, quotes, discounts, upgrades and pre-purchase questions",
+        "technical": "Bugs, errors, outages, integrations and broken features"
+      },
+      "question": "Which team should handle ticket rs024?",
+      "strength": "moderate",
+      "text": "Hello,\n\nThere may be a duplicate on the March invoice, we are not certain yet.\nWe have been reading about the enterprise plan but have not decided anything.\n\nThank you."
+    },
+    {
+      "gold": "technical",
+      "id": "rs025",
+      "options": {
+        "account": "Logins, seats, permissions, ownership and profile changes",
+        "billing": "Payments, invoices, refunds, charges and disputes about amounts",
+        "sales": "Plan comparisons, quotes, discounts, upgrades and pre-purchase questions",
+        "technical": "Bugs, errors, outages, integrations and broken features"
+      },
+      "question": "Which team should handle ticket rs025?",
+      "strength": "moderate",
+      "text": "Hi team,\n\nThe export endpoint has felt slower than usual this week, no errors seen.\nWe have been reading about the enterprise plan but have not decided anything.\n\nLet us know."
+    },
+    {
+      "gold": "sales",
+      "id": "rs026",
+      "options": {
+        "account": "Logins, seats, permissions, ownership and profile changes",
+        "billing": "Payments, invoices, refunds, charges and disputes about amounts",
+        "sales": "Plan comparisons, quotes, discounts, upgrades and pre-purchase questions",
+        "technical": "Bugs, errors, outages, integrations and broken features"
+      },
+      "question": "Which team should handle ticket rs026?",
+      "strength": "moderate",
+      "text": "Hi there,\n\nWe have been reading about the enterprise plan but have not decided anything.\nThere may be a duplicate on the March invoice, we are not certain yet.\n\nThank you."
+    },
+    {
+      "gold": "account",
+      "id": "rs027",
+      "options": {
+        "account": "Logins, seats, permissions, ownership and profile changes",
+        "billing": "Payments, invoices, refunds, charges and disputes about amounts",
+        "sales": "Plan comparisons, quotes, discounts, upgrades and pre-purchase questions",
+        "technical": "Bugs, errors, outages, integrations and broken features"
+      },
+      "question": "Which team should handle ticket rs027?",
+      "strength": "moderate",
+      "text": "Hi team,\n\nThe departing admin still appears on the workspace list, which seems odd.\nThe export endpoint has felt slower than usual this week, no errors seen.\n\nThanks in advance."
+    },
+    {
+      "gold": "billing",
+      "id": "rs028",
+      "options": {
+        "account": "Logins, seats, permissions, ownership and profile changes",
+        "billing": "Payments, invoices, refunds, charges and disputes about amounts",
+        "sales": "Plan comparisons, quotes, discounts, upgrades and pre-purchase questions",
+        "technical": "Bugs, errors, outages, integrations and broken features"
+      },
+      "question": "Which team should handle ticket rs028?",
+      "strength": "moderate",
+      "text": "Good morning,\n\nThere may be a duplicate on the March invoice, we are not certain yet.\nWe have been reading about the enterprise plan but have not decided anything.\n\nThanks in advance."
+    },
+    {
+      "gold": "technical",
+      "id": "rs029",
+      "options": {
+        "account": "Logins, seats, permissions, ownership and profile changes",
+        "billing": "Payments, invoices, refunds, charges and disputes about amounts",
+        "sales": "Plan comparisons, quotes, discounts, upgrades and pre-purchase questions",
+        "technical": "Bugs, errors, outages, integrations and broken features"
+      },
+      "question": "Which team should handle ticket rs029?",
+      "strength": "moderate",
+      "text": "Hello,\n\nThe export endpoint has felt slower than usual this week, no errors seen.\nThe departing admin still appears on the workspace list, which seems odd.\n\nAppreciate the help."
+    },
+    {
+      "gold": "sales",
+      "id": "rs030",
+      "options": {
+        "account": "Logins, seats, permissions, ownership and profile changes",
+        "billing": "Payments, invoices, refunds, charges and disputes about amounts",
+        "sales": "Plan comparisons, quotes, discounts, upgrades and pre-purchase questions",
+        "technical": "Bugs, errors, outages, integrations and broken features"
+      },
+      "question": "Which team should handle ticket rs030?",
+      "strength": "moderate",
+      "text": "Hi there,\n\nWe have been reading about the enterprise plan but have not decided anything.\nThe export endpoint has felt slower than usual this week, no errors seen.\n\nThank you."
+    },
+    {
+      "gold": "account",
+      "id": "rs031",
+      "options": {
+        "account": "Logins, seats, permissions, ownership and profile changes",
+        "billing": "Payments, invoices, refunds, charges and disputes about amounts",
+        "sales": "Plan comparisons, quotes, discounts, upgrades and pre-purchase questions",
+        "technical": "Bugs, errors, outages, integrations and broken features"
+      },
+      "question": "Which team should handle ticket rs031?",
+      "strength": "moderate",
+      "text": "Good morning,\n\nThe departing admin still appears on the workspace list, which seems odd.\nWe have been reading about the enterprise plan but have not decided anything.\n\nThanks in advance."
+    },
+    {
+      "gold": "billing",
+      "id": "rs032",
+      "options": {
+        "account": "Logins, seats, permissions, ownership and profile changes",
+        "billing": "Payments, invoices, refunds, charges and disputes about amounts",
+        "sales": "Plan comparisons, quotes, discounts, upgrades and pre-purchase questions",
+        "technical": "Bugs, errors, outages, integrations and broken features"
+      },
+      "question": "Which team should handle ticket rs032?",
+      "strength": "moderate",
+      "text": "Hi team,\n\nThere may be a duplicate on the March invoice, we are not certain yet.\nWe have been reading about the enterprise plan but have not decided anything.\n\nThanks in advance."
+    },
+    {
+      "gold": "technical",
+      "id": "rs033",
+      "options": {
+        "account": "Logins, seats, permissions, ownership and profile changes",
+        "billing": "Payments, invoices, refunds, charges and disputes about amounts",
+        "sales": "Plan comparisons, quotes, discounts, upgrades and pre-purchase questions",
+        "technical": "Bugs, errors, outages, integrations and broken features"
+      },
+      "question": "Which team should handle ticket rs033?",
+      "strength": "moderate",
+      "text": "Hello,\n\nThe export endpoint has felt slower than usual this week, no errors seen.\nThe departing admin still appears on the workspace list, which seems odd.\n\nLet us know."
+    },
+    {
+      "gold": "sales",
+      "id": "rs034",
+      "options": {
+        "account": "Logins, seats, permissions, ownership and profile changes",
+        "billing": "Payments, invoices, refunds, charges and disputes about amounts",
+        "sales": "Plan comparisons, quotes, discounts, upgrades and pre-purchase questions",
+        "technical": "Bugs, errors, outages, integrations and broken features"
+      },
+      "question": "Which team should handle ticket rs034?",
+      "strength": "moderate",
+      "text": "Hi team,\n\nWe have been reading about the enterprise plan but have not decided anything.\nThe departing admin still appears on the workspace list, which seems odd.\n\nThanks in advance."
+    },
+    {
+      "gold": "account",
+      "id": "rs035",
+      "options": {
+        "account": "Logins, seats, permissions, ownership and profile changes",
+        "billing": "Payments, invoices, refunds, charges and disputes about amounts",
+        "sales": "Plan comparisons, quotes, discounts, upgrades and pre-purchase questions",
+        "technical": "Bugs, errors, outages, integrations and broken features"
+      },
+      "question": "Which team should handle ticket rs035?",
+      "strength": "moderate",
+      "text": "Hi team,\n\nThe departing admin still appears on the workspace list, which seems odd.\nThere may be a duplicate on the March invoice, we are not certain yet.\n\nThanks in advance."
+    },
+    {
+      "gold": "billing",
+      "id": "rs036",
+      "options": {
+        "account": "Logins, seats, permissions, ownership and profile changes",
+        "billing": "Payments, invoices, refunds, charges and disputes about amounts",
+        "sales": "Plan comparisons, quotes, discounts, upgrades and pre-purchase questions",
+        "technical": "Bugs, errors, outages, integrations and broken features"
+      },
+      "question": "Which team should handle ticket rs036?",
+      "strength": "moderate",
+      "text": "Good morning,\n\nThere may be a duplicate on the March invoice, we are not certain yet.\nThe departing admin still appears on the workspace list, which seems odd.\n\nLet us know."
+    },
+    {
+      "gold": "technical",
+      "id": "rs037",
+      "options": {
+        "account": "Logins, seats, permissions, ownership and profile changes",
+        "billing": "Payments, invoices, refunds, charges and disputes about amounts",
+        "sales": "Plan comparisons, quotes, discounts, upgrades and pre-purchase questions",
+        "technical": "Bugs, errors, outages, integrations and broken features"
+      },
+      "question": "Which team should handle ticket rs037?",
+      "strength": "moderate",
+      "text": "Hello,\n\nThe export endpoint has felt slower than usual this week, no errors seen.\nThe departing admin still appears on the workspace list, which seems odd.\n\nThanks in advance."
+    },
+    {
+      "gold": "sales",
+      "id": "rs038",
+      "options": {
+        "account": "Logins, seats, permissions, ownership and profile changes",
+        "billing": "Payments, invoices, refunds, charges and disputes about amounts",
+        "sales": "Plan comparisons, quotes, discounts, upgrades and pre-purchase questions",
+        "technical": "Bugs, errors, outages, integrations and broken features"
+      },
+      "question": "Which team should handle ticket rs038?",
+      "strength": "moderate",
+      "text": "Hello,\n\nWe have been reading about the enterprise plan but have not decided anything.\nThere may be a duplicate on the March invoice, we are not certain yet.\n\nLet us know."
+    },
+    {
+      "gold": "account",
+      "id": "rs039",
+      "options": {
+        "account": "Logins, seats, permissions, ownership and profile changes",
+        "billing": "Payments, invoices, refunds, charges and disputes about amounts",
+        "sales": "Plan comparisons, quotes, discounts, upgrades and pre-purchase questions",
+        "technical": "Bugs, errors, outages, integrations and broken features"
+      },
+      "question": "Which team should handle ticket rs039?",
+      "strength": "moderate",
+      "text": "Hi team,\n\nThe departing admin still appears on the workspace list, which seems odd.\nThere may be a duplicate on the March invoice, we are not certain yet.\n\nThanks in advance."
+    },
+    {
+      "gold": "billing",
+      "id": "rs040",
+      "options": {
+        "account": "Logins, seats, permissions, ownership and profile changes",
+        "billing": "Payments, invoices, refunds, charges and disputes about amounts",
+        "sales": "Plan comparisons, quotes, discounts, upgrades and pre-purchase questions",
+        "technical": "Bugs, errors, outages, integrations and broken features"
+      },
+      "question": "Which team should handle ticket rs040?",
+      "strength": "ambiguous",
+      "text": "Hello,\n\nWe were charged twice for the March invoice and need one of the charges refunded.\nPlease transfer workspace ownership from the departing admin to me.\nThe workspace question can wait. The invoice question is what is blocking us today.\n\nThanks in advance."
+    },
+    {
+      "gold": "technical",
+      "id": "rs041",
+      "options": {
+        "account": "Logins, seats, permissions, ownership and profile changes",
+        "billing": "Payments, invoices, refunds, charges and disputes about amounts",
+        "sales": "Plan comparisons, quotes, discounts, upgrades and pre-purchase questions",
+        "technical": "Bugs, errors, outages, integrations and broken features"
+      },
+      "question": "Which team should handle ticket rs041?",
+      "strength": "ambiguous",
+      "text": "Good morning,\n\nThe export endpoint returns a 500 on every request since this morning.\nWe want a quote for moving from the team plan to enterprise before renewal.\nThe plan question can wait. The export problem is what is blocking us today.\n\nThanks in advance."
+    },
+    {
+      "gold": "sales",
+      "id": "rs042",
+      "options": {
+        "account": "Logins, seats, permissions, ownership and profile changes",
+        "billing": "Payments, invoices, refunds, charges and disputes about amounts",
+        "sales": "Plan comparisons, quotes, discounts, upgrades and pre-purchase questions",
+        "technical": "Bugs, errors, outages, integrations and broken features"
+      },
+      "question": "Which team should handle ticket rs042?",
+      "strength": "ambiguous",
+      "text": "Hi there,\n\nWe want a quote for moving from the team plan to enterprise before renewal.\nPlease transfer workspace ownership from the departing admin to me.\nThe workspace question can wait. The plan question is what is blocking us today.\n\nThank you."
+    },
+    {
+      "gold": "account",
+      "id": "rs043",
+      "options": {
+        "account": "Logins, seats, permissions, ownership and profile changes",
+        "billing": "Payments, invoices, refunds, charges and disputes about amounts",
+        "sales": "Plan comparisons, quotes, discounts, upgrades and pre-purchase questions",
+        "technical": "Bugs, errors, outages, integrations and broken features"
+      },
+      "question": "Which team should handle ticket rs043?",
+      "strength": "ambiguous",
+      "text": "Hi there,\n\nPlease transfer workspace ownership from the departing admin to me.\nThe export endpoint returns a 500 on every request since this morning.\nThe export problem can wait. The workspace question is what is blocking us today.\n\nAppreciate the help."
+    },
+    {
+      "gold": "billing",
+      "id": "rs044",
+      "options": {
+        "account": "Logins, seats, permissions, ownership and profile changes",
+        "billing": "Payments, invoices, refunds, charges and disputes about amounts",
+        "sales": "Plan comparisons, quotes, discounts, upgrades and pre-purchase questions",
+        "technical": "Bugs, errors, outages, integrations and broken features"
+      },
+      "question": "Which team should handle ticket rs044?",
+      "strength": "ambiguous",
+      "text": "Hi there,\n\nWe were charged twice for the March invoice and need one of the charges refunded.\nThe export endpoint returns a 500 on every request since this morning.\nThe export problem can wait. The invoice question is what is blocking us today.\n\nLet us know."
+    },
+    {
+      "gold": "technical",
+      "id": "rs045",
+      "options": {
+        "account": "Logins, seats, permissions, ownership and profile changes",
+        "billing": "Payments, invoices, refunds, charges and disputes about amounts",
+        "sales": "Plan comparisons, quotes, discounts, upgrades and pre-purchase questions",
+        "technical": "Bugs, errors, outages, integrations and broken features"
+      },
+      "question": "Which team should handle ticket rs045?",
+      "strength": "ambiguous",
+      "text": "Hi team,\n\nThe export endpoint returns a 500 on every request since this morning.\nWe want a quote for moving from the team plan to enterprise before renewal.\nThe plan question can wait. The export problem is what is blocking us today.\n\nThanks in advance."
+    },
+    {
+      "gold": "sales",
+      "id": "rs046",
+      "options": {
+        "account": "Logins, seats, permissions, ownership and profile changes",
+        "billing": "Payments, invoices, refunds, charges and disputes about amounts",
+        "sales": "Plan comparisons, quotes, discounts, upgrades and pre-purchase questions",
+        "technical": "Bugs, errors, outages, integrations and broken features"
+      },
+      "question": "Which team should handle ticket rs046?",
+      "strength": "ambiguous",
+      "text": "Hi there,\n\nWe were charged twice for the March invoice and need one of the charges refunded.\nWe want a quote for moving from the team plan to enterprise before renewal.\nThe invoice question can wait. The plan question is what is blocking us today.\n\nAppreciate the help."
+    },
+    {
+      "gold": "account",
+      "id": "rs047",
+      "options": {
+        "account": "Logins, seats, permissions, ownership and profile changes",
+        "billing": "Payments, invoices, refunds, charges and disputes about amounts",
+        "sales": "Plan comparisons, quotes, discounts, upgrades and pre-purchase questions",
+        "technical": "Bugs, errors, outages, integrations and broken features"
+      },
+      "question": "Which team should handle ticket rs047?",
+      "strength": "ambiguous",
+      "text": "Hi there,\n\nWe want a quote for moving from the team plan to enterprise before renewal.\nPlease transfer workspace ownership from the departing admin to me.\nThe plan question can wait. The workspace question is what is blocking us today.\n\nLet us know."
+    },
+    {
+      "gold": "billing",
+      "id": "rs048",
+      "options": {
+        "account": "Logins, seats, permissions, ownership and profile changes",
+        "billing": "Payments, invoices, refunds, charges and disputes about amounts",
+        "sales": "Plan comparisons, quotes, discounts, upgrades and pre-purchase questions",
+        "technical": "Bugs, errors, outages, integrations and broken features"
+      },
+      "question": "Which team should handle ticket rs048?",
+      "strength": "ambiguous",
+      "text": "Hi there,\n\nWe were charged twice for the March invoice and need one of the charges refunded.\nPlease transfer workspace ownership from the departing admin to me.\nThe workspace question can wait. The invoice question is what is blocking us today.\n\nLet us know."
+    },
+    {
+      "gold": "technical",
+      "id": "rs049",
+      "options": {
+        "account": "Logins, seats, permissions, ownership and profile changes",
+        "billing": "Payments, invoices, refunds, charges and disputes about amounts",
+        "sales": "Plan comparisons, quotes, discounts, upgrades and pre-purchase questions",
+        "technical": "Bugs, errors, outages, integrations and broken features"
+      },
+      "question": "Which team should handle ticket rs049?",
+      "strength": "ambiguous",
+      "text": "Hi there,\n\nWe want a quote for moving from the team plan to enterprise before renewal.\nThe export endpoint returns a 500 on every request since this morning.\nThe plan question can wait. The export problem is what is blocking us today.\n\nThanks in advance."
+    },
+    {
+      "gold": "sales",
+      "id": "rs050",
+      "options": {
+        "account": "Logins, seats, permissions, ownership and profile changes",
+        "billing": "Payments, invoices, refunds, charges and disputes about amounts",
+        "sales": "Plan comparisons, quotes, discounts, upgrades and pre-purchase questions",
+        "technical": "Bugs, errors, outages, integrations and broken features"
+      },
+      "question": "Which team should handle ticket rs050?",
+      "strength": "ambiguous",
+      "text": "Hello,\n\nPlease transfer workspace ownership from the departing admin to me.\nWe want a quote for moving from the team plan to enterprise before renewal.\nThe workspace question can wait. The plan question is what is blocking us today.\n\nAppreciate the help."
+    },
+    {
+      "gold": "account",
+      "id": "rs051",
+      "options": {
+        "account": "Logins, seats, permissions, ownership and profile changes",
+        "billing": "Payments, invoices, refunds, charges and disputes about amounts",
+        "sales": "Plan comparisons, quotes, discounts, upgrades and pre-purchase questions",
+        "technical": "Bugs, errors, outages, integrations and broken features"
+      },
+      "question": "Which team should handle ticket rs051?",
+      "strength": "ambiguous",
+      "text": "Hi team,\n\nPlease transfer workspace ownership from the departing admin to me.\nWe were charged twice for the March invoice and need one of the charges refunded.\nThe invoice question can wait. The workspace question is what is blocking us today.\n\nThank you."
+    },
+    {
+      "gold": "billing",
+      "id": "rs052",
+      "options": {
+        "account": "Logins, seats, permissions, ownership and profile changes",
+        "billing": "Payments, invoices, refunds, charges and disputes about amounts",
+        "sales": "Plan comparisons, quotes, discounts, upgrades and pre-purchase questions",
+        "technical": "Bugs, errors, outages, integrations and broken features"
+      },
+      "question": "Which team should handle ticket rs052?",
+      "strength": "ambiguous",
+      "text": "Hi there,\n\nWe were charged twice for the March invoice and need one of the charges refunded.\nPlease transfer workspace ownership from the departing admin to me.\nThe workspace question can wait. The invoice question is what is blocking us today.\n\nThank you."
+    },
+    {
+      "gold": "technical",
+      "id": "rs053",
+      "options": {
+        "account": "Logins, seats, permissions, ownership and profile changes",
+        "billing": "Payments, invoices, refunds, charges and disputes about amounts",
+        "sales": "Plan comparisons, quotes, discounts, upgrades and pre-purchase questions",
+        "technical": "Bugs, errors, outages, integrations and broken features"
+      },
+      "question": "Which team should handle ticket rs053?",
+      "strength": "ambiguous",
+      "text": "Hello,\n\nWe were charged twice for the March invoice and need one of the charges refunded.\nThe export endpoint returns a 500 on every request since this morning.\nThe invoice question can wait. The export problem is what is blocking us today.\n\nAppreciate the help."
+    },
+    {
+      "gold": "sales",
+      "id": "rs054",
+      "options": {
+        "account": "Logins, seats, permissions, ownership and profile changes",
+        "billing": "Payments, invoices, refunds, charges and disputes about amounts",
+        "sales": "Plan comparisons, quotes, discounts, upgrades and pre-purchase questions",
+        "technical": "Bugs, errors, outages, integrations and broken features"
+      },
+      "question": "Which team should handle ticket rs054?",
+      "strength": "ambiguous",
+      "text": "Good morning,\n\nWe want a quote for moving from the team plan to enterprise before renewal.\nWe were charged twice for the March invoice and need one of the charges refunded.\nThe invoice question can wait. The plan question is what is blocking us today.\n\nThank you."
+    },
+    {
+      "gold": "account",
+      "id": "rs055",
+      "options": {
+        "account": "Logins, seats, permissions, ownership and profile changes",
+        "billing": "Payments, invoices, refunds, charges and disputes about amounts",
+        "sales": "Plan comparisons, quotes, discounts, upgrades and pre-purchase questions",
+        "technical": "Bugs, errors, outages, integrations and broken features"
+      },
+      "question": "Which team should handle ticket rs055?",
+      "strength": "ambiguous",
+      "text": "Hi team,\n\nPlease transfer workspace ownership from the departing admin to me.\nWe were charged twice for the March invoice and need one of the charges refunded.\nThe invoice question can wait. The workspace question is what is blocking us today.\n\nAppreciate the help."
+    },
+    {
+      "gold": "billing",
+      "id": "rs056",
+      "options": {
+        "account": "Logins, seats, permissions, ownership and profile changes",
+        "billing": "Payments, invoices, refunds, charges and disputes about amounts",
+        "sales": "Plan comparisons, quotes, discounts, upgrades and pre-purchase questions",
+        "technical": "Bugs, errors, outages, integrations and broken features"
+      },
+      "question": "Which team should handle ticket rs056?",
+      "strength": "ambiguous",
+      "text": "Hello,\n\nWe were charged twice for the March invoice and need one of the charges refunded.\nWe want a quote for moving from the team plan to enterprise before renewal.\nThe plan question can wait. The invoice question is what is blocking us today.\n\nAppreciate the help."
+    },
+    {
+      "gold": "technical",
+      "id": "rs057",
+      "options": {
+        "account": "Logins, seats, permissions, ownership and profile changes",
+        "billing": "Payments, invoices, refunds, charges and disputes about amounts",
+        "sales": "Plan comparisons, quotes, discounts, upgrades and pre-purchase questions",
+        "technical": "Bugs, errors, outages, integrations and broken features"
+      },
+      "question": "Which team should handle ticket rs057?",
+      "strength": "ambiguous",
+      "text": "Hello,\n\nThe export endpoint returns a 500 on every request since this morning.\nPlease transfer workspace ownership from the departing admin to me.\nThe workspace question can wait. The export problem is what is blocking us today.\n\nLet us know."
+    },
+    {
+      "gold": "sales",
+      "id": "rs058",
+      "options": {
+        "account": "Logins, seats, permissions, ownership and profile changes",
+        "billing": "Payments, invoices, refunds, charges and disputes about amounts",
+        "sales": "Plan comparisons, quotes, discounts, upgrades and pre-purchase questions",
+        "technical": "Bugs, errors, outages, integrations and broken features"
+      },
+      "question": "Which team should handle ticket rs058?",
+      "strength": "ambiguous",
+      "text": "Hi there,\n\nWe want a quote for moving from the team plan to enterprise before renewal.\nThe export endpoint returns a 500 on every request since this morning.\nThe export problem can wait. The plan question is what is blocking us today.\n\nAppreciate the help."
+    },
+    {
+      "gold": "account",
+      "id": "rs059",
+      "options": {
+        "account": "Logins, seats, permissions, ownership and profile changes",
+        "billing": "Payments, invoices, refunds, charges and disputes about amounts",
+        "sales": "Plan comparisons, quotes, discounts, upgrades and pre-purchase questions",
+        "technical": "Bugs, errors, outages, integrations and broken features"
+      },
+      "question": "Which team should handle ticket rs059?",
+      "strength": "ambiguous",
+      "text": "Hi team,\n\nWe were charged twice for the March invoice and need one of the charges refunded.\nPlease transfer workspace ownership from the departing admin to me.\nThe invoice question can wait. The workspace question is what is blocking us today.\n\nThanks in advance."
+    }
+  ],
+  "separability": {
+    "ambiguous": 0.25,
+    "decisive": 1.0,
+    "moderate": 0.35
+  },
+  "version": "1.0"
+}

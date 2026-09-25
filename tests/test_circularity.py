@@ -12,14 +12,20 @@ HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 @pytest.fixture(scope="module")
-def tiers():
+def gold():
     path = os.path.join(HERE, "lab", "runs", f"{circ.TIER_RUN}-tiers-t1_trivial.jsonl")
     if not os.path.exists(path):
         pytest.skip("tier run not committed")
-    from lab.tiers.analyse import read_pass
-    from lab.tiers.baselines import TIER_ORDER, load
+    from lab.tiers.baselines import load
 
-    gold = {r["id"]: r["is_phishing"] for r in load()}
+    return {r["id"]: r["is_phishing"] for r in load()}
+
+
+@pytest.fixture(scope="module")
+def tiers(gold):
+    from lab.tiers.analyse import read_pass
+    from lab.tiers.baselines import TIER_ORDER
+
     return {t: read_pass(circ.TIER_RUN, t, 0, gold) for t in TIER_ORDER}
 
 
@@ -96,18 +102,73 @@ def test_b2_budget_is_arithmetic_and_small(tiers):
     assert block["as_fraction_of_tier"] < 0.05
 
 
-def test_b1_survives_more_corruption_than_b2(tiers):
-    b1 = circ.sensitivity_b1(tiers["t1_trivial"], tiers["t4_adversarial"])
+def test_b1_is_more_fragile_than_b2_not_less(tiers):
+    """The conclusion this file asserted backwards for two revisions.
+
+    The earlier assertion was b1 > b2, and it passed because the greedy
+    search's ties were resolved by lowest index, which is consistently the
+    kindest choice available to an adversary. Sampling the ties reverses it.
+    """
+    b1 = circ.sensitivity_b1(
+        tiers["t1_trivial"], tiers["t4_adversarial"], tie_break_samples=8
+    )
     b2 = circ.sensitivity_b2(tiers["t4_adversarial"])
     assert b1["intact_margin"] > 0
-    if b1["fraction_to_break"] is not None:
-        assert b1["fraction_to_break"] > b2["as_fraction_of_tier"]
+    assert b1["fraction_to_break"] <= b2["as_fraction_of_tier"]
 
 
 def test_b1_is_intact_before_any_corruption(tiers):
-    b1 = circ.sensitivity_b1(tiers["t1_trivial"], tiers["t4_adversarial"], max_fraction=0.01)
-    assert b1["trace"][0]["flips"] == 0
-    assert b1["trace"][0]["calibration_worsened"] is False
+    b1 = circ.sensitivity_b1(
+        tiers["t1_trivial"], tiers["t4_adversarial"], tie_break_samples=2
+    )
+    assert b1["intact_margin"] > 0
+    assert b1["flips_to_break"] >= 1
+
+
+def test_the_greedy_search_has_many_tied_candidates(tiers):
+    """Why no single greedy answer exists: twenty flips are equally damaging."""
+    from jevlab.stats import ece
+
+    pairs = tiers["t4_adversarial"]
+    scored = [round(ece(circ.flip(pairs, i)), circ.TIE_PRECISION) for i in range(len(pairs))]
+    best = max(scored)
+    assert scored.count(best) >= 10
+
+
+def test_the_lowest_index_tie_break_is_reproducible(tiers):
+    """Rounding before comparing is what makes it the same on 3.11 and 3.12."""
+    a = circ.corrupt_adversarially(tiers["t4_adversarial"], 3)
+    b = circ.corrupt_adversarially(tiers["t4_adversarial"], 3)
+    assert a == b
+
+
+def test_sampling_the_ties_reaches_a_cheaper_attack(tiers):
+    """The lowest-index choice is not neutral; it flatters the finding."""
+    block = circ.sensitivity_b1(
+        tiers["t1_trivial"], tiers["t4_adversarial"], tie_break_samples=10
+    )
+    assert block["flips_to_break"] < block["lowest_index_tie_break"]
+    lo, hi = block["tie_break_range"]
+    assert lo == block["flips_to_break"] <= hi
+
+
+def test_a_seeded_tie_break_is_deterministic(tiers):
+    import random
+
+    a = circ.corrupt_adversarially(tiers["t4_adversarial"], 3, rng=random.Random(5))
+    b = circ.corrupt_adversarially(tiers["t4_adversarial"], 3, rng=random.Random(5))
+    assert a == b
+
+
+def test_the_headline_is_the_minimum_across_passes_and_tie_breaks(gold):
+    across = circ.sensitivity_b1_all_passes(
+        circ.TIER_RUN, gold, passes=3, tie_break_samples=6
+    )
+    per_pass = [b["flips_to_break"] for b in across["per_pass"].values()]
+    assert across["flips_range"][0] == min(per_pass)
+    assert across["worst_case_fraction"] == min(
+        b["fraction_to_break"] for b in across["per_pass"].values()
+    )
 
 
 # -------------------------------------------------------------------- transport

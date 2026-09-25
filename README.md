@@ -38,10 +38,11 @@ noise floor for its sample size ([method](analysis/external/)), then ran a contr
    A perfectly calibrated model scores ECE ≈0.045 at that sample size and binning,
    which is the range that benchmark reports.
 
-6. **One parameter corrects most of it.** Fitted per tier, Platt's slope stays at
-   2.11–2.61 while the intercept swings −0.48 to +1.75 with the slice's base rate.
-   Transferring a whole map can make calibration worse; transferring the slope and
-   refitting the intercept on ~50 labels cut ECE 74% and helped every case
+6. **One parameter corrects most of it, and fifty labels is a floor rather than a
+   recommendation.** Platt's slope stays at 2.11–2.61 across tiers while the intercept
+   swings −0.48 to +1.75 with the base rate. Transferring the slope and refitting the
+   intercept on 50 labels cuts ECE 62% measured on held-out items. Below 30 labels the
+   correction can leave calibration four times worse than doing nothing
    ([method](analysis/CALIBRATION-TRANSFER.md)).
 
 7. **The probabilities are quantised to 0.01, and Choice and Score can return exactly
@@ -121,9 +122,13 @@ analysis/
   sweep/                   review of the external claim sweep, plus its audit tool
   circularity.py           judge-circularity audit of the gradient findings
   headtohead.py            scores the Jev vs local-4B battery, writes the memo
+  response_shape.py        scores the endpoint and position probes
+  corpora.py               BBQ and SMS figures, recomputed to this repo's standard
   transfer_domains.py      scores the cross-domain transfer experiment
   quantisation.py          numeric resolution of the API's returned values
   calibration_transfer.py  whether a fitted correction transfers
+  calibration_set_size.py  how many labels the intercept refit needs
+  provenance.py            which published figures have raw data behind them
 docs/
   claims-audit.md          the ledger
   thread.md                the original launch-week narrative (frozen)
@@ -137,7 +142,9 @@ lab/
   exp_circularity.py       what self-labelling would have inflated the score by
   exp_headtohead.py        Jev against a local 4B, four arms
   exp_transfer.py          does the fitted correction survive a change of domain
+  exp_response_shape.py    where exact 0/1 come from, and whether order matters
   domains/                 480 items in four non-email slices, labels committed
+  corpora/                 importers for BBQ and SMS; the corpora are not bundled
   PROBES.md                isolation, batching and Choice-vs-Noul results
   probe_structure.py       isolation, batching-scale and Choice-vs-Noul probes
   run_demos.py             triage and negation demos, scored against ground truth
@@ -164,6 +171,8 @@ python3 lab/baselines.py             # non-AI baselines on the bundled datasets
 python3 lab/tiers/baselines.py       # difficulty-gradient controls
 python3 lab/tiers/analyse.py         # re-derive the gradient result from raw responses
 python3 analysis/calibration_transfer.py
+python3 analysis/calibration_set_size.py   # label budget for the intercept refit
+python3 analysis/provenance.py             # which figures are reproducible here
 python3 analysis/external/run.py --base ~    # needs the other repos cloned
 python3 analysis/sweep/audit.py      # audit external calibration figures
 python3 analysis/circularity.py      # judge-circularity audit of B1/B2
@@ -171,6 +180,11 @@ python3 analysis/quantisation.py     # what resolution the API actually returns
 python3 lab/domains/baselines.py     # cross-domain slices: the gate
 python3 lab/exp_transfer.py --dry-run
 python3 lab/exp_headtohead.py --dry-run
+python3 lab/response_shape_items.py --check   # graded-evidence gate
+python3 lab/exp_response_shape.py --dry-run
+python3 lab/corpora/bbq.py --self-test        # importers, on bundled fixtures
+python3 lab/corpora/sms.py --self-test
+python3 analysis/corpora.py --demo            # BBQ/SMS scoring arithmetic
 python3 lab/probe_structure.py --dry-run
 python3 lab/run_tiers.py --dry-run   # size the gradient experiment
 ```
@@ -186,6 +200,7 @@ python3 lab/probe_structure.py --repeat 3             # structural probes, 24 ca
 python3 lab/exp_circularity.py --repeat 1             # circularity premium, 40 calls
 python3 lab/exp_transfer.py --repeat 3                # cross-domain transfer, 36 calls
 python3 lab/exp_headtohead.py --repeat 3              # Jev vs a local 4B, 33 calls
+python3 lab/exp_response_shape.py --repeat 3          # endpoints + position, 30 calls
 python3 skills/jev/bin/jev.py --floor                 # network floor, no key needed
 ```
 

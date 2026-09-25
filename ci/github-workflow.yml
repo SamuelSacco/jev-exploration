@@ -26,3 +26,27 @@ jobs:
         run: python3 lab/baselines.py
       - name: Demo payloads still build
         run: python3 lab/run_demos.py --dry-run > /dev/null
+      - name: Dataset controls still hold
+        run: |
+          python3 lab/tiers/baselines.py
+          python3 lab/domains/baselines.py
+          python3 lab/response_shape_items.py --check
+          python3 lab/corpora/bbq.py --self-test
+          python3 lab/corpora/sms.py --self-test
+      - name: Experiments still size themselves without a credential
+        run: |
+          python3 lab/run_tiers.py --dry-run > /dev/null
+          python3 lab/probe_structure.py --dry-run > /dev/null
+          python3 lab/exp_circularity.py --dry-run > /dev/null
+          python3 lab/exp_transfer.py --dry-run > /dev/null
+          python3 lab/exp_headtohead.py --dry-run > /dev/null
+          python3 lab/exp_response_shape.py --dry-run > /dev/null
+      - name: Offline analyses still reproduce
+        run: |
+          python3 analysis/circularity.py --tie-break-samples 5 > /dev/null
+          python3 analysis/quantisation.py > /dev/null
+          python3 analysis/calibration_transfer.py > /dev/null
+          python3 analysis/calibration_set_size.py --draws 5 > /dev/null
+          python3 analysis/corpora.py --demo > /dev/null
+      - name: Raw-data provenance
+        run: python3 analysis/provenance.py --strict

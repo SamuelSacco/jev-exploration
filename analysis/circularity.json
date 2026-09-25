@@ -42,42 +42,63 @@
       "target": 0.95
     }
   },
-  "b1_sensitivity": {
-    "intact_margin": 0.0145,
-    "flips_to_break": 8,
-    "fraction_to_break": 0.04,
-    "searched_to_fraction": 0.25,
-    "trace": [
-      {
-        "flips": 0,
-        "fraction": 0.0,
-        "compare_gaps_under_baseline_mass": 0.1007,
-        "calibration_worsened": false
+  "b1_across_passes": {
+    "per_pass": {
+      "0": {
+        "intact_margin": 0.0145,
+        "n": 200,
+        "flips_to_break": 3,
+        "fraction_to_break": 0.015,
+        "tie_break_range": [
+          3,
+          9
+        ],
+        "tie_break_samples": 20,
+        "lowest_index_tie_break": 10,
+        "searched_to_fraction": 0.25,
+        "note": "minimum over sampled tie-breaks; an upper bound on the true adversarial minimum, not the minimum itself"
       },
-      {
-        "flips": 2,
-        "fraction": 0.01,
-        "compare_gaps_under_baseline_mass": 0.1028,
-        "calibration_worsened": false
+      "1": {
+        "intact_margin": 0.0022,
+        "n": 200,
+        "flips_to_break": 1,
+        "fraction_to_break": 0.005,
+        "tie_break_range": [
+          1,
+          3
+        ],
+        "tie_break_samples": 20,
+        "lowest_index_tie_break": 2,
+        "searched_to_fraction": 0.25,
+        "note": "minimum over sampled tie-breaks; an upper bound on the true adversarial minimum, not the minimum itself"
       },
-      {
-        "flips": 4,
-        "fraction": 0.02,
-        "compare_gaps_under_baseline_mass": 0.1071,
-        "calibration_worsened": false
-      },
-      {
-        "flips": 6,
-        "fraction": 0.03,
-        "compare_gaps_under_baseline_mass": 0.1101,
-        "calibration_worsened": false
-      },
-      {
-        "flips": 8,
-        "fraction": 0.04,
-        "compare_gaps_under_baseline_mass": 0.1185,
-        "calibration_worsened": true
+      "2": {
+        "intact_margin": 0.0174,
+        "n": 200,
+        "flips_to_break": 3,
+        "fraction_to_break": 0.015,
+        "tie_break_range": [
+          3,
+          10
+        ],
+        "tie_break_samples": 20,
+        "lowest_index_tie_break": 11,
+        "searched_to_fraction": 0.25,
+        "note": "minimum over sampled tie-breaks; an upper bound on the true adversarial minimum, not the minimum itself"
       }
+    },
+    "flips_range": [
+      1,
+      3
+    ],
+    "fraction_range": [
+      0.005,
+      0.015
+    ],
+    "worst_case_fraction": 0.005,
+    "lowest_index_range": [
+      2,
+      11
     ]
   },
   "b1_random_reference": {
