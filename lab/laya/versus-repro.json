@@ -1,0 +1,141 @@
+{
+ "recorded": "2026-10-01",
+ "examples": 500,
+ "laya": {
+  "version": "0.3.22",
+  "checkpoint": "english",
+  "where": "local, 2-core CPU VM, in-process predict"
+ },
+ "jev": {
+  "model": "jev-1.13.0",
+  "where": "hosted API via skill CLI",
+  "input_tokens": 194902,
+  "cost_usd": 0.00819
+ },
+ "overall": {
+  "laya": {
+   "accuracy": 0.668,
+   "ece": 0.2412,
+   "p50_ms": 1876.6
+  },
+  "jev": {
+   "accuracy": 0.762,
+   "ece": 0.152,
+   "p50_ms": 1487.4
+  }
+ },
+ "tasks": [
+  {
+   "id": "ag_news",
+   "title": "News topic",
+   "source": "AG News (fancyzhx/ag_news) https://huggingface.co/datasets/fancyzhx/ag_news",
+   "in_laya_training_data": true,
+   "type": "choice",
+   "options": 4,
+   "laya": {
+    "n": 100,
+    "accuracy": 0.93,
+    "ece": 0.0614,
+    "p50_ms": 1876.6,
+    "p95_ms": 2884.1
+   },
+   "jev": {
+    "n": 100,
+    "accuracy": 0.92,
+    "ece": 0.0741,
+    "p50_ms": 1487.4,
+    "p95_ms": 1816.1
+   }
+  },
+  {
+   "id": "sms_spam",
+   "title": "SMS spam",
+   "source": "SMS Spam Collection (ucirvine/sms_spam) https://huggingface.co/datasets/ucirvine/sms_spam",
+   "in_laya_training_data": "unknown",
+   "type": "noul",
+   "options": 2,
+   "laya": {
+    "n": 100,
+    "accuracy": 0.96,
+    "ece": 0.052,
+    "p50_ms": 1192.4,
+    "p95_ms": 2549.0
+   },
+   "jev": {
+    "n": 100,
+    "accuracy": 0.95,
+    "ece": 0.0765,
+    "p50_ms": 1489.2,
+    "p95_ms": 2126.4
+   }
+  },
+  {
+   "id": "emotion",
+   "title": "Emotion",
+   "source": "DAIR.AI Emotion (dair-ai/emotion, config 'split') https://huggingface.co/datasets/dair-ai/emotion",
+   "in_laya_training_data": false,
+   "type": "choice",
+   "options": 6,
+   "laya": {
+    "n": 100,
+    "accuracy": 0.45,
+    "ece": 0.3412,
+    "p50_ms": 2263.5,
+    "p95_ms": 4449.3
+   },
+   "jev": {
+    "n": 100,
+    "accuracy": 0.53,
+    "ece": 0.2908,
+    "p50_ms": 1592.3,
+    "p95_ms": 2519.6
+   }
+  },
+  {
+   "id": "review_stars",
+   "title": "Review star rating",
+   "source": "Yelp Review Full (Yelp/yelp_review_full) https://huggingface.co/datasets/Yelp/yelp_review_full",
+   "in_laya_training_data": "unknown",
+   "type": "score",
+   "options": 5,
+   "laya": {
+    "n": 100,
+    "accuracy": 0.35,
+    "ece": 0.3987,
+    "p50_ms": 2945.8,
+    "p95_ms": 5291.0,
+    "within_one_level": 0.61
+   },
+   "jev": {
+    "n": 100,
+    "accuracy": 0.7,
+    "ece": 0.1459,
+    "p50_ms": 1480.5,
+    "p95_ms": 1694.2,
+    "within_one_level": 0.96
+   }
+  },
+  {
+   "id": "prompt_injection",
+   "title": "Prompt injection",
+   "source": "deepset prompt-injections (deepset/prompt-injections) https://huggingface.co/datasets/deepset/prompt-injections",
+   "in_laya_training_data": false,
+   "type": "noul",
+   "options": 2,
+   "laya": {
+    "n": 100,
+    "accuracy": 0.65,
+    "ece": 0.3528,
+    "p50_ms": 946.8,
+    "p95_ms": 2221.0
+   },
+   "jev": {
+    "n": 100,
+    "accuracy": 0.71,
+    "ece": 0.1726,
+    "p50_ms": 1453.6,
+    "p95_ms": 1704.5
+   }
+  }
+ ]
+}

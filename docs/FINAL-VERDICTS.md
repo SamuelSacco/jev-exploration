@@ -1,7 +1,7 @@
 # Final verdicts
 
 Every substantive claim this repo makes about Jev, one line each, as of
-2026-09-25 (`jev-1.13.0`). Evidence pointers go to the ledger
+2026-10-01 (`jev-1.13.0`). Evidence pointers go to the ledger
 (`docs/claims-audit.md`), which carries the numbers.
 
 | Claim | Verdict |
@@ -38,6 +38,9 @@ Every substantive claim this repo makes about Jev, one line each, as of
 | The correction decomposes into stable slope + slice intercept (issue #9 H2) | Partial — point estimates clear the thresholds; 95% CIs do not fully |
 | The transfer recipe generalises (issue #9 H3) | Holds on the fixed recipe — refit and scoring sets now disjoint |
 | Negation probe: slope-only transfer reaches a different task | Holds — 0.070 → 0.020/0.019/0.019/0.021 held-out; headroom was small |
+| Laya is a drop-in Jev replacement | Refuted on held-out multi-sentence inputs — at chance on the tiers fixtures (ECE 14.6–23.8× floor), ranking inverted on adversarial; a real, weaker model on short in-distribution texts |
+| The playground 500-example head-to-head (Laya 0.668 vs Jev 0.764) | Verified — reproduced on both arms (Laya ≤0.001 per task; Jev within one item) |
+| Laya's published application numbers reflect out-of-box capability | Overstated — the datasets are in its training mix by upstream's own flag; held-out phishing measures 0.495–0.525 |
 
 What would change the most minds from here: a second model version (does the
 slope survive a retrain), a non-email domain with headroom, and a larger-n

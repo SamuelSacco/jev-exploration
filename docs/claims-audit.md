@@ -3,7 +3,7 @@
 One row per claim made about Jev, with its current status and the best evidence for or
 against it. This file is meant to be edited as evidence appears; it is not a snapshot.
 
-**Last updated:** 2026-09-25 · **Model version for runs in this repo:** `jev-1.13.0`
+**Last updated:** 2026-10-01 · **Model version for runs in this repo:** `jev-1.13.0`
 
 Status vocabulary:
 
@@ -71,6 +71,9 @@ see the note in §1.
 | 26 | The local 4B beats Jev on home_turf accuracy and loses on negation | Partial | H2: Jev 100.0% vs local 53.3% on home_turf — the local model did not win (95% CI on the difference [-55.8, -37.5] points); Jev 100.0% vs local 95.0% on negation — the local model lost (CI [-10.0, -1.25] points). First half falsified, second held |
 | 27 | Jev calibrates better than the local 4B on every arm | Partial | H3: Jev's ECE-to-noise-floor ratio lower on 3 of 4 arms (2.13×/1.56×/1.38× vs 3.25×/4.00×/3.53× on home_turf/adversarial/typed); the local model was better calibrated on negation (0.88× vs 1.31×) |
 | 28 | Typed Choice beats adversarial Noul on the same items | Refuted | H4: +2.5 points (90.8% vs 88.3%), but the 95% bootstrap interval on the difference, [-1.7, +6.7] points, covers zero — T75's finding does not generalise past its single classification item |
+| 29 | Laya (open-source, Jev-shaped API) is a drop-in Jev replacement | Refuted for held-out multi-sentence inputs | [lab/laya/FINDINGS.md](../lab/laya/FINDINGS.md) (measured here, 2026-10-01): Laya English 421M at chance on the tiers fixtures (acc 0.495–0.525 vs Jev 0.893–0.980, ECE 14.6–23.8× the noise floor, Brier worse than a constant-0.5 forecaster), domains 0.500–0.767 vs 0.942–1.000, negation 0.825 with 26/40 pairs vs 1.000 with 40/40. Formulation controls bound the gap: Jev per-item on the same inputs loses only ~10 points (t1 subset 0.900 vs 1.000 batched); Laya with Jev's exact state slices unchanged. Ranking survives where threshold accuracy does not (t1 AUC 0.872) except adversarial, where it inverts (0.246) |
+| 30 | The playground 500-example head-to-head (Laya 0.668 / ECE 0.241 vs Jev 0.764 / 0.147) | Verified (reproduced here) | [lab/laya/FINDINGS.md](../lab/laya/FINDINGS.md): dataset rebuilt byte-identical, their scoring verbatim; Laya reproduces to ≤0.001 per task on accuracy and ECE, Jev within one item and ≤0.012 ECE; Jev input tokens 194,902, identical to the recorded run. Third-party benchmark (`wdobry/laya-playground`); the upstream Laya repo states it never measured Jev. AG News is in Laya's training mix — that row is in-distribution |
+| 31 | Laya's published application numbers (phishing 0.98–0.993, spam 0.993) reflect out-of-box capability | Overstated | Upstream `BENCHMARKS.md` flags those datasets as in Laya's training mix; the held-out measurement in row 29 gives 0.495–0.525 on phishing tiers. Short-text in-distribution performance is real (row 30: SMS spam 0.960) but does not transfer to held-out email |
 
 ---
 
