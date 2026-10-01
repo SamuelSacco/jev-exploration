@@ -139,6 +139,13 @@ CLAIMS = [
         "published_in": ["docs/claims-audit.md"],
         "runner": "lab/exp_headtohead.py",
     },
+    {
+        "claim": "Laya vs Jev head-to-head on repo fixtures: phishing tiers, domains, negation",
+        "run": "2026-10-01, run by the operator",
+        "pattern": "20261001T170333Z-laya-*.jsonl",
+        "published_in": ["lab/laya/FINDINGS.md", "docs/claims-audit.md", "docs/FINAL-VERDICTS.md"],
+        "runner": "lab/exp_laya.py",
+    },
 ]
 
 
