@@ -1,0 +1,26 @@
+{
+ "dtype": "torch.float32",
+ "amp_enabled": false,
+ "T1_bracketed_state": {
+  "t1": {
+   "n": 40,
+   "acc": 0.5,
+   "mean_p": 0.056
+  },
+  "domains": {
+   "n": 40,
+   "acc": 0.675,
+   "mean_p": 0.348
+  },
+  "negation": {
+   "n": 80,
+   "acc": 0.8375,
+   "mean_p": 0.449
+  }
+ },
+ "latency_sms100_ms": {
+  "p50": 1199.9,
+  "p95": 1502.4,
+  "mean": 1138.4
+ }
+}
