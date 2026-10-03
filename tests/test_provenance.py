@@ -57,7 +57,9 @@ def test_provenance_covers_every_runner():
     and the checker stays silent because it was never told to look.
     """
     runners = set()
-    for pattern in ("lab/run_*.py", "lab/exp_*.py", "lab/probe_*.py"):
+    for pattern in ("lab/run_*.py", "lab/exp_*.py", "lab/probe_*.py",
+                    "lab/control_*.py", "lab/repro_*.py", "lab/score_*.py",
+                    "lab/laya/*.py"):
         for path in glob.glob(os.path.join(HERE, pattern)):
             runners.add(os.path.relpath(path, HERE))
     covered = {entry["runner"] for entry in pv.CLAIMS}

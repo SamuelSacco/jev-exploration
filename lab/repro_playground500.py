@@ -6,7 +6,8 @@ through the workspace skill CLI instead. Everything else follows their
 protocol exactly: dataset rebuilt by their eval/build_dataset.py (seed 7,
 provenance-checked), the identical {state, questions} body to both
 models, their read_answer/ece/summarise arithmetic copied verbatim.
-Raw responses from both arms are written out (theirs were not committed).
+Raw responses from both arms are written out and committed in-repo
+(theirs were not committed).
 
 Version deltas vs the original run, disclosed: laya 0.3.22 here vs
 0.3.4 then (checkpoints stated unchanged upstream — the English

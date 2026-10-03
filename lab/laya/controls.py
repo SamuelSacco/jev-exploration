@@ -16,6 +16,9 @@ sys.path.insert(0, "/home/hatch/workspace/jev-laya-work")
 from lab.exp_laya import load_fixture  # noqa: E402
 import laya  # noqa: E402
 
+RUNS = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "runs")
+STAMP = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
+
 agent = laya.load("/home/hatch/workspace/laya-ckpt-en")
 out = {"dtype": str(getattr(agent, "dtype", "?")),
        "amp_enabled": getattr(agent, "amp_enabled", "?")}
@@ -31,22 +34,34 @@ for g, xs in seen.items():
 sub += load_fixture("negation")
 
 
-def score(items, state_fn):
+def score(items, state_fn, peritem):
     hits, ps = 0, []
     for it in items:
-        r = agent.predict(state_fn(it), {"q": it["question"]})
+        state = state_fn(it)
+        r = agent.predict(state, {"q": it["question"]})
         p = r["answers"]["q"]["noul"]
         ps.append(p)
         hits += (p >= 0.5) == it["gold"]
+        peritem.append({"id": it["id"], "state": state, "p": p,
+                        "pred": p >= 0.5, "gold": bool(it["gold"]),
+                        "raw": r["answers"]})
     return {"n": len(items), "acc": hits / len(items),
             "mean_p": round(statistics.mean(ps), 3)}
 
 
 groups = {}
+peritem = []
 for name, items in (("t1", sub[:40]), ("domains", sub[40:80]), ("negation", sub[80:])):
-    groups[name] = score(items, lambda it: "[%s]\n%s" % (it["id"], it["state"]))
+    groups[name] = score(items, lambda it: "[%s]\n%s" % (it["id"], it["state"]), peritem)
     print("T1", name, groups[name], flush=True)
 out["T1_bracketed_state"] = groups
+
+peritem_path = os.path.join(RUNS, "%s-laya-bracketed-control.jsonl" % STAMP)
+os.makedirs(RUNS, exist_ok=True)
+with open(peritem_path, "w") as f:
+    for rec in peritem:
+        f.write(json.dumps(rec, sort_keys=True) + "\n")
+print("per-item raw:", peritem_path, len(peritem), flush=True)
 
 texts = []
 for line in open("/home/hatch/workspace/laya-playground/eval/data/sms_spam.jsonl"):
