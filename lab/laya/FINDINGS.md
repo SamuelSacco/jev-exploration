@@ -79,9 +79,13 @@ Batching is worth something to Jev, and it is not worth 40 points:
 | negation pairs resolved | 40/40 | 39/40 | 26/40 |
 | domains slices (n=10 each), acc | 1.00/1.00/0.94/0.98 (full slices) | 1.00/1.00/0.90/1.00 | — |
 
-Per-item formulation costs Jev ~10 accuracy points on the t1 subset
-and one negation pair; the remaining gap to Laya on identical
-per-item inputs is 40 points on t1 and 13 pairs on negation. The
+Per-item formulation costs Jev 4 of 40 items on the t1 diagnostic subset
+(1.000→0.900; McNemar exact one-sided p=0.063, Newcombe 95% CI −0.6/+23.1
+points) — a real-looking but imprecisely estimated effect, scoped to t1,
+the only tier subset with a per-item Jev control (t2–t4 have none). It
+costs one negation pair (40/40→39/40). The remaining gap to Laya on
+identical per-item inputs is 40 points on t1 (0.900 vs 0.500, p<0.0001)
+and 13 pairs on negation. The
 dangling-id objection (difference 2) is bounded twice over: the
 phrasing diagnostic below (id-free and minimal phrasings collapse
 identically on tiers, ranking intact), and a direct rerun of Laya
@@ -161,9 +165,14 @@ the criteria dict.
 | D subject-line state only | 0.525 | 0.220 | 0.647 |
 | E no criteria | 0.500 | 0.020 | 0.708 |
 
-No variant recovers threshold discrimination. Shortening the state
-(D) quadruples mean P while *hurting* ranking — the lever is input
-distribution, not question wording, criteria, or the id reference.
+No variant recovers threshold discrimination (acc 0.500–0.525 across
+all five): the collapse is not caused by the id reference or the surface
+wording of the question. Ranking is a different story — it is sensitive
+to the payload: dropping the criteria dict (E) degrades AUC 0.870→0.708
+(paired bootstrap 95% CI on the drop excludes 0), and shortening the
+state to the subject line (D) degrades it to 0.647 while quadrupling
+mean P(phish). The lever is the input payload — state content and
+criteria — not the surface phrasing.
 The same checkpoint scores 0.96 on SMS spam in the benchmark below:
 short single-purpose messages are its distribution; multi-sentence
 formatted email is not.
@@ -214,11 +223,13 @@ client; the CLI path used here adds ~1.2 s of process overhead per
 call. Accuracy and ECE are the comparable quantities, and both
 reproduce.
 
-Raw outputs: `lab/runs/20261001T175300Z-playground500-laya.jsonl`,
+Raw outputs: `lab/runs/20261001T175300Z-playground500-laya.jsonl` and
+`lab/runs/20261001T175300Z-playground500-jev.jsonl`,
 aggregates in `lab/laya/versus-repro.json`, runner
-`lab/repro_playground500.py`. (The playground does not commit its raw
-Jev responses; this repo commits Laya's raw and the Jev aggregates.
-Per-example Jev responses for this run are regenerable for ~$0.008.)
+`lab/repro_playground500.py`. (Per-example Jev responses are committed;
+a fresh rerun of the identical payload stream costs ~$0.008 and
+reproduces the aggregates within noise — exact per-example reproduction
+not guaranteed, hosted-model non-determinism.)
 
 ## Verdicts
 
