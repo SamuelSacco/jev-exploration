@@ -15,10 +15,14 @@ Written before scoring, so a paid call survives a crash in the analysis code.
 The rule above was stated here and not checked, so it broke quietly: an audit of
 main on 2026-09-24 found four published runs with no raw responses behind them.
 
-`python3 analysis/provenance.py` now lists every published figure, the raw files
+`python3 analysis/provenance.py` lists every CLAIMS entry, the raw files
 that back it, and which are missing. `--strict` exits non-zero while any
-published claim is unbacked, and `tests/test_provenance.py` fails if a new
-runner is added without an entry.
+listed published claim is unbacked, and `tests/test_provenance.py` fails if
+a runner matching the covered globs has no entry. The gate is only as
+complete as the globs and the CLAIMS list: a figure published by a script
+outside `lab/run_*.py`, `lab/exp_*.py`, `lab/probe_*.py`,
+`lab/control_*.py`, `lab/repro_*.py`, `lab/score_*.py`, or `lab/laya/*.py`
+would not be caught — keep the globs current when adding runners elsewhere.
 
 A claim that cannot be recomputed from this directory is marked
 *(raw data not in repo)* in the ledger rather than left looking like the others.

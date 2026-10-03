@@ -146,6 +146,41 @@ CLAIMS = [
         "published_in": ["lab/laya/FINDINGS.md", "docs/claims-audit.md", "docs/FINAL-VERDICTS.md"],
         "runner": "lab/exp_laya.py",
     },
+    {
+        "claim": "Playground 500 reproduction: Laya vs Jev on 5x100 short texts (both arms)",
+        "run": "2026-10-01, run by the operator",
+        "pattern": "20261001T175300Z-playground500-*.jsonl",
+        "published_in": ["lab/laya/FINDINGS.md"],
+        "runner": "lab/repro_playground500.py",
+    },
+    {
+        "claim": "Jev per-item control on the 160-item diagnostic subset (t1, domains slices, negation)",
+        "run": "2026-10-01, run by the operator",
+        "pattern": "20261001T181500Z-jev-peritem.jsonl",
+        "published_in": ["lab/laya/FINDINGS.md"],
+        "runner": "lab/control_jev_peritem.py",
+    },
+    {
+        "claim": "Fixture scorer: Laya-vs-Jev tables recomputed from committed raw (no live calls)",
+        "run": "(no live calls; scores committed runs)",
+        "pattern": "20261001T170333Z-laya-all-scores.json",
+        "published_in": [],
+        "runner": "lab/score_laya.py",
+    },
+    {
+        "claim": "Bracketed-state control: Laya on 40 t1 + 40 domains + 80 negation with [{id}] state",
+        "run": "2026-10-03, rerun by the operator (per-item raw added)",
+        "pattern": "*-laya-bracketed-control.jsonl",
+        "published_in": ["lab/laya/FINDINGS.md"],
+        "runner": "lab/laya/controls.py",
+    },
+    {
+        "claim": "Phrasing diagnostic: 5 variants on 40 t1 items (per-item view consolidated from committed probe data)",
+        "run": "2026-10-01, run by the operator",
+        "pattern": "20261001T170333Z-laya-phrasing-probes.jsonl",
+        "published_in": ["lab/laya/FINDINGS.md"],
+        "runner": "lab/laya/probes.py",
+    },
 ]
 
 
