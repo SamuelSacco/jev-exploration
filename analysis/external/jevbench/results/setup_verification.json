@@ -1,0 +1,63 @@
+{
+  "lock": {
+    "items_sha256_lock": "1fbb1ab363004139b82431f8bf378ba4d43be57cd995c7e64d231770b1c71a19",
+    "items_sha256_disk": "1fbb1ab363004139b82431f8bf378ba4d43be57cd995c7e64d231770b1c71a19",
+    "items_match": true,
+    "labels_sha256_lock": "efadb35ac7472d18d25ee325b0582d4632a393ea7e024b7ff09c5ce164fe84ad",
+    "labels_sha256_disk": "efadb35ac7472d18d25ee325b0582d4632a393ea7e024b7ff09c5ce164fe84ad",
+    "labels_match": true,
+    "model_lock": "jev-1.13.0",
+    "locked_at": "2026-09-23T13:45:00+00:00"
+  },
+  "committed_counts": {
+    "easy": 750,
+    "hard": 750
+  },
+  "committed_idset_sha256": {
+    "easy": "968c1697b1a879f1e4bee0b51cd66f335094184d62696bc7dbacafeb22f336fb",
+    "hard": "ad3dfba7a1e340387ab21aabd71ca83be4083da341e64331f2c63d8caf69825b"
+  },
+  "n_paraphrase_rows": 100,
+  "thresholds_recomputed": {
+    "q_easy": 0.7357948629753385,
+    "q_hard": 1.1625318905614013,
+    "match_thresholds_json": true
+  },
+  "recon_counts": {
+    "easy": 750,
+    "hard": 750,
+    "n_easy_pool": 780,
+    "n_hard_pool": 779
+  },
+  "recon_idset_sha256": {
+    "easy": "968c1697b1a879f1e4bee0b51cd66f335094184d62696bc7dbacafeb22f336fb",
+    "hard": "ad3dfba7a1e340387ab21aabd71ca83be4083da341e64331f2c63d8caf69825b"
+  },
+  "recon_equals_committed": {
+    "easy": true,
+    "hard": true
+  },
+  "universe_in_analysis_equals_committed": {
+    "easy": true,
+    "hard": true
+  },
+  "fetch": {
+    "snli": "cached-pin-ok",
+    "mnli": "cached-pin-ok",
+    "snli_sha256": "99f9015ddda7d85f66a087452bc30d53974314fe27e7d589e2f41ad44bd509c1",
+    "mnli_sha256": "8eb49b589488e7b1a9ec95fb8a864bd50f0509b4f808eed0aed3f8167617664d"
+  },
+  "population_n": 3113,
+  "full_items": 1500,
+  "missing_text": [],
+  "choice_question": {
+    "instructions": "Decide whether the hypothesis is entailed by the premise, contradicted by the premise, or neither (neutral). Use only the premise and the hypothesis in the state. Do not use any outside knowledge of the dataset this pair came from.\n",
+    "criteria": {
+      "entailment": "The hypothesis must be true if the premise is true.",
+      "neutral": "The hypothesis might be true, but the premise does not require it.",
+      "contradiction": "The hypothesis cannot be true if the premise is true."
+    },
+    "model_yaml": "jev-1.13.0",
+    "repeats_yaml": 10
+  }
+}
