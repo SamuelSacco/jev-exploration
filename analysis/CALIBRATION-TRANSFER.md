@@ -11,7 +11,7 @@ python3 analysis/calibration_transfer.py
 
 The slope transfers; the intercept does not. Transferring a whole two-parameter map
 usually helps and occasionally hurts. Transferring the slope and spending about 50
-labels on the intercept helped in every case measured, and helped more.
+labels on the intercept helped on average in every transfer measured, and helped more.
 
 | approach | mean ECE over 12 transfers | worst single case |
 |---|---|---|
@@ -19,8 +19,12 @@ labels on the intercept helped in every case measured, and helped more.
 | full map fitted elsewhere | 0.0597 (−54%) | 0.184 (worse than no correction) |
 | slope transferred, intercept refit on 50 labels | 0.0512 (−61.7%) | 0.124 |
 
-Accuracy is unchanged throughout, since the maps are monotone and cannot reorder
-anything. Brier improves alongside ECE (t1→t4: 0.1030 → 0.0805).
+The maps are monotone, so they cannot reorder anything — ranking is unchanged
+throughout. Accuracy at a fixed threshold is a different property and does move:
+at 0.5, the t3 → t4 full map takes accuracy from 0.900 to 0.810, because the map
+carries probabilities across the threshold without reordering them. A deployment
+that thresholds mapped probabilities has to move the threshold with the map.
+Brier improves alongside ECE (t1→t4: 0.1030 → 0.0805).
 
 On the % column: the denominators are mixed. "No correction" 0.1306 and "full
 map" 0.0597 are means over the twelve full-tier transfers; the slope row is the
@@ -51,14 +55,19 @@ inside the (2.11, 2.61) band (verdicts() → PARTIAL), so "model property" is a
 qualified claim. A slope near 2.2
 means Jev's log-odds are roughly half as extreme as they should be.
 
-The intercept spans −0.48 to +1.75. It absorbs the slice's base rate and belongs to
-the slice, not the model. t3 is the outlier: it has 58 predictions below 0.1 against
-40 above 0.9, where the other tiers lean the other way, and the fit compensates with
-a large positive shift.
+The intercept spans −0.48 to +1.75, and belongs to the slice, not the model. It
+cannot be absorbing the base rate here: every tier is balanced at 100 positive and
+100 negative by construction, so prevalence never moves. What it absorbs is the
+slice's prediction distribution — where Jev's probabilities sit. t3 is the outlier:
+it has 58 predictions below 0.1 against 40 above 0.9, where the other tiers lean
+the other way, and the fit compensates with a large positive shift. (On the domain
+slices of issue #9, where prevalence varies by design, an intercept does absorb
+base rate; that is a different experiment.)
 
 That is why t3 → t4 is the one transfer that backfires, ECE 0.147 → 0.184, consistent
-across all three passes (−25%, −24%, −27%). Carrying t3's base-rate offset onto t4
-does more damage than the slope correction repairs.
+across all three passes (−25%, −24%, −27%). Carrying t3's intercept — fitted to
+t3's lopsided prediction distribution — onto t4 does more damage than the slope
+correction repairs.
 
 ## The recipe
 
@@ -73,8 +82,8 @@ mapping = fit_platt_intercept(refit, slope)
 calibrated = [mapping(p) for p in raw_probabilities]
 ```
 
-One parameter, fitted on roughly fifty labelled examples, which is enough to pin a
-base rate. `jevlab.calibration.transfer_slope` wraps both steps.
+One parameter, fitted on roughly fifty labelled examples, which is enough to pin
+the slice's intercept. `jevlab.calibration.transfer_slope` wraps both steps.
 
 ## Does it reach a different task?
 
@@ -127,28 +136,38 @@ the 69.1% the old method reports on this pass. The shortcut was worth about
 implies 0.0347, while the honest held-out figure is 0.0512 — and it is the
 kind of thing this repo corrects in other people's benchmarks.
 
-**The mean flattens at about 75 labels; the tail is the reason to stop at 50.**
+**The mean flattens early; the tail is the real budget question.**
 
-| budget | mean held-out ECE | worst single draw | as a multiple of doing nothing | transfers that can end up worse |
-|---|---|---|---|---|
-| 10 | 0.0646 | 0.4800 | 4.0x | 5 of 12 |
-| 20 | 0.0579 | 0.2188 | 1.4x | 3 of 12 |
-| 30 | 0.0516 | 0.1602 | 1.0x | 2 of 12 |
-| 50 | 0.0512 | 0.1236 | 0.8x | 0 of 12 |
-| 75 | 0.0475 | 0.1058 | 0.7x | 0 of 12 |
-| 100 | 0.0481 | 0.1228 | 0.8x | 0 of 12 |
+| budget | mean held-out ECE | worst single draw | worst draw, × doing nothing on the same items | draws left worse | transfers with a harmful draw |
+|---|---|---|---|---|---|
+| 10 | 0.0646 | 0.4800 | 4.5x | 17 of 480 | 5 of 12 |
+| 20 | 0.0579 | 0.2188 | 1.3x | 14 of 480 | 3 of 12 |
+| 30 | 0.0516 | 0.1602 | 1.2x | 6 of 480 | 3 of 12 |
+| 50 | 0.0512 | 0.1236 | 0.9x | 3 of 480 | 3 of 12 |
+| 75 | 0.0475 | 0.1058 | 0.5x | 0 of 480 | 0 of 12 |
+| 100 | 0.0481 | 0.1228 | 0.7x | 1 of 480 | 1 of 12 |
+
+Harm is paired: a draw counts when its corrected ECE exceeds the uncorrected
+ECE on the same held-out block — never against an average over other draws.
 
 Averaged, the correction is nearly done at 30 labels. But an intercept fitted on
 too few positives lands far from where it belongs and moves every probability
-the wrong way, and at 10 labels the worst draw reaches **four times the
-uncorrected ECE**. A deployment refits once and ships, so it is exposed to that
-tail, not to the mean.
+the wrong way, and at 10 labels the worst draw reaches **4.5× the uncorrected
+ECE on the same items**. A deployment refits once and ships, so it is exposed
+to that tail, not to the mean.
 
-Fifty is the smallest budget at which no draw in this sweep left calibration
-worse than applying no correction at all. So the recipe's original number
-survives, for a reason that had not been measured: not because the correction is
-finished there, but because that is where it stops being able to backfire.
-Spending 75 buys a further 7% off the mean.
+An earlier version of this sweep judged the tail against a pooled baseline —
+each transfer's worst corrected draw set against a mean uncorrected ECE averaged
+over every draw and every budget — and concluded that fifty labels is where the
+correction stops being able to backfire. Paired draw by draw, that is false at
+50: 3 of 480 draws end worse than doing nothing, all on the same evaluation draw
+into t4, the worst moving 0.1015 → 0.1209. Seventy-five is the smallest budget
+with no harmful draw in 480 (one reappears at 100, by 0.0006 — which is what a
+0-of-480 is worth: an observation, not a guarantee).
+
+So the recipe's fifty survives as a mean/tail tradeoff, not a safety claim: the
+mean gain is banked by 50, at a measured harm rate of 3 draws in 480, each
+small. Spending 75 buys a further 7% off the mean and no observed harm.
 
 Below 30 labels, do not apply the correction. Uncorrected probabilities carry a
 known distortion; a badly fitted intercept carries an unknown one.
@@ -165,4 +184,5 @@ Row 13 stays refuted: raw Jev probabilities are not calibrated at any difficulty
 failure is systematic rather than erratic, though, and a one-parameter correction
 recovers most of it. Jev returns a monotone score carrying a stable distortion
 within the fitted domain, not a probability, and converting it into one is cheap given fifty
-labels — and counterproductive given fewer than thirty.
+labels — where a small paired harm rate (3 of 480 draws) is the price — and
+counterproductive given fewer than thirty.
