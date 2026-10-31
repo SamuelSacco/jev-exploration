@@ -89,7 +89,9 @@ def test_slope_only_row_matches_the_recomputed_sweep(fresh_sweep):
 
 
 def test_every_budget_row_matches_the_recomputed_sweep(fresh_sweep):
-    """All four numeric columns of every budget row, not just the headline."""
+    """Every numeric column of every budget row, not just the headline. The
+    harm columns are paired: a draw counts when its corrected ECE exceeds the
+    uncorrected ECE on that draw's own evaluation items."""
     rows = md_table_rows(read_md("analysis", "CALIBRATION-TRANSFER.md"))
     for budget in css.SIZES:
         expected = css.headline_figures(fresh_sweep["transfers"], budget)
@@ -99,8 +101,11 @@ def test_every_budget_row_matches_the_recomputed_sweep(fresh_sweep):
         assert row[3] == f"{expected['worst_multiple_of_baseline']:.1f}x", (
             f"budget {budget} multiple: table says {row[3]}"
         )
-        assert row[4] == f"{expected['transfers_worse_than_nothing']} of 12", (
-            f"budget {budget} worse-count: table says {row[4]}"
+        assert row[4] == (
+            f"{expected['draws_worse_than_nothing']} of {expected['draws_total']}"
+        ), f"budget {budget} draws-worse: table says {row[4]}"
+        assert row[5] == f"{expected['transfers_worse_than_nothing']} of 12", (
+            f"budget {budget} transfers-worse: table says {row[5]}"
         )
 
 

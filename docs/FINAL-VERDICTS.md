@@ -20,7 +20,7 @@ Every substantive claim this repo makes about Jev, one line each, as of
 | An ordinary LLM can reproduce the interface | Verified |
 | Probabilities are calibrated | Refuted at scale — real miscalibration, both large studies |
 | Confidence is safe to route and escalate on | Depends on the sign of the error, not the size of the ECE |
-| Calibration holds when the model is out of its depth | Yes as a function; harder inputs land where it is worst |
+| Calibration holds when the model is out of its depth | Not established as equality — no evidence of change within tolerance; harder inputs land where it is worst |
 | Returned probabilities are full-precision floats | Refuted — 0.01 grid across 11,148 answers |
 | A returned probability can be exactly 0 or 1, unfixable by rescaling | Verified for Choice and Score; no Noul instance in 11,148 |
 | Batched questions cannot see each other's instructions | Verified |
@@ -32,8 +32,8 @@ Every substantive claim this repo makes about Jev, one line each, as of
 | B1 (calibration invariance across difficulty tiers) more fragile to label error than B2 (p≥0.9 hit rate) | Verified — 1 flip (0.5%) vs 3 flips (1.5%) |
 | H1: Jev beats the lexical bar where expected | Refuted — cleared it on adversarial too |
 | H2: local 4B wins home_turf, loses negation | Partial — lost both halves on home_turf, won on negation |
-| H3: Jev calibrates better on every arm | Partial — 3 of 4; local better on negation |
-| H4: typed Choice beats adversarial Noul | Refuted — +2.5 pts, CI covers zero |
+| H3: Jev calibrates better on every arm | Proven — ECE lower on all four arms, paired intervals exclude zero on each (rescored 2026-10-31: the noise-floor-ratio ranking had negation backwards) |
+| H4: typed Choice beats adversarial Noul | Not established — +2.5 pts, CI covers zero |
 | The fitted slope transfers across domains (issue #9 H1) | Partial — 0 of 3 new-domain slopes in the email band |
 | The correction decomposes into stable slope + slice intercept (issue #9 H2) | Partial — point estimates clear the thresholds; 95% CIs do not fully |
 | The transfer recipe generalises (issue #9 H3) | Holds on the fixed recipe — refit and scoring sets now disjoint |

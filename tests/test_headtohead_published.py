@@ -76,9 +76,24 @@ def test_published_verdicts_reproduce_from_committed_raw():
     v = result["verdicts"]
     assert v["H1_jev_clears_the_bar_where_expected"]["verdict"] == "REFUTED"
     assert v["H2_local_wins_home_turf_and_loses_negation"]["verdict"] == "PARTIAL"
-    assert v["H3_jev_calibrates_better_everywhere"]["verdict"] == "PARTIAL"
-    assert v["H4_choice_beats_noul_on_the_same_items"]["verdict"] == "REFUTED"
+    # H3 is scored on the ECE difference (paired bootstrap), not the
+    # ECE-to-noise-floor ratio the preregistration named: the ratio ranked
+    # negation backwards. On the difference, Jev's ECE is lower on every arm
+    # and every interval excludes zero, so the rescored verdict is PROVEN.
+    h3 = v["H3_jev_calibrates_better_everywhere"]
+    assert h3["verdict"] == "PROVEN", h3
+    assert {a: d["call"] for a, d in h3["ece_difference_by_arm"].items()} == {
+        arm: "jev" for arm in ARMS
+    }, h3
+    neg = result["arms"]["negation"]
+    assert neg["jev"]["ece"] == 0.026, neg
+    assert neg["local"]["ece"] == 0.0443, neg
+    assert neg["ece_difference"] == -0.0183, neg
+    assert neg["ece_difference_ci"][1] < 0, neg
+    # H4: the interval covers zero, which is inconclusive -- NOT ESTABLISHED,
+    # not the REFUTED the earlier scoring printed next to this same interval.
     h4 = v["H4_choice_beats_noul_on_the_same_items"]
+    assert h4["verdict"] == "NOT ESTABLISHED", h4
     assert h4["accuracy_gain"] == 0.025, h4
     assert h4["difference_ci95"][0] <= 0 <= h4["difference_ci95"][1], h4
 

@@ -12,7 +12,7 @@ python3 lab/exp_transfer.py --dry-run
 
 `analysis/CALIBRATION-TRANSFER.md` reports that Platt's slope sits at 2.11–2.61
 across all four tiers of the e-mail gradient while the intercept swings −0.48 to
-+1.75 with the slice's base rate, and concludes that the slope is a property of
++1.75 with each slice's prediction distribution, and concludes that the slope is a property of
 the model and the intercept a property of the deployment. That conclusion is
 what makes the recipe reusable, and everything behind it is e-mail legitimacy.
 

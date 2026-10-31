@@ -124,14 +124,17 @@ def test_a_local_transport_is_required_rather_than_defaulted(monkeypatch):
 # ------------------------------------------------------------------- the memo
 
 
-def _arm(jev_acc, local_acc, jev_ratio, local_ratio, bar=0.5, n=100):
+def _arm(jev_acc, local_acc, jev_ratio, local_ratio, bar=0.5, n=100,
+         jev_ece=0.05, local_ece=0.05, ece_ci=None):
     return {
         "n": n, "primitive": "noul", "lexical_bar": bar,
         "jev": {"n": n, "accuracy": jev_acc, "ci95": [jev_acc - 0.05, jev_acc + 0.05],
-                "ece": 0.05, "floor": 0.02, "ratio": jev_ratio},
+                "ece": jev_ece, "floor": 0.02, "ratio": jev_ratio},
         "local": {"n": n, "accuracy": local_acc, "ci95": [local_acc - 0.05, local_acc + 0.05],
-                  "ece": 0.05, "floor": 0.02, "ratio": local_ratio},
+                  "ece": local_ece, "floor": 0.02, "ratio": local_ratio},
         "local_unparsed": 0, "local_latency_p50_s": 1.0,
+        "ece_difference": round(jev_ece - local_ece, 4),
+        "ece_difference_ci": ece_ci,
     }
 
 
@@ -161,24 +164,61 @@ def test_h2_is_partial_when_only_one_half_holds():
     assert hh.verdicts(arms)["H2_local_wins_home_turf_and_loses_negation"]["verdict"] == "PARTIAL"
 
 
-def test_h3_is_refuted_when_the_local_model_calibrates_better_everywhere():
-    arms = {a: _arm(0.8, 0.8, 3.0, 1.2) for a in hh.ARMS}
+def test_h3_is_refuted_when_jevs_ece_is_higher_on_every_arm():
+    """The call is the ECE difference and its interval, not the ratio."""
+    arms = {a: _arm(0.8, 0.8, 3.0, 1.2, jev_ece=0.09, local_ece=0.05,
+                    ece_ci=[0.01, 0.08]) for a in hh.ARMS}
     block = hh.verdicts(arms)["H3_jev_calibrates_better_everywhere"]
     assert block["verdict"] == "REFUTED"
 
 
+def test_h3_is_proven_when_jevs_ece_is_lower_on_every_arm():
+    arms = {a: _arm(0.8, 0.8, 1.2, 3.0, jev_ece=0.05, local_ece=0.12,
+                    ece_ci=[-0.12, -0.02]) for a in hh.ARMS}
+    block = hh.verdicts(arms)["H3_jev_calibrates_better_everywhere"]
+    assert block["verdict"] == "PROVEN"
+    assert block["ece_difference_by_arm"]["negation"]["call"] == "jev"
+
+
 def test_h3_is_partial_when_it_holds_on_some_arms_only():
-    arms = {a: _arm(0.8, 0.8, 1.2, 3.0) for a in hh.ARMS}
-    arms["negation"] = _arm(0.8, 0.8, 3.0, 1.2)
+    arms = {a: _arm(0.8, 0.8, 1.2, 3.0, jev_ece=0.05, local_ece=0.12,
+                    ece_ci=[-0.12, -0.02]) for a in hh.ARMS}
+    arms["negation"] = _arm(0.8, 0.8, 3.0, 1.2, jev_ece=0.09, local_ece=0.05,
+                            ece_ci=[0.01, 0.08])
     assert hh.verdicts(arms)["H3_jev_calibrates_better_everywhere"]["verdict"] == "PARTIAL"
 
 
-def test_h4_is_refuted_when_the_difference_interval_covers_zero():
+def test_h3_does_not_rank_by_the_noise_floor_ratio():
+    """The negation trap from the published run: the local model's ratio is
+    lower (0.86x vs 1.31x) only because its sampling floor is higher, while
+    its ECE is worse (0.0443 vs 0.0260). The ratio must not crown it; with
+    the difference interval covering zero the arm is not established."""
+    arms = {a: _arm(0.8, 0.8, 1.2, 3.0, jev_ece=0.05, local_ece=0.12,
+                    ece_ci=[-0.12, -0.02]) for a in hh.ARMS}
+    arms["negation"] = _arm(1.0, 0.95, 1.31, 0.86, jev_ece=0.0260,
+                            local_ece=0.0443, ece_ci=[-0.064, 0.004])
+    block = hh.verdicts(arms)["H3_jev_calibrates_better_everywhere"]
+    assert block["ece_difference_by_arm"]["negation"]["call"] == "not established"
+    assert block["verdict"] == "PARTIAL"
+
+
+def test_h4_is_not_established_when_the_difference_interval_covers_zero():
+    """Covering zero is inconclusive, not a refutation: the earlier code
+    labelled exactly this case REFUTED."""
     arms = {
         "adversarial": _arm(0.70, 0.60, 1.5, 3.0),
         "typed": _arm(0.74, 0.60, 1.5, 3.0),
     }
     arms["typed"]["vs_adversarial_ci"] = [-0.02, 0.10]
+    assert hh.verdicts(arms)["H4_choice_beats_noul_on_the_same_items"]["verdict"] == "NOT ESTABLISHED"
+
+
+def test_h4_is_refuted_when_the_interval_is_entirely_below_zero():
+    arms = {
+        "adversarial": _arm(0.80, 0.60, 1.5, 3.0),
+        "typed": _arm(0.70, 0.60, 1.5, 3.0),
+    }
+    arms["typed"]["vs_adversarial_ci"] = [-0.18, -0.03]
     assert hh.verdicts(arms)["H4_choice_beats_noul_on_the_same_items"]["verdict"] == "REFUTED"
 
 

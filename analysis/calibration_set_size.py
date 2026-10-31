@@ -74,22 +74,33 @@ def sweep_pair(
     out = {}
     baselines = []
     for k in usable:
-        held, contaminated = [], []
+        held, contaminated, pairs = [], [], []
         for _ in range(draws):
             index = list(range(len(test_pairs)))
             rng.shuffle(index)
             evaluate = [test_pairs[i] for i in index[:eval_size]]
             refit = [test_pairs[i] for i in index[eval_size : eval_size + k]]
             mapping = fit_platt_intercept(refit, slope)
-            held.append(ece(apply_map(evaluate, mapping)))
+            base_i = ece(evaluate)
+            held_i = ece(apply_map(evaluate, mapping))
+            held.append(held_i)
             contaminated.append(ece(apply_map(evaluate + refit, mapping)))
-            baselines.append(ece(evaluate))
+            baselines.append(base_i)
+            # The paired record: this draw's corrected ECE against the
+            # uncorrected ECE on the same evaluation items. Harm is judged
+            # against this, never against an average over other draws.
+            pairs.append((round(base_i, 4), round(held_i, 4)))
+        harmed = [(b, h) for b, h in pairs if h > b]
+        harmed_worst = max(harmed, key=lambda p: p[1] - p[0]) if harmed else None
         out[k] = {
             "held_out_ece": round(statistics.mean(held), 4),
             "held_out_sd": round(statistics.pstdev(held), 4) if draws > 1 else 0.0,
             "held_out_worst": round(max(held), 4),
             "contaminated_ece": round(statistics.mean(contaminated), 4),
             "n_eval": eval_size,
+            "pairs": [list(p) for p in pairs],
+            "draws_worse": len(harmed),
+            "worst_harm": list(harmed_worst) if harmed else None,
         }
     baseline = statistics.mean(baselines) if baselines else ece(test_pairs)
     for k in out:
@@ -114,21 +125,38 @@ def knee(block: dict, tolerance: float = 0.05) -> int:
     return max(sizes)
 
 
+def _draws_worse(row: dict) -> int:
+    """Draws at one budget whose corrected ECE is worse than doing nothing on
+    the same items. Counted paired, from the row's stored summary when
+    present, else from its per-draw pairs."""
+    if "draws_worse" in row:
+        return row["draws_worse"]
+    return sum(1 for b, h in row.get("pairs", []) if h > b)
+
+
 def safe_budget(results: dict, sizes: list) -> int:
-    """Smallest budget at which no draw leaves calibration worse than doing nothing.
+    """Smallest budget at which no draw leaves calibration worse than doing
+    nothing *on that draw's own evaluation items*.
+
+    The comparison is paired: each draw's corrected ECE against the uncorrected
+    ECE of the same held-out block. An earlier version compared the worst
+    corrected draw against `baseline_ece`, a mean pooled over every draw and
+    every budget, which is a different quantity: it pronounced 50 labels safe
+    while 3 of its 480 draws were in fact worse than doing nothing on their own
+    items.
 
     The mean flattens early and the tail does not. At a small budget the
     intercept is fitted on too few positives, lands far from where it should,
     and the "correction" moves every probability the wrong way: the worst draws
-    here reach four times the uncorrected ECE. A deployment that refits once and
-    ships is exposed to the tail, not the mean, so this is the number the recipe
-    should quote.
+    here reach 4.5x the uncorrected ECE on the same items. A deployment that
+    refits once and ships is exposed to the tail, not the mean, so this is the
+    number the recipe should quote.
     """
     for k in sorted(sizes):
-        rows = [b for b in results.values() if k in b["sizes"]]
+        rows = [b for b in results.values() if _budget_row(b, k)]
         if not rows:
             continue
-        if all(b["sizes"][k]["held_out_worst"] < b["baseline_ece"] for b in rows):
+        if all(_draws_worse(_budget_row(b, k)) == 0 for b in rows):
             return k
     return 0
 
@@ -158,6 +186,27 @@ def headline_figures(results: dict, budget: int = PUBLISHED_BUDGET) -> dict:
     mean_before = statistics.mean(b["baseline_ece"] for b in blocks)
     reduction = (mean_before - mean_after) / mean_before
     worst = max(_budget_row(b, budget)["held_out_worst"] for b in blocks)
+
+    def worst_draw_multiple():
+        # The worst corrected draw as a multiple of doing nothing *on that
+        # draw's own items*, from the stored pairs -- not of a pooled mean
+        # baseline over other draws and budgets. The multiple belongs to the
+        # same draw the worst_draw column quotes.
+        all_pairs = [
+            pair
+            for b in blocks
+            for pair in (_budget_row(b, budget).get("pairs") or [])
+        ]
+        if not all_pairs:
+            return float("nan")
+        base, held = max(all_pairs, key=lambda p: (p[1], p[1] / p[0] if p[0] else 0.0))
+        return held / base if base else float("nan")
+
+    harms = [
+        _budget_row(b, budget)["worst_harm"]
+        for b in blocks
+        if _budget_row(b, budget).get("worst_harm")
+    ]
     return {
         "budget": budget,
         "transfers": len(blocks),
@@ -167,20 +216,22 @@ def headline_figures(results: dict, budget: int = PUBLISHED_BUDGET) -> dict:
         "worst_draw": round(worst, 4),
         "reduction": round(reduction, 4),
         "reduction_pct": round(reduction * 100, 1),
-        # The budget table's remaining columns: the worst draw as a multiple of
-        # doing nothing, and how many transfers have a draw that ends up worse
-        # than no correction at all.
-        "worst_multiple_of_baseline": round(
-            max(
-                _budget_row(b, budget)["held_out_worst"] / b["baseline_ece"]
-                for b in blocks
-            ),
-            1,
+        # The budget table's remaining columns, all paired: the worst draw as
+        # a multiple of doing nothing on its own items, how many individual
+        # draws ended up worse than no correction at all (of how many), in how
+        # many transfers, and the single worst such draw.
+        "worst_multiple_of_baseline": round(worst_draw_multiple(), 1),
+        "draws_worse_than_nothing": sum(
+            _draws_worse(_budget_row(b, budget)) for b in blocks
+        ),
+        "draws_total": sum(
+            len(_budget_row(b, budget).get("pairs") or []) for b in blocks
         ),
         "transfers_worse_than_nothing": sum(
-            1
-            for b in blocks
-            if _budget_row(b, budget)["held_out_worst"] >= b["baseline_ece"]
+            1 for b in blocks if _draws_worse(_budget_row(b, budget)) > 0
+        ),
+        "worst_harm": (
+            max(harms, key=lambda p: p[1] - p[0]) if harms else None
         ),
     }
 
@@ -274,20 +325,18 @@ def main(argv=None) -> int:
         rows = [b for b in results.values() if k in b["sizes"]]
         if not rows:
             continue
-        worst_k = max(b["sizes"][k]["held_out_worst"] for b in rows)
-        harmed = sum(
-            1 for b in rows if b["sizes"][k]["held_out_worst"] >= b["baseline_ece"]
-        )
-        ratio = max(
-            b["sizes"][k]["held_out_worst"] / b["baseline_ece"] for b in rows
-        )
+        hl_k = headline_figures(results, k)
         print(
-            f"  {k:>4} labels   worst draw {worst_k:.4f}  "
-            f"({ratio:.1f}x the uncorrected ECE)  "
-            f"{harmed}/{len(rows)} transfers can end up worse than doing nothing"
+            f"  {k:>4} labels   worst draw {hl_k['worst_draw']:.4f}  "
+            f"({hl_k['worst_multiple_of_baseline']:.1f}x doing nothing on the "
+            f"same items)  "
+            f"{hl_k['draws_worse_than_nothing']}/{hl_k['draws_total']} draws "
+            f"left worse than doing nothing, in "
+            f"{hl_k['transfers_worse_than_nothing']}/{len(rows)} transfers"
         )
     print(
-        f"\n  Smallest budget where no draw is worse than doing nothing: {safe} labels."
+        f"\n  Smallest budget where no paired draw is worse than doing "
+        f"nothing: {safe} labels."
     )
 
     result = {

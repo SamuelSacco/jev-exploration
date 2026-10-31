@@ -53,31 +53,60 @@ def test_the_correction_helps_on_average_at_a_reasonable_budget():
 
 
 def test_safe_budget_is_the_smallest_with_no_harmful_draw():
+    """Harm is paired: a draw harms when its corrected ECE exceeds the
+    uncorrected ECE on that same draw's evaluation items."""
     results = {
         "a": {
             "baseline_ece": 0.10,
             "sizes": {
-                10: {"held_out_worst": 0.40},
-                50: {"held_out_worst": 0.09},
+                10: {"pairs": [[0.10, 0.40], [0.11, 0.08]]},
+                50: {"pairs": [[0.10, 0.09], [0.11, 0.10]]},
             },
         },
         "b": {
             "baseline_ece": 0.12,
             "sizes": {
-                10: {"held_out_worst": 0.05},
-                50: {"held_out_worst": 0.06},
+                10: {"pairs": [[0.12, 0.05]]},
+                50: {"pairs": [[0.12, 0.06]]},
             },
         },
     }
     assert css.safe_budget(results, [10, 50]) == 50
 
 
+def test_safe_budget_compares_each_draw_to_its_own_baseline():
+    """The original bug: the worst corrected draw (0.09) sat below the pooled
+    baseline mean (0.10) and the budget was pronounced safe, while that draw
+    was worse than doing nothing on its own items (0.05). Paired, it harms."""
+    results = {
+        "a": {
+            "baseline_ece": 0.10,
+            "sizes": {
+                50: {"pairs": [[0.20, 0.08], [0.05, 0.09]]},
+                75: {"pairs": [[0.20, 0.08], [0.05, 0.04]]},
+            },
+        },
+    }
+    assert css.safe_budget(results, [50, 75]) == 75
+
+
 def test_safe_budget_is_zero_when_every_budget_can_harm():
     results = {
-        "a": {"baseline_ece": 0.10, "sizes": {10: {"held_out_worst": 0.40},
-                                              50: {"held_out_worst": 0.30}}},
+        "a": {"baseline_ece": 0.10, "sizes": {10: {"pairs": [[0.10, 0.40]]},
+                                              50: {"pairs": [[0.10, 0.30]]}}},
     }
     assert css.safe_budget(results, [10, 50]) == 0
+
+
+def test_sweep_records_the_paired_draws_it_judges_harm_by():
+    block = css.sweep_pair(squeezed(seed=1), squeezed(), [10], draws=5, eval_size=100)
+    row = block["sizes"][10]
+    assert len(row["pairs"]) == 5
+    assert row["draws_worse"] == sum(1 for b, h in row["pairs"] if h > b)
+    if row["draws_worse"]:
+        assert row["worst_harm"][1] > row["worst_harm"][0]
+    else:
+        assert row["worst_harm"] is None
 
 
 def test_knee_finds_the_smallest_budget_near_the_best():

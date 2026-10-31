@@ -41,9 +41,11 @@ noise floor for its sample size ([method](analysis/external/)), then ran a contr
 
 6. **One parameter corrects most of it, and fifty labels is a floor rather than a
    recommendation.** Platt's slope stays at 2.11–2.61 across tiers while the intercept
-   swings −0.48 to +1.75 with the base rate. Transferring the slope and refitting the
-   intercept on 50 labels cuts ECE 62% measured on held-out items. Below 30 labels the
-   correction can leave calibration four times worse than doing nothing
+   swings −0.48 to +1.75 with each slice's prediction distribution (the tiers are
+   balanced, so it is not base rate). Transferring the slope and refitting the
+   intercept on 50 labels cuts ECE 62% measured on held-out items, though 3 of 480
+   paired draws still end worse than doing nothing. Below 30 labels the
+   correction can leave calibration 4.5× worse than doing nothing on the same items
    ([method](analysis/CALIBRATION-TRANSFER.md)).
 
 7. **The probabilities are quantised to 0.01, and Choice and Score can return exactly

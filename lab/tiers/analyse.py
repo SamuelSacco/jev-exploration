@@ -123,7 +123,8 @@ def main(argv=None) -> int:
         c = coverage_at(data[tier], 0.9)
         print(
             f"  {tier:<16} coverage {c['coverage']:>5.1%}  "
-            f"hit rate {c['hit_rate']:.3f}  (n={c['n']})"
+            f"hit rate {c['hit_rate']:.3f}  "
+            f"95% Wilson [{c['ci'][0]:.3f}, {c['ci'][1]:.3f}]  (n={c['n']})"
         )
 
     print("\nDirection of the gap by bin (+ overstates P(phishing), - understates):")

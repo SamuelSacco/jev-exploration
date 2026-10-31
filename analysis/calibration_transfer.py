@@ -206,10 +206,16 @@ def main(argv=None) -> int:
         m = fit_platt(tiers[tier])
         print(f"  {tier:<16} a={m.a:.2f}  b={m.b:+.2f}")
 
-    print("\nAccuracy is unchanged by construction (the maps are monotone):")
+    print("\nAccuracy at the fixed 0.5 threshold (the maps are monotone, so ranking")
+    print("is unchanged -- thresholded accuracy is not, and moves here):")
     r = evaluate_transfer(tiers["t1_trivial"], tiers["t4_adversarial"], method=args.method)
     print(
         f"  t1 -> t4   accuracy {r['accuracy_before']:.3f} -> {r['accuracy_after']:.3f}, "
+        f"Brier {r['brier_before']:.4f} -> {r['brier_after']:.4f}"
+    )
+    r = evaluate_transfer(tiers["t3_hard"], tiers["t4_adversarial"], method=args.method)
+    print(
+        f"  t3 -> t4   accuracy {r['accuracy_before']:.3f} -> {r['accuracy_after']:.3f}, "
         f"Brier {r['brier_before']:.4f} -> {r['brier_after']:.4f}"
     )
 
