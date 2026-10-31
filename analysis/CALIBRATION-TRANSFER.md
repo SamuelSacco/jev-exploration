@@ -163,6 +163,6 @@ floor exists to catch, reproduced inside its own analysis.
 
 Row 13 stays refuted: raw Jev probabilities are not calibrated at any difficulty. The
 failure is systematic rather than erratic, though, and a one-parameter correction
-recovers most of it. Jev returns a well-behaved monotone score carrying a stable
-distortion, not a probability, and converting it into one is cheap given fifty
+recovers most of it. Jev returns a monotone score carrying a stable distortion
+within the fitted domain, not a probability, and converting it into one is cheap given fifty
 labels — and counterproductive given fewer than thirty.

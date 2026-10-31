@@ -29,7 +29,7 @@ Every substantive claim this repo makes about Jev, one line each, as of
 | Judgements far more repeatable than an LLM judge's | Verified for repeatability, not correctness |
 | A benchmark whose labels the model supplied is inflated by ~0.08 | Refuted as a constant — +0.005 here; scales with decidability |
 | 50 labels refit the intercept (61.7% held-out ECE reduction) | Verified, and a floor not a plateau; sits at the n=100 noise floor |
-| B1 (calibration invariance) more fragile to label error than B2 (p≥0.9 hit rate) | Verified — 1 flip (0.5%) vs 3 flips (1.5%) |
+| B1 (calibration invariance across difficulty tiers) more fragile to label error than B2 (p≥0.9 hit rate) | Verified — 1 flip (0.5%) vs 3 flips (1.5%) |
 | H1: Jev beats the lexical bar where expected | Refuted — cleared it on adversarial too |
 | H2: local 4B wins home_turf, loses negation | Partial — lost both halves on home_turf, won on negation |
 | H3: Jev calibrates better on every arm | Partial — 3 of 4; local better on negation |
