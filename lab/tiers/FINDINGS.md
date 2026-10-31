@@ -11,8 +11,11 @@ python3 lab/tiers/analyse.py
 
 ## Summary
 
-The calibration function does not change with difficulty; where predictions land on it
-does.
+No evidence the calibration function changes with difficulty; where predictions land
+on it does. That is an absence-of-evidence statement, not established equality: the
+decomposition below attributes the whole observed ECE movement to mass shift in all
+three passes, but it defines no tolerance on a function difference, so a change
+smaller than these counts can resolve is not ruled out.
 
 Jev carries one miscalibration curve, roughly constant across every tier, and not a
 small one: ECE sits at 2.1–2.5× its noise floor even on the trivial tier, where
@@ -110,18 +113,24 @@ which is overconfident in every bin.
 
 High-confidence answers are reliable here; coverage is what it costs.
 
-| Tier | coverage at p≥0.9 | hit rate |
-|---|---|---|
-| t1_trivial | 31.5% | **1.000** |
-| t2_ordinary | 32.5% | **1.000** |
-| t3_hard | 23.5% | **1.000** |
-| t4_adversarial | 21.5% | **1.000** |
+| Tier | coverage at p≥0.9 | hit rate | 95% Wilson interval |
+|---|---|---|---|
+| t1_trivial | 31.5% | **1.000** (63 of 63) | [0.943, 1.000] |
+| t2_ordinary | 32.5% | **1.000** (65 of 65) | [0.944, 1.000] |
+| t3_hard | 23.5% | **1.000** (47 of 47) | [0.924, 1.000] |
+| t4_adversarial | 21.5% | **1.000** (43 of 43) | [0.918, 1.000] |
 
-Precision is 1.000 at ≥0.9 in every tier including the adversarial one, on 43–65
-cases each. Because Jev is underconfident at the top, a high threshold is conservative
-rather than risky. On jev-phishing-bench, where the error runs the other way, ≥0.9
-gave a 73.9% hit rate. The direction of the error determines whether thresholding is
-safe, and a scalar ECE does not carry the direction.
+Precision is 1.000 at ≥0.9 in every tier including the adversarial one — on 43–65
+cases each, so read the intervals, not the point: 43 of 43 on the adversarial tier
+is a lower bound of 0.918, not a guarantee. Because Jev is underconfident at the
+top, the threshold is conservative *on this measured distribution*. On
+jev-phishing-bench, where the error runs the other way, ≥0.9 gave a 73.9% hit
+rate. The direction of the error determines whether thresholding is conservative,
+and a scalar ECE does not carry the direction.
+
+None of this establishes deployment safety. That also depends on error costs, the
+coverage the threshold leaves behind, subgroup behaviour and distribution shift —
+none of them measured here.
 
 The middle band is not usable as a probability at any difficulty. A 0.25 from Jev did
 not mean 25%; on t4 it meant 2.6%.
@@ -136,12 +145,16 @@ fitted map rather than by treating raw output as probabilities. Measured in
   2.1–2.5× its noise floor at every difficulty, including where accuracy is 97.5%.
 - Row 14 (confidence is safe to route on): task-dependent, and the dependence is on
   the direction of the error rather than its magnitude. Where Jev is underconfident a
-  high threshold is safe; where it is overconfident none is.
+  high threshold is conservative on the measured distribution — at these counts a
+  1.000 hit rate carries a Wilson lower bound of 0.918–0.944; where it is
+  overconfident none is. Deployment safety is a further question (error costs,
+  coverage, subgroups, shift).
 - Row 15 (calibration holds when the model is out of its depth): answered with a
-  distinction the row did not anticipate. The calibration function holds, and so does
-  the reliability of any given probability value. What changes is that harder inputs
-  land where that function is worst, so a workflow degrades without the model becoming
-  worse calibrated.
+  distinction the row did not anticipate. No evidence the calibration function
+  changes, within what these counts resolve, and the reliability of any given
+  probability value is unchanged. What changes is that harder inputs land where
+  that function is worst, so a workflow degrades without the model becoming worse
+  calibrated.
 
 ## Caveats
 

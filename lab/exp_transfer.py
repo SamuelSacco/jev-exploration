@@ -16,7 +16,8 @@ side.
 
   - Platt's slope sits in 2.11-2.61 across all four tiers and all three passes.
     That is the squeeze, read as a property of the model on e-mail and the reusable part.
-  - The intercept spans -0.48 to +1.75, tracking the slice's base rate, and is
+  - The intercept spans -0.48 to +1.75, tracking the slice's prediction
+    distribution (the tiers are balanced, so not its base rate), and is
     read as belonging to the deployment rather than the model.
   - So: transfer the slope, spend ~50 labels refitting the intercept. That cut
     mean ECE 61.7% on held-out items, though 3 of 480 draws (all in draw 23)

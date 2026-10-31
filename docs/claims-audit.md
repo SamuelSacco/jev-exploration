@@ -56,8 +56,8 @@ see the note in §1.
 | 11 | "New model class" as a scientific category | Unmeasured | [§4](#4-refuted) |
 | 12 | An ordinary LLM can reproduce the interface | Verified | [§3](#3-intelligence-and-accuracy), openjev |
 | 13 | Probabilities are calibrated | Refuted at scale | [§6](#6-the-open-question-calibration), both studies large enough to measure it find real miscalibration |
-| 14 | Confidence is safe to route and escalate on | Depends on the sign of the error | [§6](#6-the-open-question-calibration), p≥0.9 gave 1.000 here, 0.739 on phishing |
-| 15 | Calibration holds when the model is out of its depth | Yes, as a function, but harder inputs land where it is worst | [§6](#6-the-open-question-calibration), the 800-item gradient |
+| 14 | Confidence is safe to route and escalate on | Depends on the sign of the error | [§6](#6-the-open-question-calibration), p≥0.9 gave 1.000 here on 43–65 cases per tier (Wilson lower bounds 0.918–0.944), 0.739 on phishing |
+| 15 | Calibration holds when the model is out of its depth | No evidence of change within tolerance; harder inputs land where it is worst | [§6](#6-the-open-question-calibration), the 800-item gradient |
 | 16 | Returned probabilities are full-precision floats | Refuted | [§1](#numeric-resolution), every value on a 0.01 grid across 71 direct responses (measured here) |
 | 17 | A returned probability can be exactly 0 or 1, which no rescaling can repair | Verified for Choice and Score; no instance for Noul | [§1](#numeric-resolution) (measured here), [#10](../../issues/10) |
 | 18 | Questions batched into one request cannot see each other's instructions | Verified (recomputed from committed raw) | [lab/PROBES.md](../lab/PROBES.md); `lab/runs/20260921T150952Z-probe-isolation.jsonl` (6 lines, 3 reps × 2 conditions, run by the operator 2026-09-21): probe code word executed at 0.02 in a sibling question's instructions vs 0.99 in shared state — exact match to the reported 0.02 vs 0.99 |
@@ -65,12 +65,12 @@ see the note in §1.
 | 20 | Choice and independent Nouls measure the same thing | Contested | [lab/PROBES.md](../lab/PROBES.md), Nouls left 0.29 on distractors where Choice left none, n=1 item, as reported by the operator; `lab/runs/20260921T150952Z-probe-formulation.jsonl` is committed but its nouls arm ran a single-Noul variant (0.99), so the 0.29 figure is not derivable from it |
 | 21 | Jev's judgements are far more repeatable than an LLM judge's | Verified for repeatability, not for correctness | LangChain agent-eval, variance 1.49e-5 across 100 reps; but 5 frozen runs and one oracle, so agreement is 5/5 (95% CI 48–100%) and the LLM baselines' settings were unpinned |
 | 22 | A benchmark whose labels the model supplied is inflated by ~0.08 | Refuted as a constant | [analysis/CIRCULARITY.md](../analysis/CIRCULARITY.md) §4: premium +0.005 here (per-tier +0.015/−0.005/+0.015/−0.005, recomputed from `lab/runs/20260921T150525Z-circularity-*.jsonl` plus the committed tier labels, mean across passes) against T69's +0.081; it scales with how decidable the task is |
-| 23 | Fifty labels is enough to refit the intercept | Verified, and it is a floor not a plateau | [analysis/CALIBRATION-TRANSFER.md](../analysis/CALIBRATION-TRANSFER.md), 62% held-out reduction at 50; below 30 labels the worst draw is 4x the uncorrected ECE (measured here) |
+| 23 | Fifty labels is enough to refit the intercept | Verified, and it is a floor not a plateau | [analysis/CALIBRATION-TRANSFER.md](../analysis/CALIBRATION-TRANSFER.md), 62% held-out reduction at 50, with 3 of 480 paired draws still left worse than doing nothing; at 10 labels the worst draw is 4.5x the uncorrected ECE on the same items (measured here) |
 | 24 | The difficulty-tier calibration-invariance finding (B1) is more fragile to label error than the p≥0.9 hit-rate finding (B2) | Verified | [analysis/CIRCULARITY.md](../analysis/CIRCULARITY.md): an adversary needs at most 1 flipped label (0.5% of a tier) to overturn B1, against 3 flips (1.5%) for B2's hit rate to fall below 0.95. The 0.5% is an upper bound from a greedy search over sampled tie-breaks; numbers from `analysis/circularity.json` (`b1_across_passes.worst_case_fraction` = 0.005, `b2_sensitivity.t4_adversarial.flips_to_fall_below_target` = 3 at 0.015) |
 | 25 | Jev beats the lexical bar where expected (home_turf and negation, not adversarial) | Refuted | [lab/exp_headtohead.py](../lab/exp_headtohead.py) H1, run 20260925T015208Z (33 Jev calls, 1,320 local qwen3:4b calls, 0 unparsed): Jev cleared the bar on all three Noul arms including adversarial — 100.0%/88.3%/100.0% against bars of 81.7%/69.5%/50.0% |
 | 26 | The local 4B beats Jev on home_turf accuracy and loses on negation | Partial | H2: Jev 100.0% vs local 53.3% on home_turf — the local model did not win (95% CI on the difference [-55.8, -37.5] points); Jev 100.0% vs local 95.0% on negation — the local model lost (CI [-10.0, -1.25] points). First half falsified, second held |
-| 27 | Jev calibrates better than the local 4B on every arm | Partial | H3: Jev's ECE-to-noise-floor ratio lower on 3 of 4 arms (2.13×/1.56×/1.38× vs 3.25×/4.00×/3.53× on home_turf/adversarial/typed); the local model was better calibrated on negation (0.88× vs 1.31×) |
-| 28 | Typed Choice beats adversarial Noul on the same items | Refuted | H4: +2.5 points (90.8% vs 88.3%), but the 95% bootstrap interval on the difference, [-1.7, +6.7] points, covers zero — T75's finding does not generalise past its single classification item |
+| 27 | Jev calibrates better than the local 4B on every arm | Proven | H3, scored on the ECE difference with a paired bootstrap interval on the same items: Jev's ECE is lower on all four arms and every interval excludes zero — home_turf −0.1376 [−0.2088, −0.0761], adversarial −0.1125 [−0.1856, −0.0163], typed −0.1299 [−0.2001, −0.0395], negation −0.0183 [−0.0642, −0.0035]. The original scoring ranked arms by ECE-to-noise-floor ratio and called the local model better calibrated on negation (0.88× vs 1.31×; recomputation gives 0.86×) — on ECE the local model is worse there, 0.0443 vs 0.0260. The ratio measures departure from a model's own sampling floor, not calibration-error size; it is a diagnostic only |
+| 28 | Typed Choice beats adversarial Noul on the same items | Not established | H4: +2.5 points (90.8% vs 88.3%), but the 95% bootstrap interval on the difference, [-1.7, +6.7] points, covers zero. That is inconclusive — it establishes neither the advantage nor its absence — so the "Refuted" this row carried overstated the run. T75's finding remains untested past its single classification item |
 | 29 | Laya (open-source, Jev-shaped API) is a drop-in Jev replacement | Refuted for held-out multi-sentence inputs | [lab/laya/FINDINGS.md](../lab/laya/FINDINGS.md) (measured here, 2026-10-01): Laya English 421M at chance on the tiers fixtures (acc 0.495–0.525 vs Jev 0.893–0.980, ECE 14.6–23.8× the noise floor, Brier worse than a constant-0.5 forecaster), domains 0.500–0.767 vs 0.942–1.000, negation 0.825 with 26/40 pairs vs 1.000 with 40/40. Formulation controls bound the gap: Jev per-item on the same inputs loses only ~10 points (t1 subset 0.900 vs 1.000 batched); Laya with Jev's exact state slices unchanged. Ranking survives where threshold accuracy does not (t1 AUC 0.872) except adversarial, where it inverts (0.246) |
 | 30 | The playground 500-example head-to-head (Laya 0.668 / ECE 0.241 vs Jev 0.764 / 0.147) | Verified (reproduced here) | [lab/laya/FINDINGS.md](../lab/laya/FINDINGS.md): dataset rebuilt byte-identical, their scoring verbatim; Laya reproduces to ≤0.001 per task on accuracy and ECE, Jev within one item and ≤0.012 ECE; Jev input tokens 194,902, identical to the recorded run. Third-party benchmark (`wdobry/laya-playground`); the upstream Laya repo states it never measured Jev. AG News is in Laya's training mix — that row is in-distribution |
 | 31 | Laya's published application numbers (phishing 0.98–0.993, spam 0.993) reflect out-of-box capability | Overstated | Upstream `BENCHMARKS.md` flags those datasets as in Laya's training mix; the held-out measurement in row 29 gives 0.495–0.525 on phishing tiers. Short-text in-distribution performance is real (row 30: SMS spam 0.960) but does not transfer to held-out email |
@@ -289,8 +289,10 @@ here is stale — the run's results are reported in §6 under "The negation prob
 The head-to-head battery ran live on 2026-09-25 (run `20260925T015208Z`):
 33 Jev calls and 1,320 local qwen3:4b calls across four arms (home_turf,
 adversarial, negation, typed), raw responses committed in `lab/runs/` as
-`*-h2h-*.jsonl`. Results are rows 25–28 of the ledger: H1 and H4 refuted,
-H2 and H3 partial.
+`*-h2h-*.jsonl`. Results are rows 25–28 of the ledger: H1 refuted, H2 partial,
+H3 proven, H4 not established. (H3 and H4 were rescored on 2026-10-31: H3 on the
+ECE difference rather than the noise-floor ratio, H4's covers-zero interval
+relabelled from refuted to not established. See rows 27–28.)
 
 ### Re-run on the new harness, 2026-09-17
 
@@ -395,19 +397,19 @@ Caveat, flagged by the sweep that surfaced it: the Jev row may be derived from
 TypeSafe's published dashboard rather than measured live, so the provenance of the
 0.144 is unclear. It is recorded here as a third datapoint rather than a replication.
 
-### The difficulty gradient: the calibration function does not track difficulty
+### The difficulty gradient: no evidence the calibration function tracks difficulty
 
 Issue #1, run `20260918T013027Z` on `jev-1.13.0`: 800 items over four difficulty
 tiers, one domain, one fixed question wording, labels frozen before the run, three
 passes. Full write-up and caveats: [`lab/tiers/FINDINGS.md`](../lab/tiers/FINDINGS.md);
 re-derive it from the committed raw responses with `python3 lab/tiers/analyse.py`.
 
-| Tier | accuracy | ECE | floor | ratio | coverage at p≥0.9 | hit rate |
+| Tier | accuracy | ECE | floor | ratio | coverage at p≥0.9 | hit rate [95% Wilson] |
 |---|---|---|---|---|---|---|
-| t1_trivial | 97.5% [94.3, 98.9] | 0.115 | 0.054 | 2.14 | 31.5% | 1.000 |
-| t2_ordinary | 98.0% [95.0, 99.2] | 0.122 | 0.053 | 2.30 | 32.5% | 1.000 |
-| t3_hard | 93.5% [89.2, 96.2] | 0.138 | 0.055 | 2.52 | 23.5% | 1.000 |
-| t4_adversarial | 90.0% [85.1, 93.4] | 0.147 | 0.068 | 2.17 | 21.5% | 1.000 |
+| t1_trivial | 97.5% [94.3, 98.9] | 0.115 | 0.054 | 2.14 | 31.5% | 1.000 [0.943, 1.000] |
+| t2_ordinary | 98.0% [95.0, 99.2] | 0.122 | 0.053 | 2.30 | 32.5% | 1.000 [0.944, 1.000] |
+| t3_hard | 93.5% [89.2, 96.2] | 0.138 | 0.055 | 2.52 | 23.5% | 1.000 [0.924, 1.000] |
+| t4_adversarial | 90.0% [85.1, 93.4] | 0.147 | 0.068 | 2.17 | 21.5% | 1.000 [0.918, 1.000] |
 
 The accuracy gradient is real: the t1 and t4 intervals do not overlap. **The ECE
 gradient is not.** The point estimates rise monotonically, but a bootstrap interval
@@ -423,10 +425,13 @@ other's mass. Applying t4's calibration curve to t1's distribution gives ECE 0.0
 calibrated than t1.** Applying t1's curve to t4's distribution gives 0.179–0.191,
 which over-explains the observed rise. The whole movement is mass, in every pass.
 
-So Jev carries one miscalibration curve that is roughly invariant to difficulty, and
-it is not small: ECE sits at 2.1–2.5× its noise floor even where accuracy is 97.5%.
-Harder inputs do not corrupt the curve, they push probabilities into the middle of
-it, which is where it is worst.
+So the supported statement is narrower than invariance: in every pass the
+decomposition attributes the whole ECE movement to mass shift, and no pass shows
+the curve itself changing — but the decomposition defines no tolerance on a
+function difference, so equality is unrefuted at this n, not established. The
+curve is not small either: ECE sits at 2.1–2.5× its noise floor even where
+accuracy is 97.5%. Harder inputs do not corrupt the curve, they push
+probabilities into the middle of it, which is where it is worst.
 
 The shape is compression toward the middle in every tier: Jev overstates low
 probabilities and understates high ones, crossing over near 0.5. Individual bins
@@ -472,14 +477,19 @@ correctable, and it is, with a caveat that matters.
 Fitting Platt independently per tier splits the two parameters cleanly. The slope
 is stable at 2.11–2.61 across every tier and pass: Jev's log-odds are roughly half as
 extreme as they should be, and that is a property of the model on e-mail. The intercept
-spans −0.48 to +1.75, absorbs the slice's base rate, and belongs to the slice.
+spans −0.48 to +1.75 and belongs to the slice. On the tiers it cannot be absorbing
+base rate — every tier is 100 positive / 100 negative by construction — it absorbs
+where the slice's predictions sit. Base-rate absorption is the domains result of
+issue #9, where prevalence varies by design.
 
 So transferring a whole map is unreliable. Across the twelve tier-to-tier transfers
 it cut mean ECE 54%, but t3 → t4 made calibration *worse* (0.147 → 0.184, consistent
 on all three passes). Transferring only the slope and refitting the intercept on 50
 labels cut mean ECE 61.7% on held-out items the refit never saw; the worst single
-draw reached 0.124, still below the worst uncorrected case. Accuracy is untouched
-throughout, since the maps are monotone.
+draw reached 0.124. Paired draw by draw, 3 of 480 refits at that budget still ended
+worse than doing nothing on the same items (worst 0.1015 → 0.1209); at 75 labels
+none did. Ranking is untouched throughout, since the maps are monotone; accuracy
+at a fixed threshold is not — the t3 → t4 full map moves it 0.900 → 0.810 at 0.5.
 
 | approach | mean ECE, 12 transfers | worst case |
 |---|---|---|
