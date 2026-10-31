@@ -20,7 +20,7 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from jevlab.run_meta import emit, print_header  # noqa: E402
-from jevlab.stats import bootstrap_ci, ece_with_floor, wilson  # noqa: E402
+from jevlab.stats import bootstrap_ci, ece, ece_with_floor, wilson  # noqa: E402
 from lab.domains.baselines import (  # noqa: E402
     dataset_version as domains_dataset_version,
 )
@@ -153,6 +153,26 @@ def difference_ci(a: list, b: list) -> list:
     return ci
 
 
+def ece_difference_ci(jev_pairs: list, local_pairs: list):
+    """Paired bootstrap interval on (Jev ECE - local ECE) for one arm.
+
+    The items are inner-joined on qid and resampled jointly, so each resample
+    feeds the same items to both sides and the interval is on the difference
+    itself. Returns (ci95, n_pairs); disjoint arms give ([0.0, 0.0], 0).
+    """
+    jd = {qid: (p, g) for qid, p, g in jev_pairs}
+    ld = {qid: (p, g) for qid, p, g in local_pairs}
+    rows = [(jd[q][0], jd[q][1], ld[q][0]) for q in sorted(set(jd) & set(ld))]
+    if not rows:
+        return [0.0, 0.0], 0
+    lo, hi = bootstrap_ci(
+        rows,
+        statistic=lambda s: ece([(a, g) for a, g, _ in s])
+        - ece([(c, g) for _, g, c in s]),
+    )
+    return [round(lo, 4), round(hi, 4)], len(rows)
+
+
 def verdicts(arms: dict) -> dict:
     out = {}
 
@@ -198,29 +218,60 @@ def verdicts(arms: dict) -> dict:
             "verdict": "UNVERIFIABLE", "why": "needs both sides on home_turf and negation"
         }
 
-    # H3
+    # H3. Scored on the ECE difference with its paired bootstrap interval
+    # (ece_difference_ci, computed in analyse()). The preregistered criterion
+    # named the ECE-to-noise-floor ratio instead; that was a category error.
+    # The ratio measures how far a model sits from *its own* sampling floor,
+    # not the size of its calibration error, and on negation it ranked the
+    # local model better calibrated (ratio 0.86x against Jev's 1.31x) while
+    # its ECE was the higher of the two (0.0443 against 0.0260). The ratio
+    # stays in side_scores as a diagnostic -- evidence against perfect
+    # calibration -- and no longer ranks anything.
     both = [a for a in ARMS if jev(a) and local(a)]
     if not both:
         out["H3_jev_calibrates_better_everywhere"] = {
             "verdict": "UNVERIFIABLE", "why": "needs both sides on at least one arm"
         }
     else:
-        better = {a: jev(a)["ratio"] < local(a)["ratio"] for a in both}
+        detail = {}
+        for a in both:
+            ci = arms[a].get("ece_difference_ci")
+            if ci is None:
+                call = "not established"
+            elif ci[1] < 0:
+                call = "jev"
+            elif ci[0] > 0:
+                call = "local"
+            else:
+                call = "not established"
+            detail[a] = {
+                "ece_difference": arms[a].get("ece_difference"),
+                "ci95": ci,
+                "call": call,
+            }
+        calls = [d["call"] for d in detail.values()]
         out["H3_jev_calibrates_better_everywhere"] = {
-            "verdict": "PROVEN" if all(better.values()) else (
-                "REFUTED" if not any(better.values()) else "PARTIAL"
+            "verdict": "PROVEN" if all(c == "jev" for c in calls) else (
+                "REFUTED" if all(c == "local" for c in calls) else "PARTIAL"
             ),
-            "jev_ratio_lower": better,
+            "ece_difference_by_arm": detail,
             "arms_covered": both,
             "incomplete": sorted(set(ARMS) - set(both)),
         }
 
-    # H4
+    # H4. An interval covering zero establishes neither direction: the
+    # estimate stands, the run is inconclusive. The preregistered text said
+    # "falsified if the interval covers zero"; that mislabels absence of
+    # evidence as evidence of absence, and is superseded. REFUTED is reserved
+    # for an interval entirely below zero -- the opposite advantage,
+    # established.
     if jev("typed") and jev("adversarial"):
         ci = arms["typed"].get("vs_adversarial_ci") or [0.0, 0.0]
         gain = jev("typed")["accuracy"] - jev("adversarial")["accuracy"]
         out["H4_choice_beats_noul_on_the_same_items"] = {
-            "verdict": "PROVEN" if ci[0] > 0 else ("REFUTED" if ci[0] <= 0 <= ci[1] else "PARTIAL"),
+            "verdict": "PROVEN" if ci[0] > 0 else (
+                "REFUTED" if ci[1] < 0 else "NOT ESTABLISHED"
+            ),
             "accuracy_gain": round(gain, 4),
             "difference_ci95": ci,
         }
@@ -251,6 +302,12 @@ def analyse(doc: dict) -> dict:
             entry["difference_ci"] = ci
             entry["difference_pairs_n"] = n_pairs
             entry["paired_by"] = "index" if fallback else "qid"
+            eci, en_pairs = ece_difference_ci(jev_pairs, local_pairs)
+            entry["ece_difference"] = round(
+                entry["jev"]["ece"] - entry["local"]["ece"], 4
+            )
+            entry["ece_difference_ci"] = eci
+            entry["ece_difference_pairs_n"] = en_pairs
         arms[name] = entry
 
     if "typed" in arms and "adversarial" in arms:
@@ -280,18 +337,25 @@ def memo(result: dict) -> str:
     lines.append(f"Jev via `{result['transport_jev']}`, "
                  f"local via `{result['transport_local']}`.")
     lines.append("")
-    lines.append("| arm | n | primitive | lexical bar | Jev acc | local acc | Jev ECE/floor | local ECE/floor |")
-    lines.append("|---|---|---|---|---|---|---|---|")
+    lines.append("| arm | n | primitive | lexical bar | Jev acc | local acc | Jev ECE | local ECE | ECE difference [95% CI] |")
+    lines.append("|---|---|---|---|---|---|---|---|---|")
     for name in ARMS:
         a = result["arms"].get(name)
         if not a:
             continue
         j, l = a["jev"], a["local"]
+        diff, dci = a.get("ece_difference"), a.get("ece_difference_ci")
+        diff_cell = (
+            f"{diff:+.4f} [{dci[0]:+.4f}, {dci[1]:+.4f}]"
+            if diff is not None and dci
+            else "n/a"
+        )
         lines.append(
             f"| `{name}` | {a['n']} | {a['primitive']} | {a['lexical_bar']:.1%} | "
             f"{j.get('accuracy', float('nan')):.1%} | "
             f"{l.get('accuracy', float('nan')):.1%} | "
-            f"{j.get('ratio', float('nan')):.2f}x | {l.get('ratio', float('nan')):.2f}x |"
+            f"{j.get('ece', float('nan')):.4f} | {l.get('ece', float('nan')):.4f} | "
+            f"{diff_cell} |"
         )
     lines.append("")
     lines.append("## Verdicts, against what was written before the run")
