@@ -62,10 +62,11 @@ noise floor for its sample size ([method](analysis/external/)), then ran a contr
    single discount factor for self-labelled benchmarks is the wrong instrument
    ([method](analysis/CIRCULARITY.md)).
 
-In short: Jev returns a well-behaved monotone score carrying a stable distortion, not
-a probability. Converting it into one costs a slope fitted once plus roughly fifty
-labels per deployment. Whether that slope survives a change of domain or a retrain is
-untested, and is tracked in [#9](../../issues/9).
+In short: Jev returns a monotone score carrying a stable distortion within a domain,
+not a probability. Converting it into one costs a slope fitted once plus roughly
+fifty labels per deployment. The fitted slope does not transfer across domains
+([#9](../../issues/9): 0 of 3 new-domain slopes landed in the fitted band), and a
+retrain is untested.
 
 ## The API in 60 seconds
 
